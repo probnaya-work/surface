@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Investigations — Bogart Labs</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand-group">
+    <a class="brand-mark" href="index.html">
+      <svg viewBox="0 0 32 32" width="15" height="15" fill="currentColor"><path fill-rule="evenodd" d="M3 2H29V30H3Z M12 7H24V14H12Z M12 18H24V25H12Z"></path></svg>
+      <span class="brand-name">BOGART LABS</span>
+    </a>
+    <a class="brand-tag" href="lab.html">INDEPENDENT COMPUTATIONAL LABORATORY</a>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="instruments.html"><span class="label">INSTRUMENTS</span></a>
+    <a class="nav-link" href="investigations.html"><span class="nav-dot"></span><span class="label">INVESTIGATIONS</span></a>
+    <a class="nav-cta" href="intake.html">SUBMIT A PROBLEM</a>
+  </div>
+</header>
+
+<header class="mobile-header">
+  <a class="brand-name" href="index.html">BOGART LABS</a>
+  <span class="crumb">REG</span>
+</header>
+
+<div class="main">
+  <div class="page">
+    <div class="eyebrow-row">
+      <span class="eyebrow">INVESTIGATIONS</span>
+      <span class="eyebrow-meta">PARTIAL INDEX · 17 ON RECORD</span>
+    </div>
+
+    <div class="register-plate">
+      <canvas id="cv-strip"></canvas>
+    </div>
+    <div class="register-axis">
+      <span>2024</span>
+      <span>FIG. 4 — REGISTER OF INVESTIGATIONS, SWEPT IN TIME</span>
+      <span>NOW</span>
+    </div>
+
+    <div class="record-list" id="record-list"></div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <a href="lab.html">BOGART LABS · WHAT THIS LABORATORY IS →</a>
+  <span class="stamp" data-stamp></span>
+</footer>
+
+<nav class="bottom-nav has-tabs">
+  <a href="instruments.html"><span>INSTRUMENTS</span></a>
+  <a href="investigations.html"><span class="nav-dot"></span><span>INVESTIGATIONS</span></a>
+  <a href="intake.html"><span>SUBMIT</span></a>
+</nav>
+
+<script src="js/apparatus.js"></script>
+<script src="js/records.js"></script>
+<script src="js/site.js"></script>
+<script>
+  let hover = -1;
+  Apparatus.mount(document.getElementById('cv-strip'), (S) => Apparatus.buildStrip(S, {
+    records: RECORDS,
+    hoverIndex: () => hover
+  }));
+
+  const list = document.getElementById('record-list');
+  RECORDS.forEach((r, i) => {
+    const row = document.createElement(r.withheld ? 'div' : 'a');
+    row.className = 'record-row';
+    if (!r.withheld) row.href = `record.html?id=${encodeURIComponent(r.id)}`;
+    else row.style.cursor = 'default';
+    row.addEventListener('mouseenter', () => { hover = i; });
+    row.addEventListener('mouseleave', () => { hover = -1; });
+
+    const rid = document.createElement('span');
+    rid.className = 'rid'; rid.textContent = r.id;
+    row.appendChild(rid);
+
+    if (r.withheld) {
+      const redacted = document.createElement('span');
+      redacted.className = 'redacted';
+      row.appendChild(redacted);
+    } else {
+      const title = document.createElement('span');
+      title.className = 'title'; title.textContent = r.title;
+      row.appendChild(title);
+    }
+
+    const status = document.createElement('span');
+    status.className = 'status'; status.textContent = r.status;
+    row.appendChild(status);
+
+    list.appendChild(row);
+  });
+  const note = document.createElement('p');
+  note.className = 'list-note';
+  note.textContent = 'ENTRIES NOT LISTED ARE NOT MISSING.';
+  list.appendChild(note);
+</script>
+</body>
+</html>
