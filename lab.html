@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Laboratory — Bogart Labs</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand-group">
+    <a class="brand-mark" href="index.html">
+      <svg viewBox="0 0 32 32" width="15" height="15" fill="currentColor"><path fill-rule="evenodd" d="M3 2H29V30H3Z M12 7H24V14H12Z M12 18H24V25H12Z"></path></svg>
+      <span class="brand-name">BOGART LABS</span>
+    </a>
+    <a class="brand-tag" href="lab.html">INDEPENDENT COMPUTATIONAL LABORATORY</a>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="instruments.html"><span class="label">INSTRUMENTS</span></a>
+    <a class="nav-link" href="investigations.html"><span class="label">INVESTIGATIONS</span></a>
+    <a class="nav-cta" href="intake.html">SUBMIT A PROBLEM</a>
+  </div>
+</header>
+
+<header class="mobile-header">
+  <a class="brand-name" href="index.html">BOGART LABS</a>
+  <span class="crumb">LAB</span>
+</header>
+
+<div class="main">
+  <div class="page">
+    <div class="eyebrow-row">
+      <span class="eyebrow">THE LABORATORY</span>
+      <span class="eyebrow-meta">FIG. 0 — INSTRUMENT TURNED ON ITSELF</span>
+    </div>
+
+    <div class="lab-grid">
+      <div class="figure">
+        <div class="figure-plate" style="height:340px;">
+          <canvas id="cv-lab"></canvas>
+        </div>
+        <div class="figure-caption">
+          <span class="dim">HARMONOGRAPH · TWO PENDULUMS · THE TRACE SETTLES, THEN BEGINS AGAIN</span>
+        </div>
+      </div>
+
+      <div class="lab-copy">
+        <p class="intro">Bogart Labs is an independent computational laboratory exploring new ways of working with machines through software, AI, interfaces, and experimental instruments.</p>
+        <dl class="specs">
+          <dt>PREMISE</dt><dd>MACHINES ARE BECOMING CAPABLE FASTER THAN WE ARE LEARNING TO WORK WITH THEM</dd>
+          <dt>METHOD</dt><dd>BUILD THE INSTRUMENT · RUN IT · KEEP WHAT SURVIVES</dd>
+          <dt>OPERATOR</dt><dd>ONE PRINCIPAL INVESTIGATOR · COLLABORATORS DRAWN IN PER INVESTIGATION</dd>
+          <dt>FUNDING</dt><dd>OWN WORK · A SMALL NUMBER OF COMMISSIONS</dd>
+          <dt>OUTCOME</dt><dd>SOME BECOME PRODUCTS · SOME BECOME INFRASTRUCTURE · SOME STAY EXPERIMENTS</dd>
+        </dl>
+        <p class="thesis">Not every investigation needs a commercial purpose. Some only need to answer a question.</p>
+
+        <div class="working-with">
+          <span class="label">WORKING WITH THE LABORATORY</span>
+          <a class="row" href="intake.html?ch=b">
+            <span class="name">Make or investigate something together</span>
+            <span class="chan">CHANNEL B →</span>
+          </a>
+          <a class="row" href="intake.html?ch=a">
+            <span class="name">Bring us a problem to investigate</span>
+            <span class="chan">CHANNEL A →</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <a href="lab.html">BOGART LABS · WHAT THIS LABORATORY IS →</a>
+  <span class="stamp" data-stamp></span>
+</footer>
+
+<nav class="bottom-nav has-tabs">
+  <a href="instruments.html"><span>INSTRUMENTS</span></a>
+  <a href="investigations.html"><span>INVESTIGATIONS</span></a>
+  <a href="intake.html"><span>SUBMIT</span></a>
+</nav>
+
+<script src="js/apparatus.js"></script>
+<script src="js/site.js"></script>
+<script>
+  Apparatus.mount(document.getElementById('cv-lab'), (S) => Apparatus.buildHarmonograph(S));
+</script>
+</body>
+</html>
