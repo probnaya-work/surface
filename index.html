@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bogart Labs — Independent Computational Laboratory</title>
+<meta name="description" content="Bogart Labs is an independent computational laboratory exploring new ways of working with machines through software, AI, interfaces, and experimental instruments.">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand-group">
+    <a class="brand-mark" href="index.html">
+      <svg viewBox="0 0 32 32" width="15" height="15" fill="currentColor"><path fill-rule="evenodd" d="M3 2H29V30H3Z M12 7H24V14H12Z M12 18H24V25H12Z"></path></svg>
+      <span class="brand-name">BOGART LABS</span>
+    </a>
+    <a class="brand-tag" href="lab.html">INDEPENDENT COMPUTATIONAL LABORATORY</a>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="instruments.html"><span class="label">INSTRUMENTS</span></a>
+    <a class="nav-link" href="investigations.html"><span class="label">INVESTIGATIONS</span></a>
+    <a class="nav-cta" href="intake.html">SUBMIT A PROBLEM</a>
+  </div>
+</header>
+
+<header class="mobile-header">
+  <a class="brand-name" href="index.html">BOGART LABS</a>
+  <span class="crumb">IDX</span>
+</header>
+
+<div class="main">
+
+  <div class="hero" id="hero">
+    <canvas id="trace-canvas"></canvas>
+    <div class="hero-ruler-top"></div>
+    <div class="hero-ruler-left"></div>
+    <div class="hero-crosshair-h" id="crosshair-h"></div>
+    <div class="hero-crosshair-v" id="crosshair-v"></div>
+    <div class="hero-readout" id="readout"></div>
+    <div class="hero-pen" id="pen"></div>
+
+    <div class="hero-title">
+      <h1>BOGART<br>LABS</h1>
+      <div class="hero-tagline">
+        <span class="word">MACHINES</span><span class="dot">·</span>
+        <span class="word">INTELLIGENCE</span><span class="dot">·</span>
+        <span class="word">INSTRUMENTS</span>
+      </div>
+    </div>
+
+    <div class="hero-note">
+      <span>FIG. 1 — APPARATUS IN CONTINUOUS OPERATION</span>
+      <span>TRACE IS LIVE · THE PEN IS NOT IDLE</span>
+    </div>
+    <div class="hero-note mobile-fig">
+      <span>FIG. 1 · LIVE</span>
+    </div>
+  </div>
+
+  <div class="index-list">
+    <a class="index-row" href="instrument-0x2f.html">
+      <span class="id">0x2F</span>
+      <span class="desc">Local task runtime for coding agents</span>
+      <span class="status status-operational">OPERATIONAL</span>
+    </a>
+    <a class="index-row" href="instrument-057.html">
+      <span class="id">057</span>
+      <span class="desc">Visual surface for computational activity</span>
+      <span class="status status-observation">IN OBSERVATION</span>
+    </a>
+    <div class="index-foot">
+      <a class="count" href="investigations.html">17 INVESTIGATIONS ON RECORD · 4 DISCLOSED</a>
+      <a class="cta" href="intake.html">BRING US AN INTERESTING PROBLEM →</a>
+    </div>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <a href="lab.html">BOGART LABS · WHAT THIS LABORATORY IS →</a>
+  <span class="stamp" data-stamp></span>
+</footer>
+
+<nav class="bottom-nav has-tabs">
+  <a href="instruments.html"><span>INSTRUMENTS</span></a>
+  <a href="investigations.html"><span>INVESTIGATIONS</span></a>
+  <a href="intake.html"><span>SUBMIT</span></a>
+</nav>
+
+<script src="js/apparatus.js"></script>
+<script src="js/site.js"></script>
+<script>
+  const hero = document.getElementById('hero');
+  const pen = document.getElementById('pen');
+  const crosshairH = document.getElementById('crosshair-h');
+  const crosshairV = document.getElementById('crosshair-v');
+  const readout = document.getElementById('readout');
+  const showReadout = window.matchMedia('(min-width: 761px)').matches;
+
+  Apparatus.mount(document.getElementById('trace-canvas'), (S) => Apparatus.buildTrace(S, {
+    host: hero,
+    onMove: (px, py) => {
+      pen.style.transform = `translate(${px}px, ${py}px)`;
+      if (!showReadout) return;
+      crosshairH.style.transform = `translateY(${py}px)`;
+      crosshairV.style.transform = `translateX(${px}px)`;
+      const rx = px > S.w - 170 ? px - 160 : px + 14;
+      const ry = py > S.h - 60 ? py - 34 : py + 12;
+      readout.style.transform = `translate(${rx}px, ${ry}px)`;
+      readout.textContent = `X ${String(Math.round(px)).padStart(4, '0')}  Y ${String(Math.round(py)).padStart(4, '0')}`;
+    }
+  }));
+</script>
+</body>
+</html>
