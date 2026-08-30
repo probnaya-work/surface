@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0x2F — Bogart Labs</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand-group">
+    <a class="brand-mark" href="index.html">
+      <svg viewBox="0 0 32 32" width="15" height="15" fill="currentColor"><path fill-rule="evenodd" d="M3 2H29V30H3Z M12 7H24V14H12Z M12 18H24V25H12Z"></path></svg>
+      <span class="brand-name">BOGART LABS</span>
+    </a>
+    <a class="brand-tag" href="lab.html">INDEPENDENT COMPUTATIONAL LABORATORY</a>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="instruments.html"><span class="nav-dot"></span><span class="label">INSTRUMENTS</span></a>
+    <a class="nav-link" href="investigations.html"><span class="label">INVESTIGATIONS</span></a>
+    <a class="nav-cta" href="intake.html">SUBMIT A PROBLEM</a>
+  </div>
+</header>
+
+<header class="mobile-header">
+  <a class="brand-name" href="index.html">BOGART LABS</a>
+  <span class="crumb">INS / 0x2F</span>
+</header>
+
+<div class="main">
+  <div class="page detail">
+    <a class="back-link" href="instruments.html">← INSTRUMENTS</a>
+
+    <div class="split-title">
+      <span class="num">0x2F</span>
+      <span class="status status-operational">OPERATIONAL · SINCE 2025</span>
+    </div>
+
+    <div class="split">
+      <div class="figure">
+        <div class="figure-plate" style="height:320px;">
+          <canvas id="cv-step"></canvas>
+        </div>
+        <div class="figure-caption">
+          <span class="dim">FIG. 2 — TASK PATH, FOUR LANES · ■ COMPLETED</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:24px;">
+        <p class="lede">A queue is an interface, not a data structure.</p>
+        <p class="body-copy">0x2F holds machine work on the operator's own hardware: tasks are issued, paused, resumed and abandoned without losing what the agent already knew.</p>
+        <dl class="specs">
+          <dt>CLASS</dt><dd>RUNTIME</dd>
+          <dt>SUBJECT</dt><dd>CONTROL OF MACHINE WORK</dd>
+          <dt>LOCUS</dt><dd>LOCAL</dd>
+          <dt>LANES</dt><dd>FOUR, CONCURRENT</dd>
+          <dt>ACCESS</dt><dd class="accent">BY REQUEST</dd>
+        </dl>
+        <a class="action-link" href="intake.html?ch=b">REQUEST ACCESS →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <a href="lab.html">BOGART LABS · WHAT THIS LABORATORY IS →</a>
+  <span class="stamp" data-stamp></span>
+</footer>
+
+<nav class="bottom-nav has-tabs">
+  <a href="instruments.html"><span class="nav-dot"></span><span>INSTRUMENTS</span></a>
+  <a href="investigations.html"><span>INVESTIGATIONS</span></a>
+  <a href="intake.html"><span>SUBMIT</span></a>
+</nav>
+
+<script src="js/apparatus.js"></script>
+<script src="js/site.js"></script>
+<script>
+  Apparatus.mount(document.getElementById('cv-step'), (S) => Apparatus.buildStepLanes(S));
+</script>
+</body>
+</html>
