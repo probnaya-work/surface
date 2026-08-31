@@ -4,7 +4,7 @@ Instructions for AI coding agents working in this repository. Read this before m
 
 ## Project overview
 
-The Bogart Labs marketing site. A static, multi-page website — plain HTML/CSS/JS, no framework, no build step, no `package.json`. Each page is a real `.html` file with its own `<head>`; there is no client-side router and no templating engine. Shared code lives in `css/style.css` (one stylesheet, design tokens as CSS custom properties) and `js/` (a small canvas engine plus page-specific inline `<script>` blocks).
+The PROBNAYA marketing site. A static, multi-page website — plain HTML/CSS/JS, no framework, no build step, no `package.json`. Each page is a real `.html` file with its own `<head>`; there is no client-side router and no templating engine. Shared code lives in `css/style.css` (one stylesheet, design tokens as CSS custom properties) and `js/` (a small canvas engine plus page-specific inline `<script>` blocks).
 
 Keep it this way. Do not introduce a frontend framework, bundler, or package manager unless the task explicitly calls for it — dependency-light and readable-by-inspection is a deliberate constraint, not an oversight.
 

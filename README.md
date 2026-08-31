@@ -1,10 +1,10 @@
-BOGART LABS /\
+PROBNAYA /\
 
 Machines. Intelligence. Instruments.
 
-# Bogart Labs
+# PROBNAYA
 
-The public website of Bogart Labs, an independent computational laboratory.
+The public website of PROBNAYA, an independent computational laboratory.
 
 The site presents the laboratory, its instruments, and its investigations. It is
 a static multi-page website. Live canvas apparatuses render computational
