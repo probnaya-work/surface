@@ -208,7 +208,7 @@ p { text-wrap: pretty; }
 }
 .wordmark-dash {
   display: inline-block; width: 0.34em; height: 0.062em; background: var(--ink);
-  vertical-align: 0.26em; margin-left: 0.04em;
+  vertical-align: 0.312em; margin-left: 0.04em;
 }
 .hero-tagline { display: flex; align-items: baseline; gap: 22px; flex-wrap: wrap; }
 .hero-tagline span.word { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; }
