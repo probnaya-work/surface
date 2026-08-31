@@ -1,6 +1,6 @@
-PROBNAYA /\
+PROBNAYA
 
-Machines. Intelligence. Instruments.
+Independent Computational Laboratory
 
 # PROBNAYA
 
