@@ -1,4 +1,4 @@
-// Bogart Labs — the apparatus.
+// PROBNAYA — the apparatus.
 //
 // Every figure on this site is a small simulation advanced on a shared
 // requestAnimationFrame loop and drawn straight to a <canvas> each tick.
@@ -270,7 +270,7 @@ const Apparatus = (() => {
           ctx.strokeStyle = glow[i] > 0.05 ? BLUE : INK;
           ctx.beginPath(); ctx.moveTo(ex, base); ctx.lineTo(ex, base - hgt); ctx.stroke();
           if (r.withheld) { ctx.fillStyle = INK; ctx.fillRect(ex - 3, base - hgt - 7, 6, 6); }
-          if (glow[i] > 0.35) { ctx.fillStyle = BLUE; ctx.fillText(r.id, Math.min(ex + 7, w - 46), base - hgt - 10); }
+          if (glow[i] > 0.35) { ctx.fillStyle = BLUE; ctx.fillText(r.id, Math.min(ex + 7, w - 64), base - hgt - 10); }
         });
         const cx = Math.round(cur * w) + 0.5;
         ctx.strokeStyle = "rgba(34,51,204,0.55)";

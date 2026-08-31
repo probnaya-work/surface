@@ -1,4 +1,4 @@
-/* Bogart Labs — shared stylesheet
+/* PROBNAYA — shared stylesheet
    Tokens and layout are ported directly from the approved design
    ("Bogart Labs VII - Plotter.dc.html" / "...VII - Mobile.dc.html"). */
 
@@ -207,6 +207,10 @@ p { text-wrap: pretty; }
 .hero-title h1 {
   margin: 0; font-weight: 600; font-size: clamp(58px, 9vw, 138px); line-height: 0.92; letter-spacing: -0.03em;
 }
+.wordmark-dash {
+  display: inline-block; width: 0.34em; height: 0.062em; background: var(--ink);
+  vertical-align: 0.26em; margin-left: 0.04em;
+}
 .hero-tagline { display: flex; align-items: baseline; gap: 22px; flex-wrap: wrap; }
 .hero-tagline span.word { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; }
 .hero-tagline span.dot { color: var(--faint); }
@@ -258,6 +262,11 @@ p { text-wrap: pretty; }
   font-weight: 500; font-size: clamp(56px, 8vw, 104px); letter-spacing: -0.03em; line-height: 0.9;
 }
 .split-title .status { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; }
+
+.attr-line {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--faint);
+}
+.attr-line--detail { display: block; padding-top: 12px; }
 
 .lede { margin: 0; font-weight: 300; font-size: 21px; line-height: 1.4; color: var(--ink); text-wrap: pretty; }
 .body-copy { margin: 0; font-weight: 300; font-size: 16px; line-height: 1.6; color: var(--body-text); text-wrap: pretty; }
