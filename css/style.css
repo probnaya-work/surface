@@ -1,6 +1,5 @@
 /* PROBNAYA — shared stylesheet
-   Tokens and layout are ported directly from the approved design
-   ("Bogart Labs VII - Plotter.dc.html" / "...VII - Mobile.dc.html"). */
+   Tokens and layout are ported directly from the approved design. */
 
 :root {
   --ink: #16181C;
@@ -402,9 +401,8 @@ p { text-wrap: pretty; }
 .intake-receipt .note { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--faint); }
 
 /* ============================================================
-   MOBILE — structural changes described by
-   "Bogart Labs VII - Mobile.dc.html": simplified top bar,
-   fixed bottom tab bar, stacked single-column content.
+   MOBILE — structural changes from the approved design: simplified
+   top bar, fixed bottom tab bar, stacked single-column content.
    ============================================================ */
 
 @media (max-width: 760px) {
