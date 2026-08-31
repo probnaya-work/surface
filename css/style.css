@@ -371,6 +371,7 @@ p { text-wrap: pretty; }
 .seismo-caption span:last-child { color: var(--faint); }
 
 .intake-form { display: flex; flex-direction: column; border: 1px solid var(--ink); }
+.intake-form[hidden] { display: none; }
 .intake-form input, .intake-form textarea {
   border: none; background: transparent; padding: 16px 18px;
   font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--ink);
@@ -386,6 +387,7 @@ p { text-wrap: pretty; }
 .intake-form button:hover { background: var(--blue); }
 
 .intake-receipt { border: 1px solid var(--blue); padding: 30px; display: flex; flex-direction: column; gap: 10px; }
+.intake-receipt[hidden] { display: none; }
 .intake-receipt .stamp { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--blue); }
 .intake-receipt .line { font-weight: 300; font-size: 22px; }
 .intake-receipt .note { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--faint); }
