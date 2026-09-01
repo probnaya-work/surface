@@ -1,11 +1,5 @@
 'use strict';
 
-// Mock fetch globally before loading the handler so no real Resend calls are made.
-let mockFetch;
-global.fetch = (...args) => mockFetch(...args);
-
-process.env.RESEND_API_KEY = 'test_key';
-
 const handler = require('./intake.js');
 const { validate } = handler;
 
@@ -13,7 +7,29 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
 // ---------------------------------------------------------------------------
-// Helpers
+// SMTP mock helpers.
+// No real SMTP calls are made. nodemailer is never required during tests
+// because _setMailer replaces it before any handler call reaches require().
+// ---------------------------------------------------------------------------
+
+function makeMailer(sendMail) {
+  return { createTransport: () => ({ sendMail }) };
+}
+
+function okMailer() {
+  handler._setMailer(makeMailer(async () => {}));
+}
+
+function failMailer() {
+  handler._setMailer(makeMailer(async () => { throw new Error('SMTP send failed'); }));
+}
+
+function throwMailer() {
+  handler._setMailer(makeMailer(async () => { throw new Error('connect ECONNREFUSED'); }));
+}
+
+// ---------------------------------------------------------------------------
+// Request / response helpers.
 // ---------------------------------------------------------------------------
 
 function mockRes() {
@@ -28,17 +44,12 @@ function mockReq(overrides) {
   return { method: 'POST', body: {}, ...overrides };
 }
 
-function okFetch() {
-  mockFetch = async () => ({ ok: true, json: async () => ({}) });
-}
-
-function failFetch() {
-  mockFetch = async () => ({ ok: false, status: 500 });
-}
-
-function throwFetch() {
-  mockFetch = async () => { throw new Error('network error'); };
-}
+// ---------------------------------------------------------------------------
+// Set required env vars before handler tests run.
+// ---------------------------------------------------------------------------
+process.env.SMTP_USER = 'test_user@workspace.example';
+process.env.SMTP_PASS = 'test_pass';
+process.env.SMTP_FROM = 'mail@probnaya.work';
 
 // ---------------------------------------------------------------------------
 // validate()
@@ -123,19 +134,19 @@ test('handler: non-POST returns 405', async () => {
   assert.equal(res._ended, true);
 });
 
-test('handler: honeypot filled returns 200 without calling Resend', async () => {
-  let fetchCalled = false;
-  mockFetch = async () => { fetchCalled = true; return { ok: true }; };
+test('handler: honeypot filled returns 200 without sending mail', async () => {
+  let sendCalled = false;
+  handler._setMailer(makeMailer(async () => { sendCalled = true; }));
   const req = mockReq({ body: { from: 'Bot', body: 'Spam.', channel: 'A', __hp: 'gotcha' } });
   const res = mockRes();
   await handler(req, res);
   assert.equal(res._status, 200);
   assert.equal(res._body.ok, true);
-  assert.equal(fetchCalled, false);
+  assert.equal(sendCalled, false);
 });
 
 test('handler: missing required field returns 400', async () => {
-  okFetch();
+  okMailer();
   const req = mockReq({ body: { from: '', body: 'Problem.', channel: 'A' } });
   const res = mockRes();
   await handler(req, res);
@@ -144,26 +155,32 @@ test('handler: missing required field returns 400', async () => {
 });
 
 test('handler: body too long returns 400', async () => {
-  okFetch();
+  okMailer();
   const req = mockReq({ body: { from: 'Ada', body: 'X'.repeat(4001), channel: 'A' } });
   const res = mockRes();
   await handler(req, res);
   assert.equal(res._status, 400);
 });
 
-test('handler: missing API key returns 500', async () => {
-  const saved = process.env.RESEND_API_KEY;
-  delete process.env.RESEND_API_KEY;
+test('handler: missing SMTP credentials returns 500', async () => {
+  const savedUser = process.env.SMTP_USER;
+  const savedPass = process.env.SMTP_PASS;
+  const savedFrom = process.env.SMTP_FROM;
+  delete process.env.SMTP_USER;
+  delete process.env.SMTP_PASS;
+  delete process.env.SMTP_FROM;
   const req = mockReq({ body: { from: 'Ada', body: 'Problem.', channel: 'A' } });
   const res = mockRes();
   await handler(req, res);
   assert.equal(res._status, 500);
   assert.equal(res._body.error, 'Submission unavailable');
-  process.env.RESEND_API_KEY = saved;
+  process.env.SMTP_USER = savedUser;
+  process.env.SMTP_PASS = savedPass;
+  process.env.SMTP_FROM = savedFrom;
 });
 
-test('handler: Resend returns non-OK returns 500', async () => {
-  failFetch();
+test('handler: SMTP send failure returns 500', async () => {
+  failMailer();
   const req = mockReq({ body: { from: 'Ada', body: 'Problem.', channel: 'A' } });
   const res = mockRes();
   await handler(req, res);
@@ -171,8 +188,8 @@ test('handler: Resend returns non-OK returns 500', async () => {
   assert.equal(res._body.error, 'Submission unavailable');
 });
 
-test('handler: Resend throws returns 500', async () => {
-  throwFetch();
+test('handler: SMTP network error returns 500', async () => {
+  throwMailer();
   const req = mockReq({ body: { from: 'Ada', body: 'Problem.', channel: 'A' } });
   const res = mockRes();
   await handler(req, res);
@@ -181,7 +198,7 @@ test('handler: Resend throws returns 500', async () => {
 });
 
 test('handler: successful submission returns 200 with id', async () => {
-  okFetch();
+  okMailer();
   const req = mockReq({ body: { from: 'Ada Lovelace', body: 'A computing problem.', channel: 'A' } });
   const res = mockRes();
   await handler(req, res);
@@ -192,7 +209,7 @@ test('handler: successful submission returns 200 with id', async () => {
 });
 
 test('handler: successful channel B submission', async () => {
-  okFetch();
+  okMailer();
   const req = mockReq({ body: { from: 'Ada', body: 'A proposal.', channel: 'B' } });
   const res = mockRes();
   await handler(req, res);
@@ -201,12 +218,13 @@ test('handler: successful channel B submission', async () => {
 });
 
 test('handler: error response does not expose provider detail', async () => {
-  failFetch();
+  failMailer();
   const req = mockReq({ body: { from: 'Ada', body: 'Problem.', channel: 'A' } });
   const res = mockRes();
   await handler(req, res);
-  const errStr = JSON.stringify(res._body);
-  assert.ok(!errStr.includes('resend'), 'provider name must not leak');
-  assert.ok(!errStr.includes('RESEND'), 'provider name must not leak');
-  assert.ok(!errStr.includes('api.resend'), 'provider URL must not leak');
+  const errStr = JSON.stringify(res._body).toLowerCase();
+  assert.ok(!errStr.includes('smtp'),       'SMTP must not leak');
+  assert.ok(!errStr.includes('gmail'),      'Gmail must not leak');
+  assert.ok(!errStr.includes('nodemailer'), 'nodemailer must not leak');
+  assert.ok(!errStr.includes('google'),     'Google must not leak');
 });

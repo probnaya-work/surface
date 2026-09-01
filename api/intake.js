@@ -1,6 +1,8 @@
 'use strict';
 
-const RESEND_API = 'https://api.resend.com/emails';
+// Injected by tests to avoid loading nodemailer or making real SMTP calls.
+let _testMailer = null;
+
 const RECIPIENT = 'mail@probnaya.work';
 const MAX_FROM = 200;
 const MAX_BODY = 4000;
@@ -28,13 +30,14 @@ module.exports = async function handler(req, res) {
   const { from, body, channel } = result;
   const id = 'Q-' + randomId();
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const smtpFrom = process.env.SMTP_FROM;
+
+  if (!smtpUser || !smtpPass || !smtpFrom) {
     res.status(500).json({ error: 'Submission unavailable' });
     return;
   }
-
-  const fromAddress = process.env.RESEND_FROM || 'PROBNAYA Intake <intake@probnaya.work>';
 
   const subject = `INTAKE / CHANNEL ${channel} — ${from}`;
   const text = [
@@ -49,19 +52,14 @@ module.exports = async function handler(req, res) {
   ].join('\n');
 
   try {
-    const r = await fetch(RESEND_API, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ from: fromAddress, to: [RECIPIENT], subject, text }),
+    const mailer = _testMailer || require('nodemailer');
+    const transporter = mailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: { user: smtpUser, pass: smtpPass },
     });
-
-    if (!r.ok) {
-      res.status(500).json({ error: 'Submission unavailable' });
-      return;
-    }
+    await transporter.sendMail({ from: smtpFrom, to: RECIPIENT, subject, text });
   } catch {
     res.status(500).json({ error: 'Submission unavailable' });
     return;
@@ -69,6 +67,10 @@ module.exports = async function handler(req, res) {
 
   res.status(200).json({ ok: true, id });
 };
+
+// Named exports for tests.
+module.exports._setMailer = (mock) => { _testMailer = mock; };
+module.exports.validate = validate;
 
 function validate(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
@@ -91,7 +93,7 @@ function validate(data) {
     ok: true,
     // Strip CR/LF from header-interpolated field (subject line injection defence).
     from: from.replace(/[\r\n]/g, ' '),
-    // Normalise line endings in body; CR alone is not meaningful here.
+    // Normalise line endings in body.
     body: body.replace(/\r\n/g, '\n').replace(/\r/g, '\n'),
     channel,
   };
@@ -100,6 +102,3 @@ function validate(data) {
 function randomId() {
   return Math.random().toString(36).slice(2, 6).toUpperCase();
 }
-
-// Named export for tests.
-module.exports.validate = validate;
