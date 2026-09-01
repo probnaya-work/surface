@@ -84,10 +84,18 @@
           <span class="note">NO FURTHER CONFIRMATION WILL BE SENT.</span>
         </div>
 
+        <div id="intake-error" class="intake-error" hidden>
+          <span>SUBMISSION FAILED. TRY AGAIN.</span>
+        </div>
+
         <form id="intake-form" class="intake-form">
           <input id="f-from" type="text" placeholder="WHO YOU ARE" autocomplete="name">
           <textarea id="f-body-a" rows="6" placeholder="THE PROBLEM"></textarea>
           <textarea id="f-body-b" rows="6" placeholder="WHAT WE SHOULD MAKE OR INVESTIGATE TOGETHER" hidden></textarea>
+          <!-- Honeypot: positioned off-screen, not visible to humans. -->
+          <div style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" aria-hidden="true">
+            <input id="f-hp" type="text" name="website" tabindex="-1" autocomplete="off">
+          </div>
           <button type="submit">SUBMIT ON CHANNEL <span id="submit-chan">A</span> →</button>
         </form>
       </div>
@@ -97,6 +105,7 @@
 
 <footer class="site-footer">
   <a href="lab.html">PROBNAYA · WHAT THIS LABORATORY IS →</a>
+  <a href="mailto:mail@probnaya.work">mail@probnaya.work</a>
   <span class="stamp" data-stamp></span>
 </footer>
 
@@ -124,6 +133,9 @@
   const submitChan = document.getElementById('submit-chan');
   const form = document.getElementById('intake-form');
   const receipt = document.getElementById('receipt');
+  const errorEl = document.getElementById('intake-error');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  let pending = false;
 
   function renderChannel() {
     const isA = channel === 'A';
@@ -138,8 +150,18 @@
     chanLabel.textContent = channel;
     submitChan.textContent = channel;
   }
-  chA.addEventListener('click', () => { channel = 'A'; sent = false; receipt.hidden = true; form.hidden = false; renderChannel(); });
-  chB.addEventListener('click', () => { channel = 'B'; sent = false; receipt.hidden = true; form.hidden = false; renderChannel(); });
+  chA.addEventListener('click', () => {
+    if (pending) return;
+    channel = 'A'; sent = false;
+    receipt.hidden = true; form.hidden = false; errorEl.hidden = true;
+    renderChannel();
+  });
+  chB.addEventListener('click', () => {
+    if (pending) return;
+    channel = 'B'; sent = false;
+    receipt.hidden = true; form.hidden = false; errorEl.hidden = true;
+    renderChannel();
+  });
   renderChannel();
 
   const bump = () => { energy = Math.min(1.15, energy + 0.5); };
@@ -147,13 +169,40 @@
   bodyA.addEventListener('input', bump);
   bodyB.addEventListener('input', bump);
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    sent = true;
-    form.hidden = true;
-    document.getElementById('receipt-id').textContent = 'Q-' + String(100 + Math.floor(Date.now() / 1000) % 800);
-    document.getElementById('receipt-chan').textContent = channel;
-    receipt.hidden = false;
+    if (pending) return;
+    pending = true;
+    submitBtn.disabled = true;
+    errorEl.hidden = true;
+    energy = Math.min(1.15, energy + 0.5);
+
+    const body = channel === 'A' ? bodyA.value : bodyB.value;
+    const payload = {
+      from: document.getElementById('f-from').value,
+      body,
+      channel,
+      __hp: document.getElementById('f-hp').value,
+    };
+
+    try {
+      const r = await fetch('/api/intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await r.json();
+      if (!r.ok || !data.ok) throw new Error('non-ok');
+      sent = true;
+      form.hidden = true;
+      document.getElementById('receipt-id').textContent = data.id;
+      document.getElementById('receipt-chan').textContent = channel;
+      receipt.hidden = false;
+    } catch {
+      errorEl.hidden = false;
+      submitBtn.disabled = false;
+      pending = false;
+    }
   });
 
   Apparatus.mount(document.getElementById('cv-seismo'), (S) => Apparatus.buildSeismo(S, {

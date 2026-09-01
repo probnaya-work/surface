@@ -393,6 +393,10 @@ p { text-wrap: pretty; }
   cursor: pointer; text-align: left;
 }
 .intake-form button:hover { background: var(--blue); }
+.intake-form button:disabled { opacity: 0.5; cursor: default; background: transparent; }
+
+.intake-error { border: 1px solid var(--ink); padding: 14px 18px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--mid); }
+.intake-error[hidden] { display: none; }
 
 .intake-receipt { border: 1px solid var(--blue); padding: 30px; display: flex; flex-direction: column; gap: 10px; }
 .intake-receipt[hidden] { display: none; }
