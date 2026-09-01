@@ -1,4 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect x="4" y="3" width="20" height="26" fill="none" stroke="#16181C" stroke-width="2"/>
-  <rect x="14" y="14" width="17" height="3" fill="#16181C"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <style>
+    .bg { fill: #EFF0F2; }
+    .frame { fill: none; stroke: #16181C; stroke-width: 1; }
+    .bar { fill: #16181C; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #16181C; }
+      .frame { stroke: #EFF0F2; }
+      .bar { fill: #EFF0F2; }
+    }
+  </style>
+  <rect class="bg" width="16" height="16"/>
+  <rect class="frame" x="2.5" y="1.5" width="8" height="13"/>
+  <rect class="bar" x="6" y="7" width="9" height="2"/>
 </svg>
