@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Laboratory — PROBNAYA</title>
-<link rel="icon" type="image/svg+xml" href="assets/probnaya-mark.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
-<link rel="apple-touch-icon" href="assets/favicon-180.png">
+<link rel="icon" type="image/svg+xml" href="../assets/probnaya-mark.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/favicon-16.png">
+<link rel="apple-touch-icon" href="../assets/favicon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
 
@@ -75,6 +75,14 @@
             <span class="chan">CHANNEL A →</span>
           </a>
         </div>
+
+        <div class="working-with">
+          <span class="label">DOCUMENTS</span>
+          <a class="row" href="/lab/001">
+            <span class="name">Laboratory Statement 001</span>
+            <span class="chan" style="color:var(--blue)">IN FORCE →</span>
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -92,8 +100,8 @@
   <a href="/intake"><span>SUBMIT</span></a>
 </nav>
 
-<script src="js/apparatus.js"></script>
-<script src="js/site.js"></script>
+<script src="../js/apparatus.js"></script>
+<script src="../js/site.js"></script>
 <script>
   Apparatus.mount(document.getElementById('cv-lab'), (S) => Apparatus.buildHarmonograph(S));
 </script>

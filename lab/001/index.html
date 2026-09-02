@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratory Statement 001 — PROBNAYA</title>
+<link rel="icon" type="image/svg+xml" href="../../assets/probnaya-mark.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="../../assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../../assets/favicon-16.png">
+<link rel="apple-touch-icon" href="../../assets/favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/style.css">
+<style>
+/* ---- FIG. 7 field ---- */
+.lab-001-field {
+  position: relative;
+  margin-top: var(--header-h);
+  height: calc(100vh - var(--header-h));
+  min-height: 560px;
+  overflow: hidden;
+  cursor: crosshair;
+  background: var(--paper);
+}
+.lab-001-field canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+}
+.lab-001-ruler-top {
+  position: absolute; top: 0; left: 0; right: 0; height: 12px;
+  background: repeating-linear-gradient(90deg, var(--faint-line) 0px, var(--faint-line) 1px, transparent 1px, transparent 12px);
+  border-bottom: 1px solid var(--border);
+  pointer-events: none;
+}
+.lab-001-ruler-left {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 12px;
+  background: repeating-linear-gradient(180deg, var(--faint-line) 0px, var(--faint-line) 1px, transparent 1px, transparent 12px);
+  border-right: 1px solid var(--border);
+  pointer-events: none;
+}
+.lab-001-ch-h, .lab-001-ch-v {
+  position: absolute; pointer-events: none; will-change: transform;
+  background: rgba(34, 51, 204, 0.45); opacity: 0;
+}
+.lab-001-ch-h { left: 0; right: 0; top: 0; height: 1px; }
+.lab-001-ch-v { top: 0; bottom: 0; left: 0; width: 1px; }
+.lab-001-readout {
+  position: absolute; top: 0; left: 0; pointer-events: none; will-change: transform;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+  color: var(--blue); white-space: pre; opacity: 0;
+}
+.lab-001-pen {
+  position: absolute; top: -4px; left: -4px; width: 7px; height: 7px;
+  border: 1px solid var(--blue); background: var(--paper);
+  pointer-events: none; will-change: transform;
+}
+
+/* ---- Anchors ---- */
+.lab-001-anchors {
+  position: absolute; top: 26px; left: 0; right: 24px; bottom: 236px;
+  pointer-events: none;
+}
+.lab-001-anchor {
+  position: absolute;
+  display: flex; flex-direction: column; gap: 6px;
+  color: var(--faint); pointer-events: auto;
+}
+.lab-001-anchor span:first-child {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em;
+}
+.lab-001-anchor span:last-child {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; opacity: 0.7;
+}
+
+/* ---- Desktop hero title (bottom-left) ---- */
+.lab-001-title {
+  position: absolute; left: 40px; bottom: 44px;
+  display: flex; flex-direction: column; gap: 18px; pointer-events: none;
+}
+.lab-001-title h1 {
+  margin: 0; font-weight: 500;
+  font-size: clamp(52px, 7.5vw, 112px);
+  line-height: 0.92; letter-spacing: -0.03em;
+}
+
+/* ---- Desktop hero note (bottom-right) ---- */
+.lab-001-note {
+  position: absolute; right: 28px; bottom: 44px;
+  text-align: right; display: flex; flex-direction: column; gap: 6px;
+  pointer-events: none;
+}
+.lab-001-note span {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+}
+.lab-001-note span:first-child { color: var(--mid); }
+.lab-001-note span:last-child { color: var(--faint); }
+
+/* ---- Mobile hero foot (hidden on desktop) ---- */
+.lab-001-mobile-foot { display: none; }
+
+/* ---- FIG. 8 canvas height ---- */
+.lab-001-fig8 { height: 212px; }
+
+/* ---- Metadata specs column width ---- */
+.lab-001-specs { grid-template-columns: 118px 1fr; }
+
+/* ---- Part section headers ---- */
+.lab-part-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: 1px solid var(--ink);
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em;
+}
+.lab-part-head span:last-child { letter-spacing: 0.16em; color: var(--faint); }
+.lab-part-head--i { padding: 76px 0 10px; }
+.lab-part-head--ii { padding: 64px 0 10px; }
+.lab-part-head--iii { padding: 64px 0 10px; }
+
+/* ---- Clause rows ---- */
+.lab-clause-row {
+  display: grid; grid-template-columns: 90px 1fr 130px; gap: 0 24px;
+}
+.lab-clause-num {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+  color: var(--faint); padding: 30px 0;
+  border-bottom: 1px solid var(--border);
+}
+.lab-clause-body {
+  padding: 26px 0 30px;
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 9px;
+}
+.lab-clause-tag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+  color: var(--faint); padding: 30px 0;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+.lab-clause-head {
+  font-weight: 300;
+  font-size: clamp(24px, 3.2vw, 36px);
+  line-height: 1.15; letter-spacing: -0.015em;
+}
+.lab-clause-note {
+  font-weight: 300; font-size: 15px; line-height: 1.6;
+  color: var(--body-text); max-width: 58ch;
+}
+
+/* ---- Closing note ---- */
+.lab-closing-note {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 56px 0 0;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+  color: var(--faint);
+}
+
+/* ====== Mobile ====== */
+@media (max-width: 760px) {
+  .lab-001-field {
+    margin-top: 0;
+    height: 520px;
+    min-height: unset;
+    cursor: default;
+  }
+  .lab-001-ruler-top { display: none; }
+  .lab-001-anchors { top: 20px; right: 16px; bottom: 238px; }
+  .lab-001-anchor span:first-child { font-size: 9px; }
+  .lab-001-anchor span:last-child { font-size: 9px; }
+  .lab-001-anchor-i { left: 16%; top: 8%; }
+  .lab-001-anchor-ii { left: 52%; top: 46%; }
+  .lab-001-anchor-iii { left: 24%; top: 84%; }
+
+  .lab-001-title { display: none; }
+  .lab-001-note { display: none; }
+
+  .lab-001-mobile-foot {
+    display: flex;
+    position: absolute; left: 22px; right: 18px; bottom: 26px;
+    flex-direction: column; gap: 14px; pointer-events: none;
+  }
+  .lab-001-mobile-foot h1 {
+    margin: 0; font-weight: 500; font-size: 52px;
+    line-height: 0.92; letter-spacing: -0.03em;
+  }
+  .lab-001-mobile-tagline {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
+  }
+  .lab-001-fig-note {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; color: var(--faint);
+  }
+
+  .lab-001-fig8 { height: 168px; }
+  .lab-001-specs { grid-template-columns: 92px 1fr; font-size: 9px; letter-spacing: 0.1em; }
+
+  .lab-part-head { font-size: 9px; }
+  .lab-part-head--i { padding: 44px 0 9px; }
+  .lab-part-head--ii { padding: 36px 0 9px; }
+  .lab-part-head--iii { padding: 36px 0 9px; }
+
+  .lab-clause-row {
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 20px 0; border-bottom: 1px solid var(--border);
+  }
+  .lab-clause-num { padding: 0; border-bottom: none; font-size: 9px; }
+  .lab-clause-body { padding: 0; border-bottom: none; gap: 8px; }
+  .lab-clause-tag { display: none; }
+  .lab-clause-head { font-size: 26px; }
+  .lab-clause-note { font-size: 14px; }
+
+  .lab-closing-note { padding-top: 32px; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand-group">
+    <a class="brand-mark" href="/">
+      <svg viewBox="0 0 32 32" width="15" height="15" style="display:block;flex-shrink:0;overflow:visible;"><rect x="4" y="3" width="20" height="26" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="14" y="14" width="17" height="3" fill="currentColor"></rect></svg>
+      <span class="brand-name">PROBNAYA</span>
+    </a>
+    <a class="brand-tag" href="/lab">INDEPENDENT COMPUTATIONAL LABORATORY</a>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="/instruments"><span class="label">INSTRUMENTS</span></a>
+    <a class="nav-link" href="/investigations"><span class="label">INVESTIGATIONS</span></a>
+    <a class="nav-cta" href="/intake">SUBMIT A PROBLEM</a>
+  </div>
+</header>
+
+<header class="mobile-header">
+  <a class="brand-name" href="/">PROBNAYA</a>
+  <span class="crumb">LAB / 001</span>
+</header>
+
+<div class="main">
+
+  <div id="lab-field" class="lab-001-field">
+    <canvas id="cv-field"></canvas>
+    <div class="lab-001-ruler-top"></div>
+    <div class="lab-001-ruler-left"></div>
+    <div id="lab-ch-h" class="lab-001-ch-h"></div>
+    <div id="lab-ch-v" class="lab-001-ch-v"></div>
+    <div id="lab-readout" class="lab-001-readout"></div>
+    <div id="lab-pen" class="lab-001-pen"></div>
+
+    <div class="lab-001-anchors">
+      <a href="#part-i" data-anchor="0" class="lab-001-anchor lab-001-anchor-i" style="left:16%;top:14%;">
+        <span>I · APPARATUS</span>
+        <span>001–003</span>
+      </a>
+      <a href="#part-ii" data-anchor="1" class="lab-001-anchor lab-001-anchor-ii" style="left:62%;top:48%;">
+        <span>II · JUDGMENT</span>
+        <span>004–006</span>
+      </a>
+      <a href="#part-iii" data-anchor="2" class="lab-001-anchor lab-001-anchor-iii" style="left:38%;top:82%;">
+        <span>III · RECORD</span>
+        <span>007–009</span>
+      </a>
+    </div>
+
+    <div class="lab-001-title">
+      <h1>LABORATORY<br>STATEMENT</h1>
+      <div class="hero-tagline">
+        <span class="word">001</span>
+        <span class="dot">·</span>
+        <span class="word">REV. 01</span>
+        <span class="dot">·</span>
+        <span class="word" style="color:var(--blue)">IN FORCE</span>
+      </div>
+    </div>
+
+    <div class="lab-001-note">
+      <span>FIG. 7 — THE STATEMENT AS A FIELD · THREE PARTS AT FIXED COORDINATES</span>
+      <span>THE PEN INKS WHAT IT PASSES · THE DOCUMENT IS BELOW</span>
+    </div>
+
+    <div class="lab-001-mobile-foot">
+      <h1>LABORA<br>TORY</h1>
+      <div class="lab-001-mobile-tagline">
+        <span>STATEMENT 001</span>
+        <span style="color:var(--faint)">·</span>
+        <span>REV. 01</span>
+        <span style="color:var(--faint)">·</span>
+        <span style="color:var(--blue)">IN FORCE</span>
+      </div>
+      <span class="lab-001-fig-note">FIG. 7 · THE PEN INKS WHAT IT PASSES</span>
+    </div>
+  </div>
+
+  <div class="page">
+
+    <div class="eyebrow-row">
+      <span class="eyebrow">THE DOCUMENT</span>
+      <span class="eyebrow-meta">NINE CLAUSES · THREE PARTS</span>
+    </div>
+
+    <div class="split">
+      <div class="figure">
+        <div class="figure-plate lab-001-fig8">
+          <canvas id="cv-pass"></canvas>
+        </div>
+        <div class="figure-caption">
+          <span class="dim">FIG. 8 — SINGLE PASS OVER THE DOCUMENT · NINE SWEEPS</span>
+          <span class="note">AMPLITUDE DERIVED FROM CLAUSE TEXT</span>
+        </div>
+      </div>
+      <dl class="specs lab-001-specs">
+        <dt>DOCUMENT</dt><dd>LABORATORY STATEMENT 001</dd>
+        <dt>REVISION</dt><dd>REV. 01</dd>
+        <dt>ISSUED</dt><dd>2026.09</dd>
+        <dt>STATUS</dt><dd class="accent">IN FORCE</dd>
+        <dt>SUPERSEDES</dt><dd>NONE. FIRST ISSUE.</dd>
+        <dt>APPLIES TO</dt><dd>ALL WORK ISSUED UNDER PROB– FROM REV. 01</dd>
+        <dt>DRAFTED WITH</dt><dd>CLAUDE OPUS 5 · HIGH / GPT-5.6 SOL · INSTANT</dd>
+        <dt>DECIDED BY</dt><dd>PROBNAYA</dd>
+      </dl>
+    </div>
+
+    <div id="part-i" class="lab-part-head lab-part-head--i">
+      <span>I · APPARATUS</span>
+      <span>001–003</span>
+    </div>
+
+    <div class="lab-clause-row" data-row="0">
+      <span class="lab-clause-num">001</span>
+      <div class="lab-clause-body">
+        <span data-clause="0" class="lab-clause-head">WE BUILD TO INVESTIGATE.</span>
+        <span class="lab-clause-note">Not every investigation has to become a product.</span>
+      </div>
+      <span class="lab-clause-tag">APPARATUS</span>
+    </div>
+
+    <div class="lab-clause-row" data-row="1">
+      <span class="lab-clause-num">002</span>
+      <div class="lab-clause-body">
+        <span data-clause="1" class="lab-clause-head">USE THE MACHINE.</span>
+        <span class="lab-clause-note">Models, agents, code, generators, simulation, fabrication. No method is off limits, and using the machine is not the objective.</span>
+      </div>
+      <span class="lab-clause-tag">APPARATUS</span>
+    </div>
+
+    <div class="lab-clause-row" data-row="2">
+      <span class="lab-clause-num">003</span>
+      <div class="lab-clause-body">
+        <span data-clause="2" class="lab-clause-head">CURIOSITY IS SUFFICIENT CAUSE.</span>
+        <span class="lab-clause-note">Wanting to know what happens is a reason. Nothing here owes an account of its utility.</span>
+      </div>
+      <span class="lab-clause-tag">APPARATUS</span>
+    </div>
+
+    <div id="part-ii" class="lab-part-head lab-part-head--ii">
+      <span>II · JUDGMENT</span>
+      <span>004–006</span>
+    </div>
+
+    <div class="lab-clause-row" data-row="3">
+      <span class="lab-clause-num">004</span>
+      <div class="lab-clause-body">
+        <span data-clause="3" class="lab-clause-head">WHERE DID THE JUDGMENT LIVE?</span>
+        <span class="lab-clause-note">Not how much was machine-made. Intent, constraints, selection, rejection. Automate freely; keep judgment expensive.</span>
+      </div>
+      <span class="lab-clause-tag">JUDGMENT</span>
+    </div>
+
+    <div class="lab-clause-row" data-row="4">
+      <span class="lab-clause-num">005</span>
+      <div class="lab-clause-body">
+        <span data-clause="4" class="lab-clause-head">MANUAL EFFORT IS NOT EVIDENCE OF VALUE.<br>AUTOMATION IS NOT EVIDENCE OF SOPHISTICATION.</span>
+      </div>
+      <span class="lab-clause-tag">JUDGMENT</span>
+    </div>
+
+    <div class="lab-clause-row" data-row="5">
+      <span class="lab-clause-num">006</span>
+      <div class="lab-clause-body">
+        <span data-clause="5" class="lab-clause-head">OWN THE RESULT.</span>
+        <span class="lab-clause-note">Automation does not transfer responsibility. Whatever produced it, the decision to issue it is ours.</span>
+      </div>
+      <span class="lab-clause-tag">JUDGMENT</span>
+    </div>
+
+    <div id="part-iii" class="lab-part-head lab-part-head--iii">
+      <span>III · RECORD</span>
+      <span>007–009</span>
+    </div>
+
+    <div class="lab-clause-row" data-row="6">
+      <span class="lab-clause-num">007</span>
+      <div class="lab-clause-body">
+        <span data-clause="6" class="lab-clause-head">SHOW THE APPARATUS.</span>
+        <span class="lab-clause-note">Where it changes how the work should be read: models, sources, seeds, transformations, interventions, versions. Not a badge, and not everything. What is withheld stays indexed.</span>
+      </div>
+      <span class="lab-clause-tag">RECORD</span>
+    </div>
+
+    <div class="lab-clause-row" data-row="7">
+      <span class="lab-clause-num">008</span>
+      <div class="lab-clause-body">
+        <span data-clause="7" class="lab-clause-head">A DEMONSTRATION IS NOT A FINDING.</span>
+        <span class="lab-clause-note">That it works is not yet an answer.</span>
+      </div>
+      <span class="lab-clause-tag">RECORD</span>
+    </div>
+
+    <div class="lab-clause-row" data-row="8">
+      <span class="lab-clause-num">009</span>
+      <div class="lab-clause-body">
+        <span data-clause="8" class="lab-clause-head">SOME EXPERIMENTS BECOME PRODUCTS. SOME BECOME INFRASTRUCTURE. SOME BECOME OBJECTS. SOME ONLY ANSWER A QUESTION.</span>
+      </div>
+      <span class="lab-clause-tag">RECORD</span>
+    </div>
+
+    <div class="lab-closing-note">
+      <span>A LATER REVISION WILL NOT DELETE THIS ONE.</span>
+    </div>
+
+  </div>
+</div>
+
+<footer class="site-footer">
+  <a href="/lab">PROBNAYA · WHAT THIS LABORATORY IS →</a>
+  <a href="mailto:mail@probnaya.work">mail@probnaya.work</a>
+  <span class="stamp" data-stamp></span>
+</footer>
+
+<nav class="bottom-nav has-tabs">
+  <a href="/instruments"><span>INSTRUMENTS</span></a>
+  <a href="/investigations"><span>INVESTIGATIONS</span></a>
+  <a href="/intake"><span>SUBMIT</span></a>
+</nav>
+
+<script src="../../js/apparatus.js"></script>
+<script src="../../js/site.js"></script>
+<script>
+(function() {
+  'use strict';
+  const INK = '#16181C', PAPER = '#EFF0F2', BLUE = '#2233CC', FAINT = '#C7CAD0';
+  let hover = -1;
+  let lastT = null;
+  const plates = [];
+
+  function loop(now) {
+    requestAnimationFrame(loop);
+    if (lastT === null) lastT = now;
+    const dt = Math.min((now - lastT) / 1000, 0.05);
+    lastT = now;
+    const norm = dt * 60;
+    for (const p of plates) { try { p(dt, norm); } catch (e) {} }
+  }
+
+  function makeSurface(canvas) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const ctx = canvas.getContext('2d');
+    const S = { ctx, canvas, dpr, w: 0, h: 0 };
+    S.fit = () => {
+      if (!canvas.clientWidth || !canvas.clientHeight) return false;
+      S.w = canvas.clientWidth; S.h = canvas.clientHeight;
+      canvas.width = Math.round(S.w * dpr); canvas.height = Math.round(S.h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.lineWidth = 1; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      if (S.onFit) S.onFit();
+      return true;
+    };
+    new ResizeObserver(() => S.fit()).observe(canvas);
+    return S;
+  }
+
+  // FIG. 7 — the statement as a field
+  (function mountField() {
+    const host = document.getElementById('lab-field');
+    const canvas = document.getElementById('cv-field');
+    if (!host || !canvas) return;
+    const pen = document.getElementById('lab-pen');
+    const chH = document.getElementById('lab-ch-h');
+    const chV = document.getElementById('lab-ch-v');
+    const readout = document.getElementById('lab-readout');
+    const anchors = Array.from(host.querySelectorAll('[data-anchor]'));
+    const inked = anchors.map(() => 0);
+    const S = makeSurface(canvas);
+    let t = Math.random() * 900, px = 0, py = 0;
+    let mx = null, my = null, near = 0, stepAcc = 0, fadeAcc = 0, booted = false;
+
+    host.addEventListener('pointermove', e => {
+      const r = host.getBoundingClientRect();
+      mx = e.clientX - r.left; my = e.clientY - r.top; near = 1;
+    });
+    host.addEventListener('pointerleave', () => { near = 0; });
+
+    const pos = tt => {
+      const cx = S.w * 0.52, cy = S.h * 0.44, a = Math.min(S.w, S.h) * 0.32;
+      return [
+        cx + a * Math.sin(tt * 0.31) * Math.cos(tt * 0.117) + a * 0.45 * Math.sin(tt * 0.73 + 1.3),
+        cy + a * 0.75 * Math.cos(tt * 0.27) * Math.sin(tt * 0.141 + 0.6) + a * 0.35 * Math.cos(tt * 0.61)
+      ];
+    };
+
+    plates.push((dt, norm) => {
+      if (!booted) {
+        if (!S.fit()) return;
+        px = S.w * 0.52; py = S.h * 0.42; booted = true;
+      }
+      const ctx = S.ctx;
+      fadeAcc += norm;
+      while (fadeAcc >= 3) {
+        fadeAcc -= 3;
+        ctx.fillStyle = 'rgba(239,240,242,0.022)';
+        ctx.fillRect(0, 0, S.w, S.h);
+      }
+      stepAcc += 3 * norm;
+      while (stepAcc >= 1) {
+        stepAcc -= 1;
+        t += 0.012;
+        let [x, y] = pos(t);
+        if (mx !== null && near) {
+          const dx = x - mx, dy = y - my, d = Math.hypot(dx, dy) || 1;
+          const pull = Math.max(0, 1 - d / 420) * 60;
+          x += (dx / d) * pull; y += (dy / d) * pull;
+        }
+        ctx.strokeStyle = INK;
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(x, y); ctx.stroke();
+        px = x; py = y;
+      }
+
+      if (pen) pen.style.transform = `translate(${px}px, ${py}px)`;
+
+      const wide = S.w > 760;
+      if (chH) chH.style.opacity = (wide && near) ? '1' : '0';
+      if (chV) chV.style.opacity = (wide && near) ? '1' : '0';
+      if (readout) readout.style.opacity = (wide && near) ? '1' : '0';
+      if (wide && near) {
+        if (chH) chH.style.transform = `translateY(${py}px)`;
+        if (chV) chV.style.transform = `translateX(${px}px)`;
+        if (readout) {
+          const rx = px > S.w - 260 ? px - 250 : px + 14;
+          const ry = py > S.h - 60 ? py - 34 : py + 12;
+          readout.style.transform = `translate(${rx}px, ${ry}px)`;
+          readout.textContent = `LAB/001 REV.01  X ${String(Math.round(px)).padStart(4, '0')}  Y ${String(Math.round(py)).padStart(4, '0')}`;
+        }
+      }
+
+      const hostRect = host.getBoundingClientRect();
+      anchors.forEach((el, i) => {
+        const r = el.getBoundingClientRect();
+        const ax = r.left - hostRect.left + r.width / 2;
+        const ay = r.top - hostRect.top + r.height / 2;
+        const hit = Math.hypot(px - ax, py - ay) < 150;
+        inked[i] = hit ? 1 : Math.max(0, inked[i] - 0.004 * norm);
+        el.style.color = inked[i] > 0.5 ? INK : (inked[i] > 0.05 ? '#767B84' : '#A7ABB3');
+      });
+    });
+  })();
+
+  // FIG. 8 — single pass over the document, nine sweeps
+  (function mountPass() {
+    const canvas = document.getElementById('cv-pass');
+    if (!canvas) return;
+    const clauses = Array.from(document.querySelectorAll('[data-clause]'));
+    const sigs = clauses.map(el => {
+      const s = (el.textContent || '').trim();
+      let h = 2166136261;
+      for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+      const u = n => (((h >>> (n * 5)) & 31) / 31);
+      return { a: 0.35 + u(0) * 0.65, f1: 0.02 + u(1) * 0.05, f2: 0.09 + u(2) * 0.14, ph: u(3) * 6.28, len: s.length };
+    });
+    const maxLen = Math.max(...sigs.map(s => s.len), 1);
+
+    document.querySelectorAll('[data-row]').forEach(el => {
+      const i = +el.dataset.row;
+      el.addEventListener('mouseenter', () => {
+        hover = i;
+        document.querySelectorAll(`[data-row="${i}"]`).forEach(r => { r.style.background = '#E7E9EC'; });
+      });
+      el.addEventListener('mouseleave', () => {
+        hover = -1;
+        document.querySelectorAll(`[data-row="${i}"]`).forEach(r => { r.style.background = ''; });
+      });
+    });
+
+    const S = makeSurface(canvas);
+    let prog = 0, hold = 0, booted = false;
+
+    plates.push((dt, norm) => {
+      if (!booted) { if (!S.fit()) return; booted = true; }
+      const { ctx, w, h } = S;
+      const n = sigs.length || 1;
+      const pad = 14, rh = (h - pad * 2) / n;
+
+      if (hold > 0) { hold -= dt; if (hold <= 0) prog = 0; }
+      else { prog = Math.min(n, prog + dt / 1.15); if (prog >= n) hold = 3.2; }
+
+      ctx.fillStyle = PAPER; ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = FAINT;
+      ctx.beginPath(); ctx.moveTo(0.5, pad); ctx.lineTo(0.5, h - pad); ctx.stroke();
+
+      for (let i = 0; i < n; i++) {
+        const done = Math.max(0, Math.min(1, prog - i));
+        if (done <= 0) continue;
+        const s = sigs[i];
+        const y0 = pad + rh * (i + 0.5);
+        const amp = rh * 0.34 * s.a;
+        const span = (w - 24) * (s.len / maxLen) * 0.92 + 18;
+        const end = span * done;
+        ctx.strokeStyle = hover === i ? BLUE : INK;
+        ctx.beginPath();
+        for (let x = 0; x <= end; x += 2) {
+          const yy = y0 + Math.sin(x * s.f1 + s.ph) * amp * Math.sin(x * s.f2 + s.ph * 0.5);
+          x === 0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
+        }
+        ctx.stroke();
+        if (done >= 1) {
+          ctx.fillStyle = hover === i ? BLUE : FAINT;
+          ctx.fillRect(end, y0 - 1.5, 3, 3);
+        } else {
+          ctx.fillStyle = BLUE;
+          ctx.fillRect(end - 2, y0 - 2, 4, 4);
+        }
+      }
+    });
+  })();
+
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
