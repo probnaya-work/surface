@@ -51,10 +51,11 @@
 
         <div id="panel-a" class="channel-panel">
           <h2>Bring us an interesting problem.</h2>
-          <p>Commissioned investigations, experimental development, special technical projects. Interest is the only criterion we can state in advance.</p>
+          <p>Commissioned work begins with an unresolved question, not a predefined implementation brief. Interest is the only criterion we can state in advance.</p>
           <dl class="specs">
             <dt>ACCEPTED</dt><dd>QUESTIONS · APPARATUS · UNUSUAL SYSTEMS</dd>
             <dt>DECLINED</dt><dd>STAFFING</dd>
+            <dt>BASIS</dt><dd>COMMISSIONED · SAME REGISTER · UNDER STATEMENT 001</dd>
             <dt>REPLY</dt><dd>IF THE PROBLEM HOLDS</dd>
           </dl>
         </div>
@@ -89,9 +90,11 @@
         </div>
 
         <form id="intake-form" class="intake-form">
-          <input id="f-from" type="text" placeholder="WHO YOU ARE" autocomplete="name">
-          <textarea id="f-body-a" rows="6" placeholder="THE PROBLEM"></textarea>
+          <input id="f-from" type="text" placeholder="WHO YOU ARE" autocomplete="name" required>
+          <input id="f-reply" type="text" placeholder="WHERE TO REPLY" inputmode="email" autocomplete="email" required>
+          <textarea id="f-body-a" rows="6" placeholder="THE UNRESOLVED QUESTION" required></textarea>
           <textarea id="f-body-b" rows="6" placeholder="WHAT WE SHOULD MAKE OR INVESTIGATE TOGETHER" hidden></textarea>
+          <textarea id="f-tried" rows="3" placeholder="WHAT HAS ALREADY BEEN TRIED"></textarea>
           <!-- Honeypot: positioned off-screen, not visible to humans. -->
           <div style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" aria-hidden="true">
             <input id="f-hp" type="text" name="website" tabindex="-1" autocomplete="off">
@@ -129,6 +132,8 @@
   const panelB = document.getElementById('panel-b');
   const bodyA = document.getElementById('f-body-a');
   const bodyB = document.getElementById('f-body-b');
+  const replyEl = document.getElementById('f-reply');
+  const triedEl = document.getElementById('f-tried');
   const chanLabel = document.getElementById('chan-label');
   const submitChan = document.getElementById('submit-chan');
   const form = document.getElementById('intake-form');
@@ -147,6 +152,9 @@
     panelB.hidden = isA;
     bodyA.hidden = !isA;
     bodyB.hidden = isA;
+    bodyA.required = isA;
+    bodyB.required = !isA;
+    triedEl.hidden = !isA;
     chanLabel.textContent = channel;
     submitChan.textContent = channel;
   }
@@ -166,8 +174,10 @@
 
   const bump = () => { energy = Math.min(1.15, energy + 0.5); };
   document.getElementById('f-from').addEventListener('input', bump);
+  replyEl.addEventListener('input', bump);
   bodyA.addEventListener('input', bump);
   bodyB.addEventListener('input', bump);
+  triedEl.addEventListener('input', bump);
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -180,7 +190,9 @@
     const body = channel === 'A' ? bodyA.value : bodyB.value;
     const payload = {
       from: document.getElementById('f-from').value,
+      reply: replyEl.value,
       body,
+      tried: channel === 'A' ? triedEl.value : '',
       channel,
       __hp: document.getElementById('f-hp').value,
     };
