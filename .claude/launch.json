@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "probnaya-static",
-      "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "python3 -m http.server $PORT"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--env-file-if-exists=.env", ".claude/dev-server.js"],
       "autoPort": true,
       "port": 4173
     }
