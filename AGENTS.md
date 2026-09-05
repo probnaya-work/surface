@@ -4,7 +4,7 @@ Instructions for AI coding agents working in this repository. Read this before m
 
 ## Project overview
 
-The PROBNAYA marketing site. A static, multi-page website — plain HTML/CSS/JS, no framework, no build step, no `package.json`. Each page is a real `.html` file with its own `<head>`; there is no client-side router and no templating engine. Shared code lives in `css/style.css` (one stylesheet, design tokens as CSS custom properties) and `js/` (a small canvas engine plus page-specific inline `<script>` blocks).
+The PROBNAYA marketing site. A static, multi-page website — plain HTML/CSS/JS, no framework and no build step. Each page is a real `.html` file with its own `<head>`; there is no client-side router and no templating engine. Shared code lives in `css/style.css` (one stylesheet, design tokens as CSS custom properties) and `js/` (a small canvas engine plus page-specific inline `<script>` blocks).
 
 Keep it this way. Do not introduce a frontend framework, bundler, or package manager unless the task explicitly calls for it — dependency-light and readable-by-inspection is a deliberate constraint, not an oversight.
 
@@ -32,9 +32,23 @@ The canvas figures on every page are live simulations, not decorative animations
 - Preserve the original cadence and alpha/speed constants when refactoring — the feel is meant to be restrained and mechanical (a plotter, not a screensaver). If a change makes a figure look smoother or more "animated," that's a regression, not an improvement.
 - There is one shared `requestAnimationFrame` loop with a watchdog (`js/apparatus.js`, `ensureLoop`) — don't start a second `rAF` loop per plate.
 
+## The intake handler (`api/intake.js`)
+
+A Vercel serverless function, separate from the static site. `package.json` exists for it alone; `nodemailer` is its only dependency, and nothing in the site pages uses it.
+
+Mail delivery uses Google Workspace SMTP with credentials supplied by the environment. Never hardcode or commit credentials. The sender address must remain the authenticated account or a verified alias on it.
+
 ## Testing / verification
 
-There is no automated test suite for the pages themselves. Before considering a visual or interaction change done:
+The intake handler has an executable test suite:
+
+```
+node --test api/intake.test.js
+```
+
+Name the file, not the directory. `node --test api/` also treats `api/intake.js` as a test candidate and reports a misleading failure.
+
+The pages themselves have no automated tests. Before considering a visual or interaction change done:
 
 1. Serve the site locally and check the page in-browser (both the change and anything it might affect).
 2. Check both breakpoints — desktop and the mobile layout below 760px (resize or use device emulation). The two are meant to be structurally different (bottom tab bar vs. top nav, hero-only mobile index screen), not just a scaled-down desktop.
