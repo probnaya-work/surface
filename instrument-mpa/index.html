@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="/instrument-mpa/">
+<title>PROBNAYA · MPA–01 · Machine Portrait Apparatus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/apparatus.css">
+</head>
+<body>
+<div class="page" id="page" data-phase="ready">
+
+  <header class="head">
+    <div class="head-in">
+      <div class="head-left">
+        <div class="head-mark">
+          <svg viewBox="0 0 32 32" width="15" height="15" aria-hidden="true"><rect x="4" y="3" width="20" height="26" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="14" y="14" width="17" height="3" fill="currentColor"></rect></svg>
+          <span>PROBNAYA</span>
+        </div>
+        <span class="m10 ls14 c-grey head-lab">INDEPENDENT COMPUTATIONAL LABORATORY</span>
+      </div>
+      <span class="m10 ls14 c-blue head-right" data-t="headRight">MPA–01 · OPERATIONAL</span>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <a class="crumb" href="/instruments">← INSTRUMENTS</a>
+
+    <div class="title-row">
+      <span class="title">MPA–01</span>
+      <span class="m10 ls16 c-grey">PROB–MPA–01 · MACHINE PORTRAIT APPARATUS</span>
+    </div>
+
+    <div class="intro">
+      <p class="lede">The apparatus reads one photograph of a human subject on a 32 × 32 grid, cuts the 1024 readings into five fixed tonal bands, and draws each band as a mark. The output is a machine portrait: a deterministic derivative of a photograph, not a picture of a person.</p>
+      <p class="prose">Two properties are set by the operator: which derivation reads the specimen, and which field it is drawn on. Nothing else is adjustable. The photograph is what is derived, not the person, so a second photograph of the same subject will not return the same portrait.</p>
+    </div>
+
+    <div class="strip" id="preRun">
+      <div class="cell"><span class="k">STATUS</span><span class="v c-blue">OPERATIONAL</span></div>
+      <div class="cell"><span class="k">INPUT</span><span class="v">01 PHOTOGRAPH</span></div>
+      <div class="cell"><span class="k">OUTPUT</span><span class="v">01 MACHINE PORTRAIT</span></div>
+      <div class="cell"><span class="k">ISSUANCE</span><span class="v">EUR 5.00</span></div>
+    </div>
+
+    <!-- 01 · READY -->
+    <section class="two screen" data-screen="ready">
+      <div class="fig">
+        <div class="frame stage" id="stage" role="button" tabindex="0" aria-label="Place one photograph on the stage">
+          <div class="stage-grid"></div>
+          <div class="tick tl-h"></div><div class="tick tl-v"></div>
+          <div class="tick tr-h"></div><div class="tick tr-v"></div>
+          <div class="tick bl-h"></div><div class="tick bl-v"></div>
+          <div class="tick br-h"></div><div class="tick br-v"></div>
+          <div class="stage-copy">
+            <span class="l1">PLACE ONE PHOTOGRAPH ON THE STAGE</span>
+            <span class="l2">THE STAGE IS EMPTY. DROP A FILE ONTO IT, OR CLICK TO SELECT ONE.</span>
+            <span class="l3">SELECT PHOTOGRAPH</span>
+          </div>
+          <input type="file" accept="image/*" id="file" hidden>
+        </div>
+        <div class="caption">
+          <span class="m10 ls14 c-grey">FIG. 1 — SPECIMEN STAGE · 32 × 32 READ GRID</span>
+          <span class="m10 ls14 c-faint" id="stageNote">NO SPECIMEN MOUNTED</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="m10 ls20 c-grey">ADMISSIBLE INPUT</span></div>
+        <div class="kv">
+          <span>SUBJECT</span><span>ONE HUMAN FACE</span>
+          <span>POSE</span><span>FRONTAL · FACE UNOBSTRUCTED</span>
+          <span>FILE</span><span>JPEG OR PNG · 512 PX MINIMUM</span>
+          <span>RETENTION</span><span>READ, DERIVED FROM, DISCARDED</span>
+        </div>
+        <p class="prose">The photograph is not edited, retouched or interpreted. It is measured. Anything the measurement does not capture does not reach the portrait.</p>
+        <div class="await">
+          <span class="m11 ls18 c-faint">AUTHORISE ISSUE</span>
+          <span class="m10 ls14 c-faint">AWAITING INPUT</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 · SUBJECT ACQUIRED · PRELIMINARY READING -->
+    <section class="screen" data-screen="acquired" hidden style="padding-top:56px;">
+      <div class="readings-head">
+        <div class="lines">
+          <span class="m10 ls20 c-blue">SUBJECT ACQUIRED · PRELIMINARY READING</span>
+          <span class="m10 ls14 c-grey" data-t="prelimLine">16 × 16 · REDUCED FROM THE 32 × 32 CLASSIFICATION</span>
+        </div>
+        <div class="field">
+          <span class="m10 ls16 c-faint">FIELD</span>
+          <div class="seg" role="group" aria-label="Field">
+            <button type="button" data-field="light" aria-pressed="true">LIGHT</button>
+            <button type="button" data-field="dark" aria-pressed="false">DARK</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="readings">
+        <div class="reading">
+          <div class="thumb">
+            <canvas id="specimen" width="512" height="512" aria-label="Registered read window"></canvas>
+            <div class="spec-grid"></div>
+          </div>
+          <div class="lab">
+            <span class="m10 ls16 c-ink">SPECIMEN</span>
+            <span class="sub">AS SUPPLIED · <span data-t="srcDims"></span></span>
+          </div>
+        </div>
+        <div class="reading pick" data-deriv="centric" role="button" tabindex="0" aria-pressed="true">
+          <div class="thumb"><canvas data-preview="centric"></canvas><div class="sel" hidden></div></div>
+          <div class="lab"><span class="name"><span class="dot"></span>CENTRIC</span><span class="sub">MASS AS AREA</span></div>
+        </div>
+        <div class="reading pick" data-deriv="skyline" role="button" tabindex="0" aria-pressed="false">
+          <div class="thumb"><canvas data-preview="skyline"></canvas><div class="sel" hidden></div></div>
+          <div class="lab"><span class="name"><span class="dot"></span>SKYLINE</span><span class="sub">MASS AS BANDS</span></div>
+        </div>
+        <div class="reading pick" data-deriv="raster" role="button" tabindex="0" aria-pressed="false">
+          <div class="thumb"><canvas data-preview="raster"></canvas><div class="sel" hidden></div></div>
+          <div class="lab"><span class="name"><span class="dot"></span>RASTER</span><span class="sub">MASS AS QUARTERS</span></div>
+        </div>
+      </div>
+
+      <div class="relation">
+        <span class="c-grey nowrap">PRELIMINARY READING · 3 OF 5 BANDS</span><span class="c-faint">16 × 16 · 2 × 2 BLOCKS OF THE ISSUED MATRIX · BANDS 0–1 / 2 / 3–4 MERGED</span>
+        <span class="c-ink nowrap">ISSUED OUTPUT · 5 OF 5 BANDS</span><span class="c-faint">32 × 32 · REGISTERED · 1024 PX · THE MATRIX ITSELF</span>
+        <span class="c-faint nowrap">ISSUANCE RESOLVES</span><span class="c-faint">THE SAME CLASSIFICATION AT FULL GRANULARITY · SAME DERIVATION, SAME FIELD</span>
+      </div>
+
+      <div class="section-head spec-head">
+        <span class="m10 ls20 c-grey">ISSUANCE SPECIFICATION</span>
+        <button type="button" class="link withdraw" id="withdraw">WITHDRAW SPECIMEN</button>
+      </div>
+
+      <div class="strip strip-spec">
+        <div class="cell"><span class="k">SUBJECT</span><span class="v c-blue">ACQUIRED</span></div>
+        <div class="cell"><span class="k">DERIVATION</span><span class="v" data-t="derivWord">CENTRIC</span></div>
+        <div class="cell"><span class="k">FIELD</span><span class="v" data-t="fieldWord">LIGHT</span></div>
+        <div class="cell"><span class="k">OUTPUT</span><span class="v">01 · 1024 PX</span></div>
+        <div class="cell"><span class="k">ISSUANCE</span><span class="v">EUR 5.00</span></div>
+      </div>
+
+      <div class="issue-row">
+        <button type="button" class="btn btn-ink" data-act="toAuth">
+          <span class="l">AUTHORISE ISSUE</span>
+          <span class="r">EUR 5.00 →</span>
+        </button>
+        <p class="prose">Derivation and field are fixed at the moment issuance is authorised, and become properties of the issued plate.</p>
+      </div>
+    </section>
+
+    <!-- 03 · ISSUANCE AUTHORISATION -->
+    <section class="two screen" data-screen="auth" hidden>
+      <div class="fig">
+        <div class="frame"><canvas data-preview="selected"></canvas></div>
+        <div class="caption">
+          <span class="m10 ls14 c-grey">FIG. 1 — PRELIMINARY READING · <span data-t="derivWord">CENTRIC</span> · <span data-t="fieldWord">LIGHT</span></span>
+          <span class="m10 ls14 c-faint">THREE OF FIVE BANDS · 2 × 2 REDUCTION · NOT THE ISSUED PLATE</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head split">
+          <span class="m10 ls20 c-grey">ISSUANCE AUTHORISATION</span>
+          <span class="m10 ls16 c-faint">STEP 01 OF 01</span>
+        </div>
+        <div class="price-row">
+          <span class="m10 ls16 c-faint">ISSUANCE</span>
+          <span class="price">EUR 5.00</span>
+        </div>
+        <div class="kv rule">
+          <span>DERIVATION</span><span data-t="derivWord">CENTRIC</span>
+          <span>FIELD</span><span data-t="fieldWord">LIGHT</span>
+          <span>FIXED AT</span><span>AUTHORISATION · NOT ALTERABLE AFTER</span>
+        </div>
+        <!-- No payment processor is connected in this build. The card fields are
+             part of the locked composition and are inert: nothing typed here is
+             read, stored or transmitted. -->
+        <div class="card" aria-disabled="true">
+          <input class="num" placeholder="CARD NUMBER" disabled aria-label="Card number (no processor connected)">
+          <div class="row">
+            <input placeholder="MM / YY" disabled aria-label="Expiry (no processor connected)">
+            <input placeholder="CVC" disabled aria-label="CVC (no processor connected)">
+          </div>
+        </div>
+        <button type="button" class="btn btn-ink p19" id="authorise">
+          <span class="l">AUTHORISE ISSUE</span>
+          <span class="r">EUR 5.00 →</span>
+        </button>
+        <!-- Shown only while a processor is answering. No processor is connected, so it does not appear. -->
+        <div class="hold" id="hold" hidden>
+          <span class="m11 ls20">AUTHORISING</span>
+          <span class="m10 ls14">HOLD</span>
+        </div>
+        <div class="kv rule">
+          <span>PROCESSOR</span><span>NONE CONNECTED · NO CARD DETAILS ARE TAKEN</span>
+          <span>ACCOUNT</span><span>NONE CREATED</span>
+          <span>CHARGE</span><span>ONE CHARGE · ONE ISSUE · NOT RECURRING</span>
+        </div>
+        <button type="button" class="link back" data-act="cancelAuth">← CANCEL · RETURN TO READINGS</button>
+      </div>
+    </section>
+
+    <!-- 04 · APPARATUS OPERATING -->
+    <section class="two screen" data-screen="running" hidden>
+      <div class="fig">
+        <div class="frame"><canvas id="plateRunning"></canvas></div>
+        <div class="caption">
+          <span class="m10 ls14 c-grey">FIG. 2 — APPARATUS OPERATING · <span data-t="runId"></span></span>
+          <span class="m10 ls14 c-blue" data-t="cellLine">CONSTRUCTING PLATE / 0 OF 1024</span>
+        </div>
+      </div>
+      <div class="panel gap24">
+        <div class="panel-head split">
+          <span class="m10 ls20 c-grey">ISSUE IN PROGRESS</span>
+          <span class="m10 ls16 c-blue">DO NOT CLOSE THIS PAGE</span>
+        </div>
+        <span class="run-id" data-t="runId"></span>
+        <div class="kv wide">
+          <span>DERIVATION</span><span data-t="runDeriv"></span>
+          <span>FIELD</span><span data-t="runField"></span>
+          <span>STATE</span><span class="c-blue">CONSTRUCTING PLATE</span>
+          <span>CONSTRUCTED</span><span data-t="drawnLine">0 / 1024</span>
+          <span>OUTPUT</span><span>PENDING</span>
+        </div>
+        <div class="stages">
+          <div class="stage-row" data-state="done"><span class="dot"></span><span class="sl">MEASUREMENT</span><span class="sn">1024 READINGS · COMPLETE</span></div>
+          <div class="stage-row" data-state="done"><span class="dot"></span><span class="sl">BAND ASSIGNMENT</span><span class="sn">5 BANDS · COMPLETE</span></div>
+          <div class="stage-row" data-state="now"><span class="dot"></span><span class="sl">PLATE CONSTRUCTION</span><span class="sn" data-t="drawnLine">0 / 1024</span></div>
+          <div class="stage-row" data-state="wait"><span class="dot"></span><span class="sl">OUTPUT</span><span class="sn"></span></div>
+        </div>
+        <p class="prose">Measurement and band assignment are already finished — both are closed-form and cost milliseconds. What advances now is the plate itself: one mark per cell, laid down in scan order, paced so the construction can be watched rather than reported.</p>
+      </div>
+    </section>
+
+    <!-- 05 · OUTPUT ISSUED -->
+    <section class="screen" data-screen="done" hidden style="padding-top:56px;">
+      <div class="section-head issued-head">
+        <span class="m10 ls20 c-blue">OUTPUT ISSUED</span>
+        <span class="m10 ls20 c-grey">ISSUE CLOSED · 1024 CELLS DRAWN</span>
+      </div>
+
+      <div class="plate-wrap">
+        <div class="plate-col">
+          <div class="frame"><canvas id="plateDone"></canvas></div>
+          <div class="plate-cap">
+            <span class="id" data-t="runId"></span>
+            <span class="m10 ls16 c-grey">MACHINE PORTRAIT · <span data-t="runDeriv"></span> · <span data-t="runField"></span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="record">
+        <div>
+          <div class="panel-head"><span class="m10 ls20 c-grey">ISSUANCE RECORD</span></div>
+          <div class="kv">
+            <span>ISSUE</span><span data-t="runId"></span>
+            <span>APPARATUS</span><span>MPA–01</span>
+            <span>ISSUED</span><span data-t="issued"></span>
+            <span>DERIVATION</span><span data-t="markName"></span>
+            <span>FIELD</span><span data-t="runField"></span>
+            <span>GRID</span><span>32 × 32 · 1024 READINGS</span>
+            <span>BANDS</span><span>5 · FIXED WIDTH · NOT EQUALISED</span>
+            <span>FRAMING</span><span>AS-READ · ASYMMETRY KEPT</span>
+            <span>REGISTRATION</span><span class="c-blue">CELL [18, 12] · ONE CELL IN SIGNAL BLUE</span>
+          </div>
+        </div>
+        <div>
+          <div class="panel-head"><span class="m10 ls20 c-grey">INSPECTION · MEASURED OFF THE PLATE</span></div>
+          <div class="kv">
+            <span>POPULATION</span><span data-t="popLine"></span>
+            <span>LIGHTNESS</span><span data-t="rangeLine"></span>
+            <span>INK COVERAGE</span><span data-t="covLine"></span>
+            <span>SEPARATION</span><span data-t="sepLine"></span>
+            <span>VERDICT</span><span class="c-blue" data-t="verdict"></span>
+          </div>
+          <p class="prose">The bands are cut on the plate's own clipped range, so the ink budget is not equalised. A subject against a bright ground spends less ink than the same subject against a dark one, and the two plates diverge accordingly.</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-ink p19" id="save">
+          <span class="l">SAVE PORTRAIT</span>
+          <span class="r">1024 PX PNG ↓</span>
+        </button>
+        <button type="button" class="btn btn-line" id="again">
+          <span class="l">AUTHORISE ANOTHER ISSUE</span>
+          <span class="r">EUR 5.00 →</span>
+        </button>
+      </div>
+      <p class="keep">THE PORTRAIT IS NOT KEPT ON THE APPARATUS. SAVE IT BEFORE LEAVING THIS PAGE.</p>
+    </section>
+
+    <!-- PROCEDURE (ready only) -->
+    <section class="procedure screen" data-screen="ready">
+      <div class="section-head">
+        <span class="m10 ls20 c-grey">PROCEDURE</span>
+        <span class="m10 ls20 c-faint">SIX STATES · FIXED ORDER</span>
+      </div>
+      <div class="steps">
+        <div class="step"><span class="n">01</span><span class="l">INPUT</span><span class="t">One photograph is placed on the stage.</span></div>
+        <div class="step"><span class="n">02</span><span class="l">PRELIMINARY</span><span class="t">The reading is shown reduced, three ways.</span></div>
+        <div class="step"><span class="n">03</span><span class="l">SELECTION</span><span class="t">One derivation and one field are set.</span></div>
+        <div class="step"><span class="n">04</span><span class="l">AUTHORISATION</span><span class="t">EUR 5.00 authorises one issuance.</span></div>
+        <div class="step"><span class="n">05</span><span class="l">CONSTRUCTION</span><span class="t">The plate is drawn from the same matrix.</span></div>
+        <div class="step"><span class="n">06</span><span class="l">OUTPUT</span><span class="t">One plate issued, then the record closes.</span></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <span class="m10 ls14 c-faint">PROBNAYA · MPA–01 · ONE PHOTOGRAPH · ONE ISSUE · ONE PORTRAIT</span>
+    <span class="m10 ls14 c-faint" data-t="stamp"></span>
+  </footer>
+
+  <div class="bar">
+    <div class="bar-idle" id="barIdle">
+      <span class="m10 ls14 c-faint">AWAITING INPUT</span>
+      <span class="m10 ls14 c-faint">ISSUANCE EUR 5.00</span>
+    </div>
+    <button type="button" class="btn btn-ink bar-live" id="barLive" data-act="toAuth" hidden>
+      <span class="l">AUTHORISE ISSUE · <span data-t="derivWord">CENTRIC</span></span>
+      <span class="r">EUR 5.00 →</span>
+    </button>
+  </div>
+
+</div>
+<script type="module" src="js/apparatus.js"></script>
+</body>
+</html>
