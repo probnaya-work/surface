@@ -162,13 +162,9 @@ canvas { display: block; }
 /* ---- authorisation ------------------------------------------------------- */
 .price-row { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; }
 .price { font-weight: 400; font-size: 30px; letter-spacing: -0.01em; }
-.card { display: flex; flex-direction: column; border: 1px solid var(--ink); }
-.card input { border: none; background: transparent; padding: 15px 17px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink); min-width: 0; }
-.card input:disabled { color: var(--ink); -webkit-text-fill-color: var(--ink); opacity: 1; cursor: default; }
-.card .num { border-bottom: 1px solid var(--border); }
-.card .row { display: flex; }
-.card .row input { flex: 1; }
-.card .row input:first-child { border-right: 1px solid var(--border); }
+.checkout { display: flex; justify-content: space-between; align-items: center; gap: 14px; border: 1px solid var(--ink); padding: 15px 17px; }
+.payment-note { border-left: 1px solid var(--blue); padding-left: 14px; color: var(--blue); font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; line-height: 1.6; }
+.payment-note[data-kind="notice"] { color: var(--grey); border-left-color: var(--grey); }
 .back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--grey); align-self: flex-start; }
 .back:hover { color: var(--blue); }
 

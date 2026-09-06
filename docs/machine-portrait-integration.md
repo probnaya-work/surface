@@ -18,6 +18,30 @@ slash form resolve identically) and turns the shipped `← INSTRUMENTS` crumb in
 a link to `/instruments`. It does not change apparatus copy, behavior or
 presentation.
 
+## Payment boundary
+
+`api/machine-portrait.js` is the surface-owned server boundary. One POST handler
+accepts the explicit actions `create-checkout` and `verify-issuance`. It creates
+a hosted, one-time Stripe Checkout Session using a server-configured Price and
+retrieves that Session directly from Stripe before authorising construction.
+Direct API requests pin Stripe API version `2026-02-25.clover` so response
+semantics do not depend on the account's mutable default version.
+
+Only the issuance protocol and SHA-256 commitment to the canonical local draft
+are stored in Stripe metadata. The source image, canonical record, and 32 × 32
+matrix stay in the browser. A persisted attempt UUID is the Stripe idempotency
+key. The stable issue digest is SHA-256 over the protocol, Checkout Session ID,
+and draft commitment.
+
+V1 has no webhook, database, registry, or automatic recovery. If payment finishes
+but the browser loses its local draft, support or refund is manual. The visible
+`PROB–MPA–` issue label remains the apparatus' existing presentation convention;
+it does not establish an authoritative global PROBNAYA namespace.
+
+Required environment variables are documented in `.env.example` and the root
+README. The Stripe Price must be a one-time EUR 5.00 Price. `STRIPE_LIVEMODE`
+must match the secret and Price resources.
+
 ## Refreshing the artifact
 
 From the `surface` repository, with a clean sibling `objects` checkout at the

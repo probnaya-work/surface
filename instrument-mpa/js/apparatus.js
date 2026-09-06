@@ -11,18 +11,22 @@
 
 import {
   N, CELLS, PN, cropRect, cellEdges, newAccumulator, accumulateStrip, finishMeans,
-  derive, admissible, MIN_SIDE
+  derive, reduce16, preliminaryPopulation, admissible, DERIVATION_VERSION, MIN_SIDE
 } from "./derivation.js";
 import {
   PAPER, DERIVATION_WORD, DERIVATION_NAME, renderPlate, renderConstruction, inspect
 } from "./geometry.js";
-import { buildRecord, embedRecord, issueId, stampDate } from "./record.js";
+import {
+  ISSUANCE_PROTOCOL, buildDraft, buildRecord, canonicalJson, embedRecord,
+  issueId, matrixString, parseMatrix, stampDate
+} from "./record.js";
 
 const OUTPUT_PX = 1024;
 const STRIP_ROWS = 256;          // source rows read per pass; bounds canvas memory, never changes the sums
 const CONSTRUCTION_MS = 3400;    // presentation pace for 1024 cells; not a computation time
 const REVEAL_MS = 900;           // presentation pace for the preliminary readings
-const SEQ_KEY = "prob-mpa-seq";  // local counter, not a ledger
+const PENDING_KEY = "prob-mpa-pending-issuance-v1";
+const PENDING_TTL_MS = 24 * 60 * 60 * 1000;
 
 // Review-only pace multiplier: ?pace=2 draws twice as fast. Changes when marks
 // appear, never which marks appear.
@@ -46,7 +50,8 @@ const state = {
   deriv: "centric",
   field: "light",
   specimen: null,            // { result, hash, type, width, height }
-  run: null                  // { seq, id, issued, deriv, field, inspection, record, drawn }
+  run: null,                 // { id, issued, deriv, field, inspection, record, drawn }
+  returnSessionId: null
 };
 
 // ---- canvases ---------------------------------------------------------------
@@ -200,13 +205,19 @@ async function mount(file) {
 function withdraw() {
   cancelAnimationFrame(constructRaf);
   cancelAnimationFrame(revealRaf);
+  clearPending();
   state.specimen = null;
   state.run = null;
+  state.returnSessionId = null;
   reveal = 1;
   const thumb = $("#specimen");
   thumb.getContext("2d").clearRect(0, 0, thumb.width, thumb.height);
   const note = $("#stageNote");
   note.textContent = "NO SPECIMEN MOUNTED"; note.className = "m10 ls14 c-faint";
+  setText("authoriseLabel", "AUTHORISE ISSUE");
+  setText("authoriseRight", "EUR 5.00 →");
+  setPaymentNote("");
+  setAuthorising(false);
   setPhase("ready");
 }
 
@@ -232,25 +243,197 @@ function setField(f) {
 
 // ---- issuance -----------------------------------------------------------------
 
-function nextSeq() {
-  let seq = 0;
-  try { seq = parseInt(localStorage.getItem(SEQ_KEY) || "0", 10) || 0; } catch (e) { /* no storage: counter restarts */ }
-  seq += 1;
-  try { localStorage.setItem(SEQ_KEY, String(seq)); } catch (e) { /* ignore */ }
-  return seq;
+function readPending() {
+  try {
+    const pending = JSON.parse(localStorage.getItem(PENDING_KEY));
+    const created = pending && Date.parse(pending.createdAt);
+    const validAttempt = pending && typeof pending.attemptId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(pending.attemptId);
+    const validSession = pending && (pending.sessionId === null || (typeof pending.sessionId === "string" && pending.sessionId.length <= 255));
+    const validHash = pending && typeof pending.draftHash === "string" && /^[a-f0-9]{64}$/.test(pending.draftHash);
+    const age = Date.now() - created;
+    if (!pending || !validAttempt || !validSession || !validHash || !pending.draft || !Number.isFinite(created) || age < -5 * 60 * 1000 || age > PENDING_TTL_MS) {
+      localStorage.removeItem(PENDING_KEY);
+      return null;
+    }
+    return pending;
+  } catch (e) {
+    try { localStorage.removeItem(PENDING_KEY); } catch (ignored) { /* storage unavailable */ }
+    return null;
+  }
 }
 
-// Authorised issuance measures nothing. It freezes the selection, takes the
-// stored matrix, reads its inspection figures, and begins drawing.
-function authorise() {
+function writePending(pending) {
+  localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+  if (!localStorage.getItem(PENDING_KEY)) throw new Error("pending issuance was not retained");
+}
+
+function clearPending() {
+  try { localStorage.removeItem(PENDING_KEY); } catch (e) { /* storage unavailable */ }
+}
+
+function setPaymentNote(message, kind = "error") {
+  const note = $("#paymentNote");
+  note.textContent = message;
+  note.dataset.kind = kind;
+  note.hidden = !message;
+}
+
+function setAuthorising(active, label = "AUTHORISING") {
+  const button = $("#authorise");
+  button.disabled = active;
+  button.hidden = active;
+  $("#hold").hidden = !active;
+  $("#holdLabel").textContent = label;
+  for (const el of $$('[data-act="cancelAuth"]')) el.disabled = active;
+}
+
+async function requestApi(body) {
+  const response = await fetch("/api/machine-portrait", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+    body: JSON.stringify(body)
+  });
+  let data = null;
+  try { data = await response.json(); } catch (e) { /* handled below */ }
+  if (!response.ok || !data) {
+    const error = new Error(data && data.error ? data.error : "The payment service did not answer.");
+    error.code = data && data.code;
+    throw error;
+  }
+  return data;
+}
+
+async function draftHash(draft) {
+  return sha256Hex(new TextEncoder().encode(canonicalJson(draft)));
+}
+
+function specimenFromDraft(draft) {
+  if (!draft || draft.issuanceProtocol !== ISSUANCE_PROTOCOL || draft.apparatus !== "PROB-MPA-01" || draft.derivationVersion !== DERIVATION_VERSION) throw new Error("invalid draft");
+  const matrix = parseMatrix(draft.matrix);
+  if (matrix.length !== CELLS || !draft.source || !draft.crop || !draft.clip || !draft.parameters) throw new Error("invalid draft");
+  if (!Number.isInteger(draft.source.width) || !Number.isInteger(draft.source.height) || !admissible(draft.source.width, draft.source.height)) throw new Error("invalid source dimensions");
+  if (!/^[a-f0-9]{64}$/.test(draft.source.sha256 || "") || typeof draft.source.mediaType !== "string" || draft.source.mediaType.length > 100) throw new Error("invalid source record");
+  if (![draft.crop.x, draft.crop.y, draft.crop.side].every(Number.isInteger) || draft.crop.side < MIN_SIDE) throw new Error("invalid crop");
+  if (![draft.clip.lo, draft.clip.hi].every(Number.isFinite)) throw new Error("invalid clip");
+  if (!["centric", "skyline", "raster"].includes(draft.parameters.derivation)) throw new Error("invalid derivation");
+  if (!["light", "dark"].includes(draft.parameters.field)) throw new Error("invalid field");
+  if (!Array.isArray(draft.population) || draft.population.length !== 5 || !draft.population.every(n => Number.isInteger(n) && n >= 0) || draft.population.reduce((a, b) => a + b, 0) !== CELLS) throw new Error("invalid population");
+  const preliminary = reduce16(matrix);
+  return {
+    result: {
+      version: draft.derivationVersion,
+      n: N,
+      source: { width: draft.source.width, height: draft.source.height },
+      crop: draft.crop,
+      clip: draft.clip,
+      bands: matrix,
+      population: Int32Array.from(draft.population),
+      preliminary,
+      preliminaryPopulation: preliminaryPopulation(preliminary)
+    },
+    hash: draft.source.sha256,
+    type: draft.source.mediaType,
+    width: draft.source.width,
+    height: draft.source.height
+  };
+}
+
+function restoreDraft(draft) {
+  const specimen = specimenFromDraft(draft);
+  state.specimen = specimen;
+  state.deriv = draft.parameters.derivation;
+  state.field = draft.parameters.field;
+  setText("srcDims", specimen.width + " × " + specimen.height + " PX");
+  const p = specimen.result.preliminaryPopulation;
+  setText("prelimLine", "16 × 16 · REDUCED FROM THE 32 × 32 CLASSIFICATION · " + p[0] + " / " + p[1] + " / " + p[2]);
+  setDeriv(state.deriv);
+  setField(state.field);
+  reveal = 1;
+  return specimen;
+}
+
+function currentDraft() {
+  const spec = state.specimen;
+  return buildDraft({
+    derivation: state.deriv,
+    field: state.field,
+    sourceHash: spec.hash,
+    sourceType: spec.type,
+    result: spec.result
+  });
+}
+
+async function createCheckout() {
   const spec = state.specimen;
   if (!spec || state.phase !== "auth") return;
-  const seq = nextSeq();
-  const issuedAt = new Date();
-  const deriv = state.deriv, field = state.field;
+  setPaymentNote("");
+  setAuthorising(true, "AUTHORISING");
+  try {
+    const draft = currentDraft();
+    const commitment = await draftHash(draft);
+    const retained = readPending();
+    const sameAttempt = retained && retained.draft && retained.draft.issuanceProtocol === ISSUANCE_PROTOCOL && retained.draftHash === commitment;
+    const pending = {
+      attemptId: sameAttempt ? retained.attemptId : crypto.randomUUID(),
+      sessionId: sameAttempt ? retained.sessionId : null,
+      draftHash: commitment,
+      draft,
+      createdAt: sameAttempt ? retained.createdAt : new Date().toISOString()
+    };
+    writePending(pending);
+    const result = await requestApi({
+      action: "create-checkout",
+      attemptId: pending.attemptId,
+      draftHash: pending.draftHash,
+      protocol: ISSUANCE_PROTOCOL
+    });
+    if (typeof result.sessionId !== "string" || typeof result.checkoutUrl !== "string") throw new Error("The payment service returned an invalid Checkout Session.");
+    pending.sessionId = result.sessionId;
+    writePending(pending);
+    location.assign(result.checkoutUrl);
+  } catch (error) {
+    setPaymentNote(error.message || "Checkout could not be opened. Retry with the same issuance.");
+    setAuthorising(false);
+  }
+}
+
+// Payment authorises issuance. Verification measures nothing: it restores the
+// committed matrix, checks its hash against Stripe, and only then draws it.
+async function verifyIssuance(pending, sessionId) {
+  if (!pending || !sessionId || state.phase !== "auth") return;
+  setPaymentNote("");
+  setAuthorising(true, "AUTHORISING");
+  try {
+    if (pending.sessionId && pending.sessionId !== sessionId) throw new Error("Checkout Session does not match the retained issuance.");
+    const commitment = await draftHash(pending.draft);
+    if (commitment !== pending.draftHash) throw new Error("The retained issuance no longer matches its commitment.");
+    pending.sessionId = sessionId;
+    writePending(pending);
+    const result = await requestApi({
+      action: "verify-issuance",
+      sessionId,
+      draftHash: commitment,
+      protocol: ISSUANCE_PROTOCOL
+    });
+    if (!result.authorized || result.protocol !== ISSUANCE_PROTOCOL || result.draftHash !== commitment || !/^[a-f0-9]{64}$/.test(result.issueDigest || "")) throw new Error("The issuance authorisation was invalid.");
+    const issuedAt = new Date(result.issuedAt);
+    if (!Number.isFinite(issuedAt.getTime())) throw new Error("The issuance timestamp was invalid.");
+    beginConstruction(pending.draft, commitment, result.issueDigest, issuedAt);
+  } catch (error) {
+    setPaymentNote(error.message || "Payment could not be verified. No issue was created.");
+    setText("authoriseLabel", "RETRY VERIFICATION");
+    setText("authoriseRight", "VERIFY →");
+    setAuthorising(false);
+  }
+}
+
+function beginConstruction(draft, commitment, identity, issuedAt) {
+  const spec = state.specimen;
+  const deriv = draft.parameters.derivation, field = draft.parameters.field;
   const inspection = inspect(spec.result.bands, spec.result.population, deriv, OUTPUT_PX, N);
-  const record = buildRecord({ seq, issuedAt, derivation: deriv, field, sourceHash: spec.hash, sourceType: spec.type, result: spec.result });
-  state.run = { seq, id: issueId(seq), issued: stampDate(issuedAt), deriv, field, inspection, record, drawn: 0 };
+  const record = buildRecord({ draft, draftHash: commitment, issueDigest: identity, issuedAt });
+  state.run = { id: issueId(identity), issued: stampDate(issuedAt), deriv, field, inspection, record, drawn: 0 };
 
   setText("runId", state.run.id);
   setText("runDeriv", DERIVATION_WORD[deriv]);
@@ -266,6 +449,14 @@ function authorise() {
 
   setPhase("running");
   construct();
+}
+
+function authorise() {
+  if (state.returnSessionId) {
+    verifyIssuance(readPending(), state.returnSessionId);
+    return;
+  }
+  createCheckout();
 }
 
 // ---- construction -------------------------------------------------------------
@@ -323,6 +514,7 @@ async function save() {
   a.download = run.id.replace(/–/g, "-") + "_" + run.deriv + "_" + run.field + "_" + OUTPUT_PX + ".png";
   a.href = url;
   a.click();
+  clearPending();
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
@@ -370,7 +562,56 @@ $("#withdraw").addEventListener("click", withdraw);
 $("#save").addEventListener("click", save);
 $("#again").addEventListener("click", () => { withdraw(); window.scrollTo(0, 0); });
 
+function cleanCheckoutQuery(params) {
+  params.delete("session_id");
+  params.delete("checkout");
+  const query = params.toString();
+  history.replaceState(history.state, "", location.pathname + (query ? "?" + query : "") + location.hash);
+}
+
+async function resumeCheckout() {
+  const params = new URLSearchParams(location.search);
+  const returnedSession = params.get("session_id");
+  const cancelled = params.get("checkout") === "cancelled";
+  if (returnedSession || cancelled) cleanCheckoutQuery(params);
+
+  const pending = readPending();
+  if (!pending) {
+    if (returnedSession) {
+      const note = $("#stageNote");
+      note.textContent = "PAYMENT RETURNED · LOCAL ISSUANCE STATE UNAVAILABLE · CONTACT SUPPORT";
+      note.className = "m10 ls14 c-blue";
+    }
+    return;
+  }
+
+  try {
+    restoreDraft(pending.draft);
+  } catch (e) {
+    clearPending();
+    const note = $("#stageNote");
+    note.textContent = "RETAINED ISSUANCE STATE COULD NOT BE READ · CONTACT SUPPORT";
+    note.className = "m10 ls14 c-blue";
+    return;
+  }
+
+  setPhase("auth");
+  if (cancelled) {
+    setPaymentNote("CHECKOUT CANCELLED · THE DERIVED OBJECT IS RETAINED", "notice");
+    return;
+  }
+
+  const sessionId = returnedSession || pending.sessionId;
+  if (sessionId) {
+    state.returnSessionId = sessionId;
+    setText("authoriseLabel", "RETRY VERIFICATION");
+    setText("authoriseRight", "VERIFY →");
+    await verifyIssuance(pending, sessionId);
+  }
+}
+
 setText("stamp", "PROB–" + stampDate(new Date()));
 setDeriv(state.deriv);
 setField(state.field);
 setPhase("ready");
+resumeCheckout();

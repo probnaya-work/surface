@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base href="/instrument-mpa/">
+<meta name="referrer" content="no-referrer">
 <title>PROBNAYA · MPA–01 · Machine Portrait Apparatus</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
@@ -176,27 +177,21 @@
           <span>FIELD</span><span data-t="fieldWord">LIGHT</span>
           <span>FIXED AT</span><span>AUTHORISATION · NOT ALTERABLE AFTER</span>
         </div>
-        <!-- No payment processor is connected in this build. The card fields are
-             part of the locked composition and are inert: nothing typed here is
-             read, stored or transmitted. -->
-        <div class="card" aria-disabled="true">
-          <input class="num" placeholder="CARD NUMBER" disabled aria-label="Card number (no processor connected)">
-          <div class="row">
-            <input placeholder="MM / YY" disabled aria-label="Expiry (no processor connected)">
-            <input placeholder="CVC" disabled aria-label="CVC (no processor connected)">
-          </div>
+        <div class="checkout" aria-label="Payment is completed on Stripe Checkout">
+          <span class="m10 ls16">STRIPE CHECKOUT</span>
+          <span class="m10 ls14 c-faint">CARD OR WALLET · HOSTED PAYMENT</span>
         </div>
         <button type="button" class="btn btn-ink p19" id="authorise">
-          <span class="l">AUTHORISE ISSUE</span>
-          <span class="r">EUR 5.00 →</span>
+          <span class="l" data-t="authoriseLabel">AUTHORISE ISSUE</span>
+          <span class="r" data-t="authoriseRight">EUR 5.00 →</span>
         </button>
-        <!-- Shown only while a processor is answering. No processor is connected, so it does not appear. -->
         <div class="hold" id="hold" hidden>
-          <span class="m11 ls20">AUTHORISING</span>
+          <span class="m11 ls20" id="holdLabel">AUTHORISING</span>
           <span class="m10 ls14">HOLD</span>
         </div>
+        <div class="payment-note" id="paymentNote" role="status" aria-live="polite" hidden></div>
         <div class="kv rule">
-          <span>PROCESSOR</span><span>NONE CONNECTED · NO CARD DETAILS ARE TAKEN</span>
+          <span>PROCESSOR</span><span>STRIPE CHECKOUT · CARD DETAILS STAY WITH STRIPE</span>
           <span>ACCOUNT</span><span>NONE CREATED</span>
           <span>CHARGE</span><span>ONE CHARGE · ONE ISSUE · NOT RECURRING</span>
         </div>

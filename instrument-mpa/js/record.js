@@ -13,9 +13,13 @@ import { REGISTRATION } from "./geometry.js";
 export const APPARATUS = "PROB-MPA-01";
 export const OBJECT_TYPE = "MACHINE PORTRAIT";
 export const PNG_KEYWORD = "PROBNAYA.MPA-01.RECORD";
+export const ISSUANCE_PROTOCOL = "MPA-ISSUANCE/1";
 
-export function issueId(seq) {
-  return "PROB–MPA–" + String(seq).padStart(6, "0");
+// Presentation only. PROB–MPA is the apparatus' current visible convention,
+// not an authoritative global PROBNAYA object namespace. The complete digest
+// remains in the record independently of this label.
+export function issueId(digest) {
+  return "PROB–MPA–" + digest.slice(0, 20).toUpperCase();
 }
 
 export function stampDate(date) {
@@ -30,17 +34,32 @@ export function matrixString(bands) {
 }
 
 export function parseMatrix(str) {
+  if (typeof str !== "string" || !/^[0-4]+$/.test(str)) throw new Error("invalid matrix");
   const out = new Uint8Array(str.length);
   for (let i = 0; i < str.length; i++) out[i] = str.charCodeAt(i) - 48;
   return out;
 }
 
-export function buildRecord({ seq, issuedAt, derivation, field, sourceHash, sourceType, result }) {
+// Canonical JSON is used only to commit the locally held issued-object draft.
+// Object keys sort recursively; array order is retained.
+export function canonicalJson(value) {
+  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new Error("non-finite canonical number");
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return "[" + value.map(canonicalJson).join(",") + "]";
+  if (typeof value === "object") {
+    return "{" + Object.keys(value).sort().map(key => JSON.stringify(key) + ":" + canonicalJson(value[key])).join(",") + "}";
+  }
+  throw new Error("unsupported canonical value");
+}
+
+export function buildDraft({ derivation, field, sourceHash, sourceType, result }) {
   return {
     object: OBJECT_TYPE,
     apparatus: APPARATUS,
-    issue: issueId(seq),
-    issued: stampDate(issuedAt),
+    issuanceProtocol: ISSUANCE_PROTOCOL,
     derivationVersion: DERIVATION_VERSION,
     source: {
       sha256: sourceHash,
@@ -57,6 +76,28 @@ export function buildRecord({ seq, issuedAt, derivation, field, sourceHash, sour
     population: Array.from(result.population),
     parameters: { derivation, field, registration: [REGISTRATION.c, REGISTRATION.r] },
     representations: { web: "1024 PX PNG" }
+  };
+}
+
+export function buildRecord({ draft, draftHash, issueDigest, issuedAt }) {
+  return {
+    object: draft.object,
+    apparatus: draft.apparatus,
+    issue: issueId(issueDigest),
+    issueDigest,
+    issued: stampDate(issuedAt),
+    issuanceProtocol: draft.issuanceProtocol,
+    draftHash,
+    derivationVersion: draft.derivationVersion,
+    source: draft.source,
+    crop: draft.crop,
+    lattice: draft.lattice,
+    bands: draft.bands,
+    clip: draft.clip,
+    matrix: draft.matrix,
+    population: draft.population,
+    parameters: draft.parameters,
+    representations: draft.representations
   };
 }
 
