@@ -293,15 +293,7 @@ p { text-wrap: pretty; }
 .instrument-copy .head .num { font-weight: 500; font-size: 52px; letter-spacing: -0.02em; line-height: 1; }
 .instrument-copy .head .status { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; }
 
-.object-entry {
-  margin-top: 76px; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 26px 0;
-  display: flex; justify-content: space-between; align-items: flex-end; gap: 44px;
-}
-.object-entry-copy { display: flex; flex-direction: column; gap: 14px; max-width: 660px; }
-.object-entry-copy .head { display: flex; align-items: baseline; gap: 18px; }
-.object-entry-copy .head .num { font-weight: 500; font-size: 32px; letter-spacing: -0.02em; line-height: 1; }
-.object-entry-copy .head .status { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; }
-.object-entry .action-link { flex: 0 0 auto; }
+.object-figure img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
 .bench-note {
   margin-top: 76px; border: 1px dashed var(--faint); padding: 22px 24px;
@@ -447,7 +439,6 @@ p { text-wrap: pretty; }
 
   .instrument-block, .split, .lab-grid, .intake-grid, .record-open { grid-template-columns: 1fr; gap: 18px; }
   .instrument-block + .instrument-block { padding-top: 30px; }
-  .object-entry { margin-top: 30px; align-items: flex-start; flex-direction: column; gap: 22px; }
   .split-title .num { font-size: 48px; }
 
   .specs { grid-template-columns: 90px 1fr; }
