@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MPA–01 — PROBNAYA</title>
+<link rel="icon" type="image/svg+xml" href="assets/probnaya-mark.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand-group">
+    <a class="brand-mark" href="/">
+      <svg viewBox="0 0 32 32" width="15" height="15" style="display:block; flex-shrink:0; overflow:visible;"><rect x="4" y="3" width="20" height="26" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="14" y="14" width="17" height="3" fill="currentColor"></rect></svg>
+      <span class="brand-name">PROBNAYA</span>
+    </a>
+    <a class="brand-tag" href="/lab">INDEPENDENT COMPUTATIONAL LABORATORY</a>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="/instruments"><span class="nav-dot"></span><span class="label">INSTRUMENTS</span></a>
+    <a class="nav-link" href="/investigations"><span class="label">INVESTIGATIONS</span></a>
+    <a class="nav-cta" href="/intake">SUBMIT A PROBLEM</a>
+  </div>
+</header>
+
+<header class="mobile-header">
+  <a class="brand-name" href="/">PROBNAYA</a>
+  <span class="crumb">INS / MPA–01</span>
+</header>
+
+<div class="main">
+  <div class="page detail">
+    <a class="back-link" href="/instruments">← INSTRUMENTS</a>
+
+    <div class="split-title">
+      <span class="num">MPA–01</span>
+      <span class="status status-service">IN SERVICE · ISSUING</span>
+    </div>
+    <span class="attr-line attr-line--detail">MPA–01 · BY PROBNAYA</span>
+
+    <div class="split">
+      <div class="figure">
+        <div class="figure-plate" style="height:400px;">
+          <canvas id="cv-plate"></canvas>
+        </div>
+        <div class="figure-caption">
+          <span class="dim">FIG. 5 — ONE READING, RENDERED IN MARKS</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:24px;">
+        <p class="lede">A portrait is a measurement, not a likeness.</p>
+        <p class="body-copy">MPA–01 is an apparatus rather than a tool: a person supplies one photograph, the same measurement is taken that is taken of everything, and the reading is issued as a set of objects. The subject changes. The instrument does not.</p>
+        <dl class="specs">
+          <dt>CLASS</dt><dd>APPARATUS</dd>
+          <dt>SUBJECT</dt><dd>THE FACE AS A MEASURED QUANTITY</dd>
+          <dt>INPUT</dt><dd>ONE PHOTOGRAPH</dd>
+          <dt>ISSUE</dt><dd>PORTRAIT · RECORD · MARKS</dd>
+          <dt>ISSUED BY</dt><dd>PROBNAYA</dd>
+          <dt>ACCESS</dt><dd class="accent">OPEN</dd>
+        </dl>
+        <a class="action-link" href="/instrument-mpa/">ENTER THE APPARATUS →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <a href="/lab">PROBNAYA · WHAT THIS LABORATORY IS →</a>
+  <a href="mailto:mail@probnaya.work">mail@probnaya.work</a>
+  <span class="stamp" data-stamp></span>
+</footer>
+
+<nav class="bottom-nav has-tabs">
+  <a href="/instruments"><span class="nav-dot"></span><span>INSTRUMENTS</span></a>
+  <a href="/investigations"><span>INVESTIGATIONS</span></a>
+  <a href="/intake"><span>SUBMIT</span></a>
+</nav>
+
+<script src="js/apparatus.js"></script>
+<script src="js/site.js"></script>
+<script>
+  Apparatus.mount(document.getElementById('cv-plate'), (S) => Apparatus.buildPlate(S));
+</script>
+</body>
+</html>

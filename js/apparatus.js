@@ -389,9 +389,73 @@ const Apparatus = (() => {
     };
   }
 
+  // ---- FIG.5 — MPA-01: one 16 x 16 reading committed cell by cell, in marks ----
+  // Marks are CONCENTRIC: a centred square of side = cell x level / 4, level 0 left
+  // empty. The blue cell is the fiducial, the subject's left pupil at column 9, row 6.
+  const MPA_N = 16, MPA_FID_C = 9, MPA_FID_R = 6;
+  const MPA_READING = [
+    0,0,0,0,0,0,1,2,2,2,1,1,0,0,0,0, 0,0,0,0,0,1,2,3,3,3,3,3,1,0,0,0,
+    0,0,0,0,1,3,3,3,3,2,2,2,3,1,0,0, 0,0,0,0,3,3,3,1,1,1,1,1,2,3,0,0,
+    0,0,0,1,3,3,1,1,1,1,1,1,2,3,0,0, 0,0,0,3,4,1,2,2,2,2,2,1,1,2,1,0,
+    0,0,2,3,2,1,2,4,4,2,2,2,2,2,1,0, 0,0,3,2,1,1,2,2,2,1,3,4,3,3,1,0,
+    0,1,4,2,1,1,1,2,1,1,2,3,2,4,1,0, 0,1,4,4,1,1,1,2,1,1,2,2,2,4,2,0,
+    1,1,4,4,1,1,2,2,3,3,2,2,3,4,1,0, 0,2,4,4,2,1,3,3,3,3,2,3,4,4,1,0,
+    2,2,3,4,4,2,3,3,3,3,3,4,4,4,2,2, 2,3,4,4,4,3,3,3,3,3,4,4,4,4,3,3,
+    3,3,4,4,4,4,4,4,4,4,4,4,4,3,2,1, 3,4,4,4,4,4,4,4,4,4,4,4,4,3,2,1
+  ];
+
+  function buildPlate(S) {
+    const CELLS = MPA_N * MPA_N;
+    let g = null, drawn = 0, acc = 0, hold = 0;
+
+    const sheet = () => {
+      const { ctx } = S;
+      const side = Math.max(48, Math.min(S.w - 76, S.h - 64));
+      g = { x: Math.round((S.w - side) / 2), y: Math.round((S.h - side) / 2), side, s: side / MPA_N };
+      ctx.fillStyle = PAPER; ctx.fillRect(0, 0, S.w, S.h);
+      ctx.strokeStyle = "#A7ABB3";
+      const o = 8, t = 22;
+      [[g.x, g.y, 1, 1], [g.x + side, g.y, -1, 1], [g.x, g.y + side, 1, -1], [g.x + side, g.y + side, -1, -1]]
+        .forEach(([cx, cy, sx, sy]) => {
+          ctx.beginPath();
+          ctx.moveTo(cx + 0.5, cy + sy * o + 0.5); ctx.lineTo(cx + 0.5, cy + sy * (o + t) + 0.5);
+          ctx.moveTo(cx + sx * o + 0.5, cy + 0.5); ctx.lineTo(cx + sx * (o + t) + 0.5, cy + 0.5);
+          ctx.stroke();
+        });
+      drawn = 0; acc = 0; hold = 0;
+    };
+    S.onFit = sheet; sheet();
+
+    return {
+      tick: (dt, norm) => {
+        const { ctx } = S;
+        if (hold > 0) { hold -= dt; if (hold <= 0) sheet(); return; }
+        acc += 2.5 * norm * S.speed();
+        while (acc >= 1 && drawn < CELLS) {
+          acc -= 1;
+          const c = drawn % MPA_N, r = (drawn / MPA_N) | 0, level = MPA_READING[drawn];
+          drawn++;
+          if (!level) continue;
+          const cs = g.s * level / 4, off = (g.s - cs) / 2;
+          ctx.fillStyle = (c === MPA_FID_C && r === MPA_FID_R) ? BLUE : INK;
+          ctx.fillRect(g.x + c * g.s + off, g.y + r * g.s + off, cs, cs);
+        }
+        if (drawn >= CELLS) acc = 0;
+        const row = Math.min(MPA_N - 1, (drawn / MPA_N) | 0);
+        ctx.fillStyle = PAPER; ctx.fillRect(g.x - 26, g.y - 2, 12, g.side + 4);
+        if (drawn < CELLS) {
+          ctx.fillStyle = BLUE;
+          ctx.fillRect(g.x - 22, Math.round(g.y + row * g.s + g.s / 2) - 1, 7, 2);
+        } else if (hold <= 0) {
+          hold = 5; // seconds held before the reading is committed again
+        }
+      }
+    };
+  }
+
   return {
     INK, PAPER, BLUE, MID, FAINT,
     mount,
-    buildTrace, buildStepLanes, buildRaster, buildStrip, buildRecordReading, buildSeismo, buildHarmonograph
+    buildTrace, buildStepLanes, buildRaster, buildStrip, buildRecordReading, buildSeismo, buildHarmonograph, buildPlate
   };
 })();

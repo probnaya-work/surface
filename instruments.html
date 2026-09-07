@@ -88,19 +88,19 @@
       <div class="instrument-copy">
         <div class="head">
           <span class="num">MPA–01</span>
-          <span class="status status-operational">OPERATIONAL</span>
+          <span class="status status-service">IN SERVICE</span>
         </div>
         <span class="attr-line">MPA–01 · BY PROBNAYA</span>
-        <p class="body-copy">Reads one photograph locally in the browser on a 32 × 32 grid and constructs one machine portrait. The source photograph is not uploaded.</p>
-        <a class="action-link" href="/instrument-mpa/">OPEN APPARATUS →</a>
+        <p class="body-copy">A photograph is supplied. The apparatus takes one fixed measurement and issues what it read — a portrait, its record, and the marks it was drawn with.</p>
+        <a class="action-link" href="/instrument-mpa-01">OPEN INSTRUMENT →</a>
       </div>
       <div class="figure">
-        <div class="figure-plate object-figure" style="height:280px;">
-          <img src="assets/machine-portrait-synthetic.png" alt="Machine Portrait constructed from a synthetic specimen">
+        <div class="figure-plate" style="height:280px;">
+          <canvas id="cv-plate"></canvas>
         </div>
         <div class="figure-caption">
-          <span class="dim">FIG. 4 — MACHINE PORTRAIT · 32 × 32 MATRIX</span>
-          <span class="note">SYNTHETIC SPECIMEN</span>
+          <span class="dim">FIG. 5 — ONE READING, IN MARKS</span>
+          <span class="note">256 CELLS</span>
         </div>
       </div>
     </div>
@@ -129,6 +129,7 @@
 <script>
   Apparatus.mount(document.getElementById('cv-step'), (S) => Apparatus.buildStepLanes(S));
   Apparatus.mount(document.getElementById('cv-raster'), (S) => Apparatus.buildRaster(S));
+  Apparatus.mount(document.getElementById('cv-plate'), (S) => Apparatus.buildPlate(S));
 </script>
 </body>
 </html>

@@ -234,6 +234,7 @@ p { text-wrap: pretty; }
 .index-row .status { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-align: right; }
 .status-operational { color: var(--blue); }
 .status-observation { color: var(--mid); }
+.status-service { color: var(--blue); }
 
 .index-foot {
   display: flex; justify-content: space-between; align-items: baseline; padding: 26px 0 90px 0;
