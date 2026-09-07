@@ -26,6 +26,7 @@ cp "$source_root/js/apparatus.js" "$target_root/js/apparatus.js"
 cp "$source_root/js/derivation.js" "$target_root/js/derivation.js"
 cp "$source_root/js/geometry.js" "$target_root/js/geometry.js"
 cp "$source_root/js/record.js" "$target_root/js/record.js"
+cp "$source_root/js/turn2.js" "$target_root/js/turn2.js"
 
 # Surface owns public navigation. This is the only overlay applied to the
 # shipped apparatus: the existing visual crumb becomes a link back to the
@@ -47,7 +48,8 @@ cat > "$target_root/SOURCE.json" <<EOF
     "js/apparatus.js",
     "js/derivation.js",
     "js/geometry.js",
-    "js/record.js"
+    "js/record.js",
+    "js/turn2.js"
   ],
   "surfaceOverlay": "index.html: set the public asset base to /instrument-mpa/ and link the existing Instruments crumb to /instruments"
 }

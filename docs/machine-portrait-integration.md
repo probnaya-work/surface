@@ -11,7 +11,7 @@ apparatus implementation. The files in `instrument-mpa/` are a deploy artifact,
 not a separately maintained implementation. Do not edit the copied derivation,
 geometry, record or apparatus state files in `surface`.
 
-The artifact contains only the six runtime files needed by the browser. Its
+The artifact contains only the seven runtime files needed by the browser. Its
 `SOURCE.json` records the exact `objects` commit. The surface-owned HTML overlay
 sets `/instrument-mpa/` as the asset base (so the clean URL and its trailing-
 slash form resolve identically) and turns the shipped `← INSTRUMENTS` crumb into
