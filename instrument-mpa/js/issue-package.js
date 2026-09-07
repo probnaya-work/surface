@@ -79,7 +79,7 @@ export const TYPE = Object.freeze({
   fieldValue:      Object.freeze({ font: "mono",    size: 6,   track: 0.04 }),
   prose:           Object.freeze({ font: "mono",    size: 6,   track: 0.10 }),
   provenanceLabel: Object.freeze({ font: "mono",    size: 5.5, track: 0.14 }),
-  levelKeyLabel:   Object.freeze({ font: "mono",    size: 5.5, track: 0.14 }),
+  levelKeyLabel:   Object.freeze({ font: "mono",    size: 5.5, track: 0.08 }),
   matrixDigit:     Object.freeze({ font: "mono",    size: 7.5, track: 0 }),
   tableIndex:      Object.freeze({ font: "mono",    size: 5,   track: 0 }),
   principalTag:    Object.freeze({ font: "mono",    size: 4.5, track: 0.14 })
@@ -260,9 +260,9 @@ function levelKey() {
       items.push(rect(x, LEVEL_KEY.y, RULE.hair, LEVEL_KEY.swatch, GREY_TYPE));
       items.push(rect(x + LEVEL_KEY.swatch - RULE.hair, LEVEL_KEY.y, RULE.hair, LEVEL_KEY.swatch, GREY_TYPE));
     }
-    // The reference artwork sets these labels in flex columns that widen past
-    // the pitch; REV C freezes 13.5 mm centres, so the label closes up to fit.
-    items.push(text(x, labelBaseline, `L${i} · ${Math.round(LEVEL_TINTS[i] * 100)}%`, TYPE.levelKeyLabel, GREY_TYPE));
+    // 5.5 pt at 0.08 em, not the 0.14 em the provenance labels use: at 0.14 em
+    // `L4 · 100 %` measures 14.36 mm and overruns the frozen 13.5 mm pitch.
+    items.push(text(x, labelBaseline, `L${i} · ${Math.round(LEVEL_TINTS[i] * 100)} %`, TYPE.levelKeyLabel, GREY_TYPE));
   }
   const proseTop = LEVEL_KEY.y + LEVEL_KEY.swatch + LEVEL_KEY.gap + lineBox(TYPE.levelKeyLabel.size) + 7;
   items.push(text(LEVEL_KEY.x, proseTop + capOffset(TYPE.prose.size), RECORD_PROSE, TYPE.prose, GREY_TYPE));
