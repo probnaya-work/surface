@@ -1,13 +1,14 @@
 {
   "source": "probnaya-work/objects/machine-portrait",
-  "commit": "04fe0fed6fe7d976bece5f83f7cf47e8d3faa6e9",
+  "commit": "7c788f0e3d16472536e0cc5397735eea3b0a22e1",
   "runtimeFiles": [
     "index.html",
     "css/apparatus.css",
     "js/apparatus.js",
     "js/derivation.js",
     "js/geometry.js",
-    "js/record.js"
+    "js/record.js",
+    "js/turn2.js"
   ],
   "surfaceOverlay": "index.html: set the public asset base to /instrument-mpa/ and link the existing Instruments crumb to /instruments"
 }

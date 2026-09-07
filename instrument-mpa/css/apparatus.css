@@ -98,8 +98,8 @@ canvas { display: block; }
 .stage { cursor: pointer; }
 .stage:hover, .stage.over { background: var(--hover); }
 .stage-grid { position: absolute; inset: 0; pointer-events: none;
-  background-image: repeating-linear-gradient(to right, rgba(167,171,179,0.4) 0 1px, transparent 1px 3.125%),
-                    repeating-linear-gradient(to bottom, rgba(167,171,179,0.4) 0 1px, transparent 1px 3.125%); }
+  background-image: repeating-linear-gradient(to right, rgba(167,171,179,0.4) 0 1px, transparent 1px 6.25%),
+                    repeating-linear-gradient(to bottom, rgba(167,171,179,0.4) 0 1px, transparent 1px 6.25%); }
 .tick { position: absolute; background: var(--ink); }
 .tick.tl-h { top: 0; left: 0; width: 22px; height: 1px; }   .tick.tl-v { top: 0; left: 0; width: 1px; height: 22px; }
 .tick.tr-h { top: 0; right: 0; width: 22px; height: 1px; }  .tick.tr-v { top: 0; right: 0; width: 1px; height: 22px; }
@@ -139,6 +139,34 @@ canvas { display: block; }
 
 .relation { display: grid; grid-template-columns: auto 1fr; gap: 9px 22px; border-top: 1px solid var(--border); margin-top: 26px; padding-top: 16px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; line-height: 1.6; }
 
+/* ---- registration and inspection ---------------------------------------- */
+.pad56 { padding-top: 56px; }
+.two.pad32 { padding-top: 32px; }
+.pad18 { padding-top: 18px; }
+.gap72 { margin-top: 72px; }
+.gap80 { margin-top: 80px; }
+.narrow { max-width: 46ch; }
+.rule-top { border-top: 1px solid var(--ink); padding-top: 14px; }
+.await.dashed { border-style: dashed; }
+.links { display: flex; flex-wrap: wrap; gap: 20px; align-items: baseline; }
+
+/* A canvas whose own aspect ratio governs the frame, rather than the 1:1 plate frame. */
+.frame.free { aspect-ratio: auto; }
+.frame.free canvas { position: relative; inset: auto; width: 100%; height: auto; }
+.frame.pick { cursor: crosshair; }
+.frame.pad { padding: 52px; box-sizing: border-box; display: flex; justify-content: center; }
+.frame.pad canvas { position: relative; inset: auto; width: 100%; height: auto; align-self: center; }
+.plate-268 { max-width: 268px; }
+.plate-248 { max-width: 248px; }
+
+.reg-now { display: flex; flex-direction: column; gap: 5px; line-height: 1.5; border-bottom: 1px solid var(--blue); padding-bottom: 10px; }
+
+.measured-pair { display: flex; flex-wrap: wrap; gap: 32px; padding-top: 32px; align-items: flex-start; }
+.mp-col { flex: 0 1 300px; min-width: 230px; max-width: 340px; display: flex; flex-direction: column; gap: 10px; }
+.mp-col.wide { flex: 1.15 1 340px; min-width: 270px; max-width: none; }
+
+.verify { max-width: 620px; padding-top: 32px; display: flex; flex-direction: column; gap: 22px; }
+
 .spec-head { padding: 72px 0 12px 0; }
 .link { cursor: pointer; background: none; border: none; padding: 0; margin: 0; font: inherit; }
 .withdraw { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--grey); border-bottom: 1px solid var(--border); padding-bottom: 2px; }
@@ -156,6 +184,7 @@ canvas { display: block; }
 .btn-ink.p19 { padding: 19px 20px; }
 .btn-line { background: none; border: 1px solid var(--ink); color: var(--ink); padding: 19px 20px; }
 .btn-line:hover { border-color: var(--blue); color: var(--blue); }
+.btn:disabled { cursor: not-allowed; background: var(--border); color: var(--grey); }
 .issue-row .btn-ink { flex: 1 1 340px; }
 .hold { border: 1px solid var(--blue); color: var(--blue); padding: 19px 20px; display: flex; justify-content: space-between; align-items: center; gap: 14px; }
 
@@ -183,7 +212,18 @@ canvas { display: block; }
 .issued-head { border-bottom-color: var(--blue); }
 .plate-wrap { display: flex; justify-content: center; padding: 64px 0 0 0; }
 .plate-col { width: 100%; max-width: 620px; display: flex; flex-direction: column; gap: 16px; }
+.plate-col.narrow { max-width: 320px; }
 .plate-col .frame { overflow: visible; }
+
+/* The three issued objects, each shown as its two A4 faces. */
+.objects { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 40px; padding-top: 32px; }
+.object { display: flex; flex-direction: column; gap: 14px; }
+.object-faces { display: flex; gap: 12px; }
+/* A single-face object keeps the sheet at the same scale as a two-face one. */
+.object-faces.single .face { flex: 0 1 calc(50% - 6px); }
+.face { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+.sheet { border: 1px solid var(--border); background: var(--paper); }
+.sheet canvas { width: 100%; height: auto; }
 .plate-cap { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: baseline; }
 .plate-cap .id { font-weight: 400; font-size: 20px; letter-spacing: -0.01em; }
 .record { display: flex; flex-wrap: wrap; gap: 48px; padding-top: 72px; align-items: flex-start; }
@@ -210,6 +250,13 @@ canvas { display: block; }
 
 @media (max-width: 779px) {
   .head-lab { display: none; }
-  .page[data-phase="ready"] .bar, .page[data-phase="acquired"] .bar { display: block; }
-  .page[data-phase="ready"], .page[data-phase="acquired"] { padding-bottom: 56px; }
+  .page:not([data-phase="issued"]) .bar { display: block; }
+  .page:not([data-phase="issued"]) { padding-bottom: 56px; }
+  .frame.pad { padding: 32px; }
+}
+
+@media (max-width: 520px) {
+  .mp-col, .mp-col.wide { flex: 1 1 100%; max-width: none; }
+  .object-faces { flex-wrap: wrap; }
+  .face { flex: 1 1 140px; }
 }

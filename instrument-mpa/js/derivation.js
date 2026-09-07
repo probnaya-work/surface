@@ -1,8 +1,12 @@
-// PROB–MPA–01 · DERIVATION
+// PROB–MPA–01 · HISTORICAL 32 × 32 DERIVATION (RETIRED)
 //
-// The source derivation of the Machine Portrait Apparatus. Pure functions over
-// typed arrays; no DOM, no canvas, no clock, no randomness. The same decoded
-// pixels through the same DERIVATION_VERSION yield the same 32 × 32 band matrix.
+// Retained as research source and regression coverage. This module is not
+// imported by the active apparatus or issued-object record. Canonical MPA-01
+// generation is TURN 2 in turn2.js.
+//
+// This historical implementation is pure over typed arrays; no DOM, canvas,
+// clock or randomness. The same decoded pixels through its version yield the
+// same 32 × 32 band matrix.
 //
 //   decoded pixels (RGBA, 8-bit, sRGB)
 //     → locked square crop

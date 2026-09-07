@@ -1,10 +1,11 @@
-// PROB–MPA–01 · VISUAL DERIVATION
+// PROB–MPA–01 · HISTORICAL THREE-DERIVATION GEOMETRY (RETIRED)
 //
-// Three deterministic geometries render one integer band into one cell. All
-// three read the same matrix; only the closed-form mark differs. Every mark is
-// inset by a gutter (factor 0.82) so cells at the same band stay discrete.
-// FIELD swaps two colours and nothing else. The registration cell is a fixed
-// address, not a source-derived observation.
+// Retained as research source and regression coverage. This module is not
+// imported by the active apparatus or issued-object record. Canonical TURN 2
+// marks, including full-cell 2C level 4, live in turn2.js.
+//
+// In the historical system three deterministic geometries rendered one integer
+// band into one cell. All read the same 32 × 32 matrix and used a 0.82 gutter.
 
 export const PAPER = "#EFF0F2";
 export const INK = "#16181C";

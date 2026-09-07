@@ -1,14 +1,16 @@
 // PROB–MPA–01 · ISSUED OBJECT RECORD
 //
-// The canonical data of an issued Machine Portrait: enough to re-render every
-// representation without the source photograph. The record travels inside the
-// saved PNG as a text chunk, so the plate carries its own derivation data.
+// The canonical TURN 2 data of an issued Machine Portrait: both 16 × 16
+// matrices and enough provenance to re-render the portrait and all marks
+// without the source photograph. The record travels inside the saved PNG.
 //
-//   SOURCE → DERIVATION → AUTHORITATIVE MATRIX → SELECTED PARAMETERS
-//   → ISSUED OBJECT RECORD → DERIVED REPRESENTATIONS
+//   SOURCE + PUPILS → REGISTERED READ → MEASURED / RECONSTRUCTED MATRICES
+//   → ISSUED OBJECT RECORD → PORTRAIT / RECORD / MARKS
 
-import { DERIVATION_VERSION } from "./derivation.js";
-import { REGISTRATION } from "./geometry.js";
+import {
+  TURN2_DERIVATION_VERSION, TURN2_EYE_Y, TURN2_INTERNAL_SIZE, TURN2_MARKS,
+  TURN2_N, TURN2_REGISTRATION, TURN2_WINDOW_IPD
+} from "./turn2.js";
 
 export const APPARATUS = "PROB-MPA-01";
 export const OBJECT_TYPE = "MACHINE PORTRAIT";
@@ -26,7 +28,7 @@ export function stampDate(date) {
   return date.toISOString().slice(0, 10).replace(/-/g, ".");
 }
 
-// The matrix as a string of 1024 band digits, row-major. Exact and compact.
+// A matrix as row-major level digits. Exact and compact.
 export function matrixString(bands) {
   let s = "";
   for (let i = 0; i < bands.length; i++) s += bands[i];
@@ -55,27 +57,74 @@ export function canonicalJson(value) {
   throw new Error("unsupported canonical value");
 }
 
-export function buildDraft({ derivation, field, sourceHash, sourceType, result }) {
+export function buildDraft({ sourceHash, sourceType, pupils, result }) {
+  const measured = result.framings.asread;
+  const reconstructed = result.framings.anfas;
   return {
     object: OBJECT_TYPE,
     apparatus: APPARATUS,
     issuanceProtocol: ISSUANCE_PROTOCOL,
-    derivationVersion: DERIVATION_VERSION,
+    derivationVersion: TURN2_DERIVATION_VERSION,
+    generator: {
+      protocol: "TURN 2",
+      deterministic: true,
+      historicalPixelReaderRecovered: false
+    },
     source: {
       sha256: sourceHash,
       mediaType: sourceType,
-      width: result.source.width,
-      height: result.source.height,
+      width: result.geometry.width,
+      height: result.geometry.height,
       retained: false
     },
-    crop: { x: result.crop.x, y: result.crop.y, side: result.crop.side },
-    lattice: { n: result.n, cells: result.n * result.n },
-    bands: 5,
-    clip: { percentiles: [2, 98], lo: result.clip.lo, hi: result.clip.hi },
-    matrix: matrixString(result.bands),
-    population: Array.from(result.population),
-    parameters: { derivation, field, registration: [REGISTRATION.c, REGISTRATION.r] },
-    representations: { web: "1024 PX PNG" }
+    registration: {
+      pupils: {
+        subjectRight: [pupils.rx, pupils.ry],
+        subjectLeft: [pupils.lx, pupils.ly]
+      },
+      ipdPixels: result.geometry.ipd,
+      angleRadians: result.geometry.angle,
+      window: {
+        sidePixels: result.geometry.windowSide,
+        ipdMultiplier: TURN2_WINDOW_IPD,
+        eyeLine: TURN2_EYE_Y,
+        internalSize: TURN2_INTERNAL_SIZE
+      },
+      cell: [TURN2_REGISTRATION.c, TURN2_REGISTRATION.r]
+    },
+    lattice: { n: TURN2_N, cells: TURN2_N * TURN2_N },
+    levels: { count: 5, lightest: 0, darkest: 4 },
+    ranking: { populations: [52, 51, 51, 51, 51], tieBreak: "STABLE ROW-MAJOR" },
+    matrices: {
+      measured: {
+        name: "MEASURED",
+        framing: "AS-READ",
+        matrix: matrixString(measured.levels),
+        population: Array.from(measured.population)
+      },
+      reconstructed: {
+        name: "RECONSTRUCTED",
+        framing: "ANFAS",
+        transform: "MIRROR-AVERAGE EACH CELL WITH COLUMN 15-c BEFORE RANKING",
+        matrix: matrixString(reconstructed.levels),
+        population: Array.from(reconstructed.population)
+      }
+    },
+    issueModel: {
+      issuedObjects: ["PORTRAIT", "RECORD", "MARKS"],
+      portrait: { mark: "2C CONCENTRIC", recto: "MEASURED", verso: "RECONSTRUCTED" },
+      record: "BOTH CANONICAL 16 × 16 MATRICES + METADATA + PROVENANCE",
+      marks: { ids: TURN2_MARKS.map(mark => mark.id), sides: ["MEASURED", "RECONSTRUCTED"] },
+      packagingIsIssuedObject: false
+    },
+    reading: {
+      decode: "BROWSER-DECODED EXIF-ORIENTED sRGB",
+      registration: "FIXED 1024 × 1024 CANVAS · HIGH-QUALITY CANVAS 2D RESAMPLE",
+      luminance: "LINEARIZED sRGB → REC.709 RELATIVE LUMINANCE",
+      statistic: "ONE ROW-MAJOR MEAN PER 64 × 64 CELL",
+      provenance: "DETERMINISTIC PRODUCTION CHOICE · NOT HISTORICALLY PROVEN"
+    },
+    representations: { web: "1024 PX PNG · MEASURED RECTO · FULL RECORD EMBEDDED" }
   };
 }
 
@@ -90,13 +139,14 @@ export function buildRecord({ draft, draftHash, issueDigest, issuedAt }) {
     draftHash,
     derivationVersion: draft.derivationVersion,
     source: draft.source,
-    crop: draft.crop,
+    generator: draft.generator,
     lattice: draft.lattice,
-    bands: draft.bands,
-    clip: draft.clip,
-    matrix: draft.matrix,
-    population: draft.population,
-    parameters: draft.parameters,
+    levels: draft.levels,
+    registration: draft.registration,
+    ranking: draft.ranking,
+    matrices: draft.matrices,
+    issueModel: draft.issueModel,
+    reading: draft.reading,
     representations: draft.representations
   };
 }
