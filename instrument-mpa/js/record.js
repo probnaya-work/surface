@@ -151,7 +151,9 @@ export function buildRecord({ draft, draftHash, issueDigest, issuedAt }) {
   };
 }
 
-// ---- PNG text chunk ----------------------------------------------------------
+// ---- PNG chunks --------------------------------------------------------------
+
+const PNG_SIG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 const CRC_TABLE = (() => {
   const t = new Uint32Array(256);
@@ -169,12 +171,24 @@ export function crc32(bytes) {
   return (c ^ 0xffffffff) >>> 0;
 }
 
-const PNG_SIG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
-
 function latin1(str) {
   const out = new Uint8Array(str.length);
   for (let i = 0; i < str.length; i++) out[i] = str.charCodeAt(i) & 0xff;
   return out;
+}
+
+// One PNG chunk: length, type, data, CRC over type and data.
+export function pngChunk(typeName, data) {
+  const type = latin1(typeName);
+  const chunk = new Uint8Array(4 + 4 + data.length + 4);
+  const view = new DataView(chunk.buffer);
+  view.setUint32(0, data.length);
+  chunk.set(type, 4);
+  chunk.set(data, 8);
+  const crcInput = new Uint8Array(4 + data.length);
+  crcInput.set(type, 0); crcInput.set(data, 4);
+  view.setUint32(8 + data.length, crc32(crcInput));
+  return chunk;
 }
 
 // A PNG iTXt chunk (UTF-8 text) carrying `text` under `keyword`.
@@ -187,16 +201,35 @@ export function textChunk(keyword, text) {
   data.set(key, p); p += key.length;
   data[p++] = 0; data[p++] = 0; data[p++] = 0; data[p++] = 0; data[p++] = 0;
   data.set(body, p);
-  const type = latin1("iTXt");
-  const chunk = new Uint8Array(4 + 4 + data.length + 4);
-  const view = new DataView(chunk.buffer);
-  view.setUint32(0, data.length);
-  chunk.set(type, 4);
-  chunk.set(data, 8);
-  const crcInput = new Uint8Array(4 + data.length);
-  crcInput.set(type, 0); crcInput.set(data, 4);
-  view.setUint32(8 + data.length, crc32(crcInput));
-  return chunk;
+  return pngChunk("iTXt", data);
+}
+
+// A pHYs chunk declaring the intended physical resolution in pixels per metre.
+// It carries no record and no internal data: it is what lets a printed sheet
+// place at 100 % and measure exactly.
+export function physChunk(pixelsPerMetre) {
+  if (!Number.isInteger(pixelsPerMetre) || pixelsPerMetre <= 0) throw new Error("pHYs needs whole pixels per metre");
+  const data = new Uint8Array(9);
+  const view = new DataView(data.buffer);
+  view.setUint32(0, pixelsPerMetre);
+  view.setUint32(4, pixelsPerMetre);
+  data[8] = 1; // unit specifier: the metre
+  return pngChunk("pHYs", data);
+}
+
+// Insert a chunk directly after IHDR, which is where pHYs belongs.
+export function insertPngChunkAfterIHDR(pngBytes, chunk) {
+  for (let i = 0; i < 8; i++) if (pngBytes[i] !== PNG_SIG[i]) throw new Error("not a PNG");
+  const view = new DataView(pngBytes.buffer, pngBytes.byteOffset, pngBytes.byteLength);
+  const headerLength = view.getUint32(8);
+  const type = String.fromCharCode(...pngBytes.subarray(12, 16));
+  if (type !== "IHDR") throw new Error("PNG does not begin with IHDR");
+  const at = 8 + 12 + headerLength;
+  const out = new Uint8Array(pngBytes.length + chunk.length);
+  out.set(pngBytes.subarray(0, at), 0);
+  out.set(chunk, at);
+  out.set(pngBytes.subarray(at), at + chunk.length);
+  return out;
 }
 
 // Insert a text chunk before IEND. Returns a new byte array; the image data is untouched.

@@ -11,8 +11,10 @@
 // and attempt id.
 //
 // The issue is digital. PORTRAIT / RECORD / MARKS are shown as the three A4
-// faces of the printable issue package; the apparatus neither prints nor posts
-// them, and production package assembly is separate infrastructure.
+// faces of the frozen REV C issue package, drawn from the shared display lists
+// in issue-package.js so the preview and the archive sheets are the same
+// artwork. After verification the whole issue leaves as one archive. The
+// apparatus neither prints nor posts anything.
 
 import {
   TURN2_BLUE, TURN2_CELLS, TURN2_DERIVATION_VERSION, TURN2_INK,
@@ -21,11 +23,13 @@ import {
   registerAndRead, registrationCell as turn2RegistrationCell, renderTurn2Plate
 } from "./turn2.js";
 import {
-  ISSUANCE_PROTOCOL, buildDraft, buildRecord, canonicalJson, embedRecord,
+  ISSUANCE_PROTOCOL, buildDraft, buildRecord, canonicalJson,
   issueId, parseMatrix, stampDate
 } from "./record.js";
+import { issueView, issuedFaces } from "./issue-package.js";
+import { drawFace } from "./issue-render.js";
+import { buildArchive, recordJson } from "./archive.js";
 
-const OUTPUT_PX = 1024;
 const PRINCIPAL_MARK = "2c";
 
 // Which canonical framings production presents. RECONSTRUCTED / ANFAS is a
@@ -39,13 +43,9 @@ const PENDING_KEY = "prob-mpa-pending-issuance-turn2-v1";
 const PENDING_TTL_MS = 24 * 60 * 60 * 1000;
 const EXPECTED_POPULATION = [52, 51, 51, 51, 51];
 
-// A4 proportion at the resolution the issued faces are previewed with.
-const SHEET_W = 630, SHEET_H = 891, SHEET_M = 58;
-
-// Canvas cannot resolve CSS custom properties. The two secondary rules of the
-// composed faces are the canonical TURN 2 ramp, not separate colour values.
+// Canvas cannot resolve CSS custom properties. The secondary rule of the source
+// panels is the canonical TURN 2 ramp, not a separate colour value.
 const TURN2_BORDER = TURN2_RAMP[1];
-const TURN2_GREY = TURN2_RAMP[3];
 
 const MARK_NOTES = {
   "2a": "FLAT CELL · TONE = LEVEL",
@@ -89,15 +89,6 @@ function divergence() {
   let count = 0;
   for (let i = 0; i < TURN2_CELLS; i++) if (measured[i] !== reconstructed[i]) count++;
   return count;
-}
-
-// Every representation is rendered from a canonical matrix, never by scaling a
-// plate bitmap. This is the offscreen surface the composed A4 faces draw from.
-function plateCanvas(levels, markId, pixels) {
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = pixels;
-  renderTurn2Plate(canvas.getContext("2d"), pixels, levels, markId);
-  return canvas;
 }
 
 // ---- source presentation and manual pupil registration ----------------------
@@ -571,134 +562,14 @@ function completeIssue(draft, commitment, identity, issuedAt) {
 
 // ---- issued object faces ----------------------------------------------------
 
+// The three printed faces are no longer composed here. issue-package.js holds
+// the frozen REV C geometry as display lists and issue-render.js draws them, so
+// this preview and the archive sheets can never drift apart.
+
 function monoFont(ctx, size, colour, spacing = 1.4) {
   ctx.font = '500 ' + size + 'px "Geist Mono", ui-monospace, Menlo, monospace';
   ctx.fillStyle = colour;
   if ("letterSpacing" in ctx) ctx.letterSpacing = spacing + "px";
-}
-
-function sheet(canvas, draw) {
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.fillStyle = TURN2_PAPER;
-  ctx.fillRect(0, 0, SHEET_W, SHEET_H);
-  ctx.textBaseline = "alphabetic";
-  draw(ctx);
-}
-
-function sheetChrome(ctx, left, right, foot) {
-  monoFont(ctx, 9.5, TURN2_INK, 1.7);
-  ctx.fillText(left, SHEET_M, SHEET_M + 8);
-  monoFont(ctx, 9.5, TURN2_GREY, 1.7);
-  ctx.fillText(right, SHEET_W - SHEET_M - ctx.measureText(right).width, SHEET_M + 8);
-  ctx.fillStyle = TURN2_INK;
-  ctx.fillRect(SHEET_M, SHEET_M + 20, SHEET_W - 2 * SHEET_M, 1);
-  ctx.fillStyle = TURN2_BORDER;
-  ctx.fillRect(SHEET_M, SHEET_H - SHEET_M - 22, SHEET_W - 2 * SHEET_M, 1);
-  monoFont(ctx, 8, TURN2_GREY, 1.3);
-  ctx.fillText(foot, SHEET_M, SHEET_H - SHEET_M - 8);
-}
-
-function runId() {
-  return state.run ? state.run.id : "MPA–01";
-}
-
-function portraitFace(canvas, framing) {
-  const label = framingLabel(framing);
-  sheet(canvas, ctx => {
-    sheetChrome(ctx, "PORTRAIT · " + label, runId(), "PROBNAYA · MPA–01 · MACHINE PORTRAIT");
-    const side = 290;
-    const x = Math.round((SHEET_W - side) / 2), top = 262;
-    ctx.drawImage(plateCanvas(levelsOf(framing), PRINCIPAL_MARK, OUTPUT_PX), x, top, side, side);
-    monoFont(ctx, 8, TURN2_GREY, 1.3);
-    ctx.fillText("CONCENTRIC", x, top + side + 26);
-    const meta = "4.2 × IPD · EYE LINE 0.40 H";
-    ctx.fillText(meta, x + side - ctx.measureText(meta).width, top + side + 26);
-    ctx.fillStyle = TURN2_BORDER;
-    ctx.fillRect(x, top + side + 36, side, 1);
-    monoFont(ctx, 8, TURN2_GREY, 1.3);
-    ctx.fillText(label, x, top + side + 54);
-  });
-}
-
-function matrixBlock(ctx, levels, x, y, title, columnWidth) {
-  monoFont(ctx, 8, TURN2_BLUE, 1.4);
-  ctx.fillText(title, x, y);
-  ctx.fillStyle = TURN2_BORDER;
-  ctx.fillRect(x, y + 8, columnWidth, 1);
-  monoFont(ctx, 8, TURN2_INK, 0);
-  const step = columnWidth / TURN2_N;
-  for (let r = 0; r < TURN2_N; r++) {
-    for (let c = 0; c < TURN2_N; c++) ctx.fillText(String(levels[r * TURN2_N + c]), x + c * step, y + 26 + r * 14);
-  }
-}
-
-// RECORD is one printed face. Both matrices and the provenance that interprets
-// them share it, so the issue is five faces across three objects.
-function recordFace(canvas) {
-  sheet(canvas, ctx => {
-    sheetChrome(ctx, "RECORD · MATRICES AND PROVENANCE", runId(), "TWO FRAMINGS OF ONE MEASUREMENT · MACHINE RECORD, NOT A LIKENESS");
-    const columnWidth = 210, top = SHEET_M + 72;
-    if (framingPublic("anfas")) {
-      matrixBlock(ctx, levelsOf("asread"), SHEET_M, top, "MEASURED", columnWidth);
-      matrixBlock(ctx, levelsOf("anfas"), SHEET_W - SHEET_M - columnWidth, top, "RECONSTRUCTED", columnWidth);
-    } else {
-      matrixBlock(ctx, levelsOf("asread"), Math.round((SHEET_W - columnWidth) / 2), top, "MEASURED", columnWidth);
-    }
-    ctx.fillStyle = TURN2_BORDER;
-    ctx.fillRect(SHEET_M, 384, SHEET_W - 2 * SHEET_M, 1);
-    const rows = [
-      ["ISSUE", runId()],
-      ["APPARATUS", "MPA–01 · MACHINE PORTRAIT APPARATUS"],
-      ["ISSUED", state.run ? state.run.issued : "—"],
-      ["SOURCE", "ONE PHOTOGRAPH · READ, DERIVED FROM, DISCARDED"],
-      ["REGISTRATION", "HUMAN · BOTH PUPILS MARKED ON THE PHOTOGRAPH"],
-      ["WINDOW", "4.2 × IPD · SQUARE"],
-      ["EYE LINE", "0.40 H"],
-      ["GRID", "16 × 16 · 256 READINGS"],
-      ["LEVELS", "5 · RANK QUANTISED · NEAR-EQUAL"],
-      ["POPULATIONS", populationOf("asread")],
-      ...(framingPublic("anfas")
-        ? [["DIVERGENCE", divergence() + " OF 256 CELLS"], ["FRAMINGS", "MEASURED · RECONSTRUCTED"]]
-        : [["FRAMING", "MEASURED"]]),
-      ["PRINCIPAL MARK", "CONCENTRIC"],
-      ["MARKS", "08 · COMPLETE SET"],
-      ["REGISTER", `POINT [${TURN2_REGISTRATION.c}, ${TURN2_REGISTRATION.r}] · ONE SIGNAL REGISTER`],
-      ["OBJECTS", "PORTRAIT · RECORD · MARKS"],
-      ["DELIVERY", "DIGITAL · PRINTABLE BY THE HOLDER"],
-      ["DETERMINISM", "SAME PHOTOGRAPH, SAME REGISTRATION, SAME RECORD"]
-    ];
-    rows.forEach((row, index) => {
-      const y = 402 + index * 18;
-      monoFont(ctx, 8, TURN2_GREY, 1.3); ctx.fillText(row[0], SHEET_M, y);
-      monoFont(ctx, 8, TURN2_INK, 1.3); ctx.fillText(row[1], SHEET_M + 136, y);
-      ctx.fillStyle = TURN2_BORDER;
-      ctx.fillRect(SHEET_M, y + 7, SHEET_W - 2 * SHEET_M, 1);
-    });
-    monoFont(ctx, 8, TURN2_GREY, 1.3);
-    ctx.fillText("THE PORTRAIT IS A DERIVATIVE OF ONE PHOTOGRAPH,", SHEET_M, SHEET_H - SHEET_M - 62);
-    ctx.fillText("NOT A PICTURE OF A PERSON.", SHEET_M, SHEET_H - SHEET_M - 48);
-  });
-}
-
-function marksFace(canvas, framing) {
-  const label = framingLabel(framing);
-  sheet(canvas, ctx => {
-    sheetChrome(ctx, "MARKS · " + label, runId(), "EIGHT MARKS · ONE MEASUREMENT · NO MARK HOLDS INFORMATION THE OTHERS LACK");
-    const columns = 3, gap = 22;
-    const side = Math.floor((SHEET_W - 2 * SHEET_M - gap * (columns - 1)) / columns);
-    TURN2_MARKS.forEach((mark, index) => {
-      const x = SHEET_M + (index % columns) * (side + gap);
-      const y = 150 + Math.floor(index / columns) * (side + 34);
-      ctx.drawImage(plateCanvas(levelsOf(framing), mark.id, 512), x, y, side, side);
-      ctx.strokeStyle = TURN2_BORDER;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(x + 0.5, y + 0.5, side - 1, side - 1);
-      monoFont(ctx, 8, mark.id === PRINCIPAL_MARK ? TURN2_BLUE : TURN2_GREY, 1.3);
-      ctx.fillText(mark.name, x, y + side + 14);
-    });
-  });
 }
 
 // ---- export -----------------------------------------------------------------
@@ -712,22 +583,36 @@ function download(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
-// The current web export remains one record-bearing PNG of the principal
-// portrait recto. The embedded canonical record contains both matrices and the
-// complete PORTRAIT / RECORD / MARKS issue model; production package assembly
-// is separate.
-async function save() {
-  if (!state.run || !state.result) return;
-  const blob = await new Promise(resolve => plateCanvas(levelsOf("asread"), PRINCIPAL_MARK, OUTPUT_PX).toBlob(resolve, "image/png"));
-  const png = new Uint8Array(await blob.arrayBuffer());
-  const output = embedRecord(png, state.run.record);
-  download(new Blob([output], { type: "image/png" }), `${state.run.id.replace(/–/g, "-")}_portrait_concentric_measured_recto_${OUTPUT_PX}.png`);
-  clearPending();
+// The issued material leaves as one archive: the canonical record, the nine
+// standalone masters, the three printed faces and the wrapper front. It exists
+// only after a verified issuance, and no image in it carries metadata.
+let archiving = false;
+
+async function downloadArchive() {
+  if (!state.run || archiving) return;
+  archiving = true;
+  const button = $("#downloadArchive");
+  button.disabled = true;
+  try {
+    const archive = await buildArchive(state.run.record, (done, total) => {
+      setText("archiveState", String(done).padStart(2, "0") + " / " + String(total).padStart(2, "0"));
+    });
+    download(new Blob([archive.bytes], { type: "application/zip" }), archive.filename);
+    setText("archiveState", "ZIP \u2193");
+    clearPending();
+  } catch (error) {
+    setText("archiveState", "NOT BUILT");
+    console.error(error);
+  } finally {
+    archiving = false;
+    button.disabled = false;
+  }
 }
 
+// The same bytes the archive carries, offered on their own.
 function saveRecord() {
   if (!state.run) return;
-  download(new Blob([JSON.stringify(state.run.record, null, 2)], { type: "application/json" }), `${state.run.id.replace(/–/g, "-")}_record.json`);
+  download(new Blob([recordJson(state.run.record)], { type: "application/json" }), `${state.run.id.replace(/–/g, "-")}_record.json`);
 }
 
 // ---- mark strip -------------------------------------------------------------
@@ -871,12 +756,13 @@ function renderIssued() {
   setText("barLeft", "ISSUE COMPLETE · PAID");
   const done = $("#donePlate");
   renderTurn2Plate(done.getContext("2d"), done.width, levelsOf("asread"), PRINCIPAL_MARK);
-  portraitFace($("#sheetPortraitA"), "asread");
-  recordFace($("#sheetRecord"));
-  marksFace($("#sheetMarksA"), "asread");
-  if (!framingPublic("anfas")) return;
-  portraitFace($("#sheetPortraitB"), "anfas");
-  marksFace($("#sheetMarksB"), "anfas");
+  const [portrait, record, marks] = issuedFaces(issueView(state.run.record));
+  drawFace($("#sheetPortraitA"), portrait);
+  drawFace($("#sheetRecord"), record);
+  drawFace($("#sheetMarksA"), marks);
+  // REV C issues one face per object, so there is no verso artwork to draw. The
+  // gated verso markup stays in the document, but re-exposing a second framing
+  // now needs a package revision, not only a wider PUBLIC_FRAMINGS.
 }
 
 function renderPhase() {
@@ -981,7 +867,7 @@ $("#cancelIssue").addEventListener("click", () => { if (state.phase === "checkou
 $("#retryVerify").addEventListener("click", () => {
   if (state.phase === "verifying") verifyIssuance(readPending(), state.session);
 });
-$("#save").addEventListener("click", save);
+$("#downloadArchive").addEventListener("click", downloadArchive);
 $("#saveRecord").addEventListener("click", saveRecord);
 $("#again").addEventListener("click", () => { withdraw(); window.scrollTo(0, 0); });
 
