@@ -20,6 +20,9 @@
   --bottom-nav-h: 54px;
 }
 
+h1.eyebrow { margin: 0; font-weight: inherit; }
+h1.num { margin: 0; }
+
 * { box-sizing: border-box; }
 
 html, body { margin: 0; padding: 0; background: var(--paper); }

@@ -4,10 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title id="page-title">Record — PROBNAYA</title>
+<meta id="page-description" name="description" content="A disclosed record from the PROBNAYA register of investigations.">
 <link rel="icon" type="image/svg+xml" href="assets/probnaya-mark.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" href="assets/favicon-180.png">
+<meta property="og:type" content="article">
+<meta id="og-url" property="og:url" content="https://probnaya.work/record">
+<meta property="og:site_name" content="PROBNAYA">
+<meta id="og-title" property="og:title" content="Record — PROBNAYA">
+<meta id="og-description" property="og:description" content="A disclosed record from the PROBNAYA register of investigations.">
+<meta property="og:image" content="https://probnaya.work/assets/og-1200x630.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta id="twitter-title" name="twitter:title" content="Record — PROBNAYA">
+<meta id="twitter-description" name="twitter:description" content="A disclosed record from the PROBNAYA register of investigations.">
+<meta name="twitter:image" content="https://probnaya.work/assets/og-1200x630.png">
+<script id="record-schema" type="application/ld+json"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -35,18 +49,18 @@
   <span class="crumb">REG / REC</span>
 </header>
 
-<div class="main">
+<main class="main">
   <div class="page detail">
     <a class="back-link" href="/investigations">← INVESTIGATIONS</a>
 
     <div class="split-title" style="align-items:baseline;">
-      <span class="eyebrow" id="rec-id" style="font-size:11px;">RECORD</span>
+      <h1 class="eyebrow" id="rec-id" style="margin:0;font-size:11px;font-weight:400;">RECORD</h1>
       <span class="eyebrow-meta" id="rec-status"></span>
     </div>
 
     <div id="rec-body"></div>
   </div>
-</div>
+</main>
 
 <footer class="site-footer">
   <a href="/lab">PROBNAYA · WHAT THIS LABORATORY IS →</a>
@@ -68,7 +82,34 @@
   const wanted = params.get('id');
   const rec = RECORDS.find(r => r.id === wanted) || RECORDS.find(r => !r.withheld) || RECORDS[0];
 
-  document.getElementById('page-title').textContent = `Record ${rec.id} — PROBNAYA`;
+  const canonicalUrl = `https://probnaya.work/record?id=${encodeURIComponent(rec.id)}`;
+  const pageTitle = `Record ${rec.id}: ${rec.title || rec.status} — PROBNAYA`;
+  const pageDescription = rec.withheld
+    ? `Record ${rec.id} is withheld in the PROBNAYA register of investigations.`
+    : `${rec.title}. Question: ${rec.question}`;
+
+  document.getElementById('page-title').textContent = pageTitle;
+  document.getElementById('page-description').content = pageDescription;
+  document.getElementById('og-url').content = canonicalUrl;
+  document.getElementById('og-title').content = pageTitle;
+  document.getElementById('og-description').content = pageDescription;
+  document.getElementById('twitter-title').content = pageTitle;
+  document.getElementById('twitter-description').content = pageDescription;
+  const canonical = document.createElement('link');
+  canonical.rel = 'canonical';
+  canonical.href = canonicalUrl;
+  document.head.appendChild(canonical);
+  document.getElementById('record-schema').textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CreativeWork',
+    '@id': `${canonicalUrl}#record`,
+    url: canonicalUrl,
+    name: rec.title ? `Record ${rec.id}: ${rec.title}` : `Record ${rec.id}`,
+    description: pageDescription,
+    isPartOf: { '@id': 'https://probnaya.work/investigations#page' },
+    creator: { '@id': 'https://probnaya.work/#laboratory', '@type': 'Organization', name: 'PROBNAYA' },
+    publisher: { '@id': 'https://probnaya.work/#laboratory' }
+  });
   document.getElementById('rec-id').textContent = `RECORD ${rec.id}`;
   document.getElementById('rec-status').textContent = rec.status;
 

@@ -14,6 +14,8 @@
   --mono: "Geist Mono", ui-monospace, Menlo, monospace;
 }
 
+h1.title { margin: 0; }
+
 html, body { margin: 0; padding: 0; background: var(--paper); }
 body { color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
 ::selection { background: var(--blue); color: var(--paper); }

@@ -9,9 +9,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" href="assets/favicon-180.png">
-<link rel="canonical" href="https://probnaya.work">
+<link rel="canonical" href="https://probnaya.work/">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://probnaya.work">
+<meta property="og:url" content="https://probnaya.work/">
+<meta property="og:site_name" content="PROBNAYA">
 <meta property="og:title" content="PROBNAYA — Independent Computational Laboratory">
 <meta property="og:description" content="An independent computational laboratory. Instruments, investigations, and experimental systems.">
 <meta property="og:image" content="https://probnaya.work/assets/og-1200x630.png">
@@ -21,6 +22,28 @@
 <meta name="twitter:title" content="PROBNAYA — Independent Computational Laboratory">
 <meta name="twitter:description" content="An independent computational laboratory. Instruments, investigations, and experimental systems.">
 <meta name="twitter:image" content="https://probnaya.work/assets/og-1200x630.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://probnaya.work/#laboratory",
+      "name": "PROBNAYA",
+      "url": "https://probnaya.work/",
+      "description": "An independent computational laboratory publishing instruments, investigations, and experimental systems.",
+      "logo": "https://probnaya.work/assets/probnaya-mark.svg"
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://probnaya.work/#website",
+      "name": "PROBNAYA",
+      "url": "https://probnaya.work/",
+      "publisher": { "@id": "https://probnaya.work/#laboratory" }
+    }
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -48,7 +71,7 @@
   <span class="crumb">IDX</span>
 </header>
 
-<div class="main">
+<main class="main">
 
   <div class="hero" id="hero">
     <canvas id="trace-canvas"></canvas>
@@ -99,7 +122,7 @@
     </div>
   </div>
 
-</div>
+</main>
 
 <footer class="site-footer">
   <a href="/lab">PROBNAYA · WHAT THIS LABORATORY IS →</a>
