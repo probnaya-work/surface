@@ -29,6 +29,9 @@ import {
 import { issueView, issuedFaces } from "./issue-package.js";
 import { drawFace } from "./issue-render.js";
 import { buildArchive, recordJson } from "./archive.js";
+import {
+  sourceDimensionRejection, sourceDimensionsAdmissible, sourceFileRejection
+} from "./source-input.js";
 
 const PRINCIPAL_MARK = "2c";
 
@@ -291,10 +294,12 @@ async function sha256Hex(buffer) {
 }
 
 function admissible(width, height) {
-  return Math.min(width, height) >= 512;
+  return sourceDimensionsAdmissible(width, height);
 }
 
 async function readSpecimen(file) {
+  const fileRejection = sourceFileRejection(file);
+  if (fileRejection) return { rejected: fileRejection };
   const bytes = await file.arrayBuffer();
   const hash = await sha256Hex(bytes);
   const source = await createImageBitmap(new Blob([bytes], { type: file.type }), {
@@ -302,8 +307,8 @@ async function readSpecimen(file) {
     colorSpaceConversion: "none",
     premultiplyAlpha: "none"
   });
-  if (!admissible(source.width, source.height)) {
-    const rejected = `${source.width} × ${source.height} PX · 512 PX MINIMUM`;
+  const rejected = sourceDimensionRejection(source.width, source.height);
+  if (rejected) {
     source.close();
     return { rejected };
   }
@@ -318,8 +323,9 @@ function setStageNote(message, blue = false) {
 
 async function mount(file) {
   if (!file) return;
-  if (!/^image\//.test(file.type)) {
-    setStageNote("NOT ADMITTED · NOT AN IMAGE FILE", true);
+  const fileRejection = sourceFileRejection(file);
+  if (fileRejection) {
+    setStageNote("NOT ADMITTED · " + fileRejection, true);
     return;
   }
   setStageNote("DECODING", true);

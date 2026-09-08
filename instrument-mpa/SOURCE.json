@@ -1,16 +1,15 @@
 {
   "source": "probnaya-work/objects/machine-portrait",
-  "commit": "7cf45be583e1359d42f63acb43732e1005b3b363",
+  "commit": "1e54b4ba665d76ebfe5bf940e8f1beafd8d4fa14",
   "runtimeFiles": [
     "index.html",
     "css/apparatus.css",
     "js/apparatus.js",
     "js/archive.js",
-    "js/derivation.js",
-    "js/geometry.js",
     "js/issue-package.js",
     "js/issue-render.js",
     "js/record.js",
+    "js/source-input.js",
     "js/turn2.js",
     "js/zip.js"
   ],
