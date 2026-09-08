@@ -223,28 +223,74 @@ p { text-wrap: pretty; }
 .hero-note span:last-child { color: var(--faint); }
 .hero-note.mobile-fig { display: none; }
 
-.index-list { max-width: 1120px; margin: 0 auto; padding: 0 40px; }
-.index-row {
-  display: grid; grid-template-columns: 120px 1fr 150px; gap: 28px; align-items: baseline;
-  padding: 26px 0; border-bottom: 1px solid var(--border); cursor: pointer;
-}
-.index-row:hover { background: var(--hover-bg); }
-.index-row .id { font-weight: 500; font-size: 26px; }
-.index-row .desc { font-weight: 300; font-size: 17px; color: var(--body-text); }
-.index-row .status { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-align: right; }
 .status-operational { color: var(--blue); }
 .status-observation { color: var(--mid); }
 .status-service { color: var(--blue); }
 
-.index-foot {
-  display: flex; justify-content: space-between; align-items: baseline; padding: 26px 0 90px 0;
+/* ---------- register of condition (index) ----------
+   Rows are built by js/register.js and ordered by access, so nothing here may
+   assume a fixed number of rows or a fixed order. */
+
+.register-of-condition { max-width: 1120px; margin: 0 auto; padding: 0 40px; }
+.register-of-condition .eyebrow-row { padding: 56px 0 11px 0; flex-wrap: wrap; gap: 8px 24px; }
+
+.register-row { border-bottom: 1px solid var(--border); }
+
+.register-head {
+  display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center;
+  width: 100%; padding: 24px 0; cursor: pointer; text-align: left;
+  border: none; background: none; color: inherit;
 }
-.index-foot .count {
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--faint); cursor: pointer;
+.register-head:hover { background: var(--hover-bg); }
+.register-head .id { flex: 0 0 104px; font-weight: 500; font-size: 26px; letter-spacing: -0.01em; }
+.register-head .desc { flex: 1 1 220px; font-weight: 300; font-size: 17px; color: var(--body-text); text-wrap: pretty; }
+.register-head .condition {
+  flex: 0 0 132px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--body-text);
 }
-.index-foot .count:hover { color: var(--blue); }
-.index-foot .cta {
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--blue); cursor: pointer;
+.register-head .access {
+  flex: 0 0 112px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
+  color: var(--mid); text-align: right;
+}
+.register-head .access.is-live { color: var(--blue); }
+
+/* The mark states the condition on its own, before any word does: a mark that is
+   issuing, solid, outlined, provisional, or struck down to a single rule. */
+.mark { flex: 0 0 16px; height: 26px; display: flex; align-items: center; }
+.mark i { display: block; }
+.mark--issuing i {
+  width: 11px; height: 11px; border: 1px solid var(--ink);
+  display: flex; align-items: center; justify-content: center;
+}
+.mark--issuing i::after { content: ""; display: block; width: 5px; height: 5px; background: var(--blue); }
+.mark--solid i { width: 7px; height: 7px; background: var(--ink); }
+.mark--outline i { width: 7px; height: 7px; border: 1px solid var(--ink); }
+.mark--dashed i { width: 7px; height: 7px; border: 1px dashed var(--faint); }
+.mark--none i { width: 7px; height: 1px; background: var(--faint); }
+
+.register-panel {
+  display: flex; flex-wrap: wrap; gap: 44px; padding: 0 0 40px 38px; align-items: flex-start;
+}
+.register-panel[hidden] { display: none; }
+
+.register-figure { flex: 0 1 264px; gap: 9px; }
+.register-figure .figure-plate { height: 264px; }
+.register-figure .figure-caption { flex-wrap: wrap; gap: 8px; }
+.figure-caption .accent { color: var(--blue); }
+
+.register-detail { flex: 1 1 300px; min-width: 280px; display: flex; flex-direction: column; gap: 24px; }
+.register-detail .specs { padding-top: 14px; }
+.register-note {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--faint);
+  background: var(--hover-bg); padding: 11px 14px; align-self: flex-start;
+}
+
+.register-foot {
+  display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; align-items: baseline;
+  padding: 22px 0 90px 0;
+}
+.register-foot .note { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--mid); }
+.register-foot .cta {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--blue);
   border-bottom: 1px solid var(--blue); padding-bottom: 3px;
 }
 
@@ -434,9 +480,20 @@ p { text-wrap: pretty; }
   .hero-note.mobile-fig { display: flex; right: 16px; top: 14px; bottom: auto; left: auto; }
   .hero-crosshair-h, .hero-crosshair-v, .hero-readout { display: none; }
 
-  /* Mobile index screen is the hero alone — 0x2F/057/investigations are one
-     tap away via the bottom tab bar, matching the approved mobile composition. */
-  .index-list { display: none; }
+  /* The register stays on the mobile index — it is the substance of the page,
+     not an appendix — but stacks: identity on one line, description under it,
+     condition and access on a third, and the open panel unindented. */
+  .register-of-condition { padding: 0 18px; }
+  .register-of-condition .eyebrow-row { padding: 34px 0 11px 0; }
+  .register-head { gap: 6px 16px; padding: 20px 0; }
+  .register-head .id { flex: 0 0 auto; font-size: 22px; }
+  .register-head .desc { flex: 1 1 100%; font-size: 16px; }
+  .register-head .condition { flex: 0 0 auto; }
+  .register-head .access { flex: 1 1 auto; }
+  .register-panel { padding: 0 0 30px 0; gap: 24px; }
+  .register-figure { flex: 1 1 100%; }
+  .register-detail { flex: 1 1 100%; min-width: 0; }
+  .register-foot { padding: 20px 0 40px 0; }
 
   .instrument-block, .split, .lab-grid, .intake-grid, .record-open { grid-template-columns: 1fr; gap: 18px; }
   .instrument-block + .instrument-block { padding-top: 30px; }

@@ -77,24 +77,18 @@
     </div>
   </div>
 
-  <div class="index-list">
-    <a class="index-row" href="/instrument-0x2f">
-      <span class="id">0x2F</span>
-      <span class="desc">Local task runtime for coding agents</span>
-      <span class="status status-operational">OPERATIONAL</span>
-    </a>
-    <a class="index-row" href="/instrument-057">
-      <span class="id">057</span>
-      <span class="desc">Visual surface for computational activity</span>
-      <span class="status status-observation">IN OBSERVATION</span>
-    </a>
-    <a class="index-row" href="/instrument-mpa-01">
-      <span class="id">MPA–01</span>
-      <span class="desc">Measuring apparatus for the machine portrait</span>
-      <span class="status status-service">IN SERVICE</span>
-    </a>
-    <div class="index-foot">
-      <a class="count" href="/investigations">17 INVESTIGATIONS ON RECORD · 4 DISCLOSED</a>
+  <div class="register-of-condition">
+    <div class="eyebrow-row">
+      <span class="eyebrow">REGISTER OF CONDITION</span>
+      <span class="eyebrow-meta">AS READ <span data-stamp></span></span>
+    </div>
+
+    <!-- Rows are built by js/register.js: one entry per work, ordered by what a
+         visitor can do with it. Editing this list means editing that file. -->
+    <div class="register" data-register></div>
+
+    <div class="register-foot">
+      <span class="note">ORDERED BY ACCESS · NOT BY IMPORTANCE</span>
       <a class="cta" href="/intake">BRING US AN INTERESTING PROBLEM →</a>
     </div>
   </div>
@@ -114,6 +108,7 @@
 </nav>
 
 <script src="js/apparatus.js"></script>
+<script src="js/register.js"></script>
 <script src="js/site.js"></script>
 <script>
   const hero = document.getElementById('hero');
