@@ -1,6 +1,6 @@
 'use strict';
 
-const handler = require('./intake.js');
+const handler = require('../api/intake.js');
 const { validate, isEmailLike } = handler;
 
 const { test } = require('node:test');
@@ -240,6 +240,24 @@ test('handler: non-POST returns 405', async () => {
   assert.equal(res._ended, true);
 });
 
+test('handler: malformed JSON returns a controlled 400', async () => {
+  const req = { method: 'POST', get body() { throw new SyntaxError('bad json'); } };
+  const res = mockRes();
+  await handler(req, res);
+  assert.equal(res._status, 400);
+  assert.equal(res._body.error, 'Malformed JSON');
+});
+
+test('handler: oversized request returns 413 before delivery', async () => {
+  let sendCalled = false;
+  handler._setMailer(makeMailer(async () => { sendCalled = true; }));
+  const req = mockReq({ headers: { 'content-length': String(16 * 1024 + 1) }, body: submission() });
+  const res = mockRes();
+  await handler(req, res);
+  assert.equal(res._status, 413);
+  assert.equal(sendCalled, false);
+});
+
 test('handler: honeypot filled returns 200 without sending mail', async () => {
   let sendCalled = false;
   handler._setMailer(makeMailer(async () => { sendCalled = true; }));
@@ -385,4 +403,16 @@ test('handler: error response does not expose provider detail', async () => {
   assert.ok(!errStr.includes('gmail'),      'Gmail must not leak');
   assert.ok(!errStr.includes('nodemailer'), 'nodemailer must not leak');
   assert.ok(!errStr.includes('google'),     'Google must not leak');
+});
+
+test('installed Nodemailer preserves the createTransport/sendMail contract', async () => {
+  const nodemailer = require('nodemailer');
+  const transporter = nodemailer.createTransport({ jsonTransport: true });
+  const info = await transporter.sendMail({
+    from: 'mail@probnaya.work',
+    to: 'mail@probnaya.work',
+    subject: 'INTAKE COMPATIBILITY TEST',
+    text: 'No network delivery is performed.',
+  });
+  assert.ok(info.message);
 });

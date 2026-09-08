@@ -7,6 +7,7 @@ const STRIPE_API_VERSION = '2026-02-25.clover';
 const PROTOCOL = 'MPA-ISSUANCE/1';
 const EXPECTED_AMOUNT = 500;
 const EXPECTED_CURRENCY = 'eur';
+const MAX_REQUEST_BYTES = 4096;
 const SHA256_RE = /^[a-f0-9]{64}$/;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SESSION_RE = /^cs_(?:test_|live_)[A-Za-z0-9]{10,200}$/;
@@ -21,7 +22,24 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const input = validateRequest(req.body);
+  if (requestTooLarge(req, MAX_REQUEST_BYTES)) {
+    res.status(413).json({ error: 'Request is too large', code: 'payload_too_large' });
+    return;
+  }
+
+  let body;
+  try {
+    body = req.body;
+  } catch {
+    res.status(400).json({ error: 'Malformed JSON', code: 'malformed_json' });
+    return;
+  }
+  if (bodyTooLarge(body, MAX_REQUEST_BYTES)) {
+    res.status(413).json({ error: 'Request is too large', code: 'payload_too_large' });
+    return;
+  }
+
+  const input = validateRequest(body);
   if (!input.ok) {
     res.status(400).json({ error: input.error, code: 'invalid_request' });
     return;
@@ -58,6 +76,23 @@ function setResponseHeaders(res) {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
+}
+
+function requestTooLarge(req, limit) {
+  const headers = req && req.headers;
+  const raw = headers && (headers['content-length'] ?? headers['Content-Length']);
+  if (raw === undefined) return false;
+  const length = Number(raw);
+  return Number.isFinite(length) && length > limit;
+}
+
+function bodyTooLarge(body, limit) {
+  try {
+    const json = JSON.stringify(body);
+    return typeof json === 'string' && Buffer.byteLength(json, 'utf8') > limit;
+  } catch {
+    return true;
+  }
 }
 
 function validateRequest(body) {

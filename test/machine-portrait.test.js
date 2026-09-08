@@ -2,7 +2,7 @@
 
 const { test, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
-const handler = require('./machine-portrait.js');
+const handler = require('../api/machine-portrait.js');
 
 const HASH = 'ab'.repeat(32);
 const ATTEMPT = '123e4567-e89b-42d3-a456-426614174000';
@@ -70,6 +70,19 @@ test('rejects non-POST requests and disables caching', async () => {
   assert.equal(res.headers.Allow, 'POST');
   assert.equal(res.headers['Cache-Control'], 'no-store, max-age=0');
   assert.equal(res.headers['Referrer-Policy'], 'no-referrer');
+});
+
+test('returns controlled errors for malformed and oversized JSON', async () => {
+  const malformed = { method: 'POST', get body() { throw new SyntaxError('bad json'); } };
+  const malformedRes = mockRes();
+  await handler(malformed, malformedRes);
+  assert.equal(malformedRes.statusCode, 400);
+  assert.equal(malformedRes.body.code, 'malformed_json');
+
+  const oversizedRes = mockRes();
+  await handler({ method: 'POST', headers: { 'content-length': '4097' }, body: createRequest() }, oversizedRes);
+  assert.equal(oversizedRes.statusCode, 413);
+  assert.equal(oversizedRes.body.code, 'payload_too_large');
 });
 
 test('validates bounded, exact create and verify schemas', () => {

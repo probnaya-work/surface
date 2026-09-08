@@ -1,0 +1,13 @@
+# Repository-only material. Runtime files are deliberately allowlisted by
+# omission; package manifests remain available to Vercel's dependency install.
+.claude/
+.env.example
+AGENTS.md
+CLAUDE.md
+LICENSE
+README.md
+docs/
+scripts/
+test/
+assets/machine-portrait-synthetic.png
+instrument-mpa/SOURCE.json

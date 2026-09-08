@@ -43,10 +43,11 @@ Mail delivery uses Google Workspace SMTP with credentials supplied by the enviro
 The intake handler has an executable test suite:
 
 ```
-node --test api/intake.test.js
+node --test test/intake.test.js
 ```
 
-Name the file, not the directory. `node --test api/` also treats `api/intake.js` as a test candidate and reports a misleading failure.
+Name the file, not the directory. Tests live outside `api/` so Vercel never
+turns test harnesses into public Functions.
 
 The pages themselves have no automated tests. Before considering a visual or interaction change done:
 

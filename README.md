@@ -47,5 +47,5 @@ store: a paid return without its retained local draft requires manual support.
 Run all serverless function tests with:
 
 ```sh
-node --test api/intake.test.js api/machine-portrait.test.js
+node --test test/intake.test.js test/machine-portrait.test.js
 ```

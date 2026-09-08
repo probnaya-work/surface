@@ -8,14 +8,31 @@ const MAX_FROM = 200;
 const MAX_REPLY = 200;
 const MAX_BODY = 4000;
 const MAX_TRIED = 2000;
+const MAX_REQUEST_BYTES = 16 * 1024;
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
+    if (typeof res.setHeader === 'function') res.setHeader('Allow', 'POST');
     res.status(405).end();
     return;
   }
 
-  const data = req.body;
+  if (requestTooLarge(req, MAX_REQUEST_BYTES)) {
+    res.status(413).json({ error: 'Request is too large' });
+    return;
+  }
+
+  let data;
+  try {
+    data = req.body;
+  } catch {
+    res.status(400).json({ error: 'Malformed JSON' });
+    return;
+  }
+  if (bodyTooLarge(data, MAX_REQUEST_BYTES)) {
+    res.status(413).json({ error: 'Request is too large' });
+    return;
+  }
 
   // Honeypot: silently accept, do not deliver.
   if (data && data.__hp) {
@@ -82,6 +99,23 @@ module.exports = async function handler(req, res) {
 module.exports._setMailer = (mock) => { _testMailer = mock; };
 module.exports.validate = validate;
 module.exports.isEmailLike = isEmailLike;
+
+function requestTooLarge(req, limit) {
+  const headers = req && req.headers;
+  const raw = headers && (headers['content-length'] ?? headers['Content-Length']);
+  if (raw === undefined) return false;
+  const length = Number(raw);
+  return Number.isFinite(length) && length > limit;
+}
+
+function bodyTooLarge(body, limit) {
+  try {
+    const json = JSON.stringify(body);
+    return typeof json === 'string' && Buffer.byteLength(json, 'utf8') > limit;
+  } catch {
+    return true;
+  }
+}
 
 function validate(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
