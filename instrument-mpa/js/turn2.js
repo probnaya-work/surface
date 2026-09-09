@@ -25,7 +25,7 @@
 export const TURN2_N = 16;
 export const TURN2_CELLS = TURN2_N * TURN2_N;
 export const TURN2_LEVELS = 5;
-export const TURN2_DERIVATION_VERSION = "PROB-MPA-01/TURN-2/1.0.0";
+export const TURN2_DERIVATION_VERSION = "PROB-MPA-01/TURN-2/1.0.1";
 export const TURN2_WINDOW_IPD = 4.2;
 export const TURN2_EYE_Y = 0.40;
 export const TURN2_INTERNAL_SIZE = 1024;
