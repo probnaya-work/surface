@@ -29,6 +29,7 @@ cp "$source_root/js/geometry.js" "$target_root/js/geometry.js"
 cp "$source_root/js/issue-package.js" "$target_root/js/issue-package.js"
 cp "$source_root/js/issue-render.js" "$target_root/js/issue-render.js"
 cp "$source_root/js/record.js" "$target_root/js/record.js"
+cp "$source_root/js/source-input.js" "$target_root/js/source-input.js"
 cp "$source_root/js/turn2.js" "$target_root/js/turn2.js"
 cp "$source_root/js/zip.js" "$target_root/js/zip.js"
 
@@ -56,6 +57,7 @@ cat > "$target_root/SOURCE.json" <<EOF
     "js/issue-package.js",
     "js/issue-render.js",
     "js/record.js",
+    "js/source-input.js",
     "js/turn2.js",
     "js/zip.js"
   ],

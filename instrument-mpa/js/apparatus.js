@@ -29,6 +29,9 @@ import {
 import { issueView, issuedFaces } from "./issue-package.js";
 import { drawFace } from "./issue-render.js";
 import { buildArchive, recordJson } from "./archive.js";
+import {
+  sourceDimensionRejection, sourceDimensionsAdmissible, sourceFileRejection
+} from "./source-input.js";
 
 const PRINCIPAL_MARK = "2c";
 
@@ -71,6 +74,7 @@ const state = {
   specimen: null,
   pupils: { right: null, left: null },
   result: null,
+  restoredDraft: null,
   run: null,
   framing: PUBLIC_FRAMINGS[0],
   mark: PRINCIPAL_MARK,
@@ -291,19 +295,21 @@ async function sha256Hex(buffer) {
 }
 
 function admissible(width, height) {
-  return Math.min(width, height) >= 512;
+  return sourceDimensionsAdmissible(width, height);
 }
 
 async function readSpecimen(file) {
+  const fileRejection = sourceFileRejection(file);
+  if (fileRejection) return { rejected: fileRejection };
   const bytes = await file.arrayBuffer();
   const hash = await sha256Hex(bytes);
   const source = await createImageBitmap(new Blob([bytes], { type: file.type }), {
     imageOrientation: "from-image",
-    colorSpaceConversion: "none",
+    colorSpaceConversion: "default",
     premultiplyAlpha: "none"
   });
-  if (!admissible(source.width, source.height)) {
-    const rejected = `${source.width} × ${source.height} PX · 512 PX MINIMUM`;
+  const rejected = sourceDimensionRejection(source.width, source.height);
+  if (rejected) {
     source.close();
     return { rejected };
   }
@@ -318,8 +324,9 @@ function setStageNote(message, blue = false) {
 
 async function mount(file) {
   if (!file) return;
-  if (!/^image\//.test(file.type)) {
-    setStageNote("NOT ADMITTED · NOT AN IMAGE FILE", true);
+  const fileRejection = sourceFileRejection(file);
+  if (fileRejection) {
+    setStageNote("NOT ADMITTED · " + fileRejection, true);
     return;
   }
   setStageNote("DECODING", true);
@@ -341,6 +348,7 @@ function clearSpecimen() {
   if (state.result && state.result.canvas) state.result.canvas.width = state.result.canvas.height = 0;
   state.specimen = null;
   state.result = null;
+  state.restoredDraft = null;
   state.pupils = { right: null, left: null };
   state.hover = null;
   state.fit = null;
@@ -428,7 +436,8 @@ function exactPopulation(value) {
 }
 
 function specimenFromDraft(draft) {
-  if (!draft || draft.issuanceProtocol !== ISSUANCE_PROTOCOL || draft.apparatus !== "PROB-MPA-01" || draft.derivationVersion !== TURN2_DERIVATION_VERSION) throw new Error("invalid draft");
+  if (!draft || draft.issuanceProtocol !== ISSUANCE_PROTOCOL || draft.apparatus !== "PROB-MPA-01" ||
+      (draft.derivationVersion !== TURN2_DERIVATION_VERSION && draft.derivationVersion !== "PROB-MPA-01/TURN-2/1.0.0")) throw new Error("invalid draft");
   if (!draft.source || !Number.isInteger(draft.source.width) || !Number.isInteger(draft.source.height) || !admissible(draft.source.width, draft.source.height)) throw new Error("invalid source dimensions");
   if (!/^[a-f0-9]{64}$/.test(draft.source.sha256 || "") || typeof draft.source.mediaType !== "string" || draft.source.mediaType.length > 100 || draft.source.retained !== false) throw new Error("invalid source record");
   if (!draft.generator || draft.generator.protocol !== "TURN 2" || draft.generator.deterministic !== true) throw new Error("invalid generator");
@@ -470,11 +479,15 @@ function restoreDraft(draft) {
     left: { x: restored.pupils.lx, y: restored.pupils.ly }
   };
   state.result = restored.result;
+  state.restoredDraft = draft;
   return restored;
 }
 
 function currentDraft() {
   if (!state.specimen || !state.result) throw new Error("canonical reading is incomplete");
+  // A Checkout retry must reuse the committed draft, including its original
+  // decoder version. Restored matrices must never acquire new provenance.
+  if (state.restoredDraft) return state.restoredDraft;
   return buildDraft({
     sourceHash: state.specimen.hash,
     sourceType: state.specimen.type,
