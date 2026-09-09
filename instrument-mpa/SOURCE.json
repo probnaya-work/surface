@@ -13,5 +13,5 @@
     "js/turn2.js",
     "js/zip.js"
   ],
-  "surfaceOverlay": "index.html: set the public asset base to /instrument-mpa/ and link the existing Instruments crumb to /instruments"
+  "surfaceOverlay": "scripts/machine-portrait-surface.patch: public asset base, navigation, metadata, structured data and heading semantics"
 }

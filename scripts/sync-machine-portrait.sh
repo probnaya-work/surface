@@ -6,9 +6,15 @@ surface_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 objects_root=${1:-"$surface_root/../objects"}
 source_root="$objects_root/machine-portrait"
 target_root="$surface_root/instrument-mpa"
+overlay_patch="$surface_root/scripts/machine-portrait-surface.patch"
 
 if [ ! -d "$source_root/js" ] || [ ! -f "$source_root/index.html" ]; then
   echo "Machine Portrait source not found at $source_root" >&2
+  exit 1
+fi
+
+if [ ! -f "$overlay_patch" ]; then
+  echo "Machine Portrait surface overlay not found at $overlay_patch" >&2
   exit 1
 fi
 
@@ -35,15 +41,11 @@ cp "$source_root/js/zip.js" "$target_root/js/zip.js"
 # part of the public runtime artifact.
 rm -f "$target_root/js/derivation.js" "$target_root/js/geometry.js"
 
-# Surface owns public navigation. This is the only overlay applied to the
-# shipped apparatus: the existing visual crumb becomes a link back to the
-# Instruments index without changing its copy or presentation.
-overlay_tmp=$(mktemp "$target_root/index.html.XXXXXX")
-sed -e 's|<meta name="viewport" content="width=device-width, initial-scale=1">|<meta name="viewport" content="width=device-width, initial-scale=1">\
-<base href="/instrument-mpa/">|' \
-  -e 's|<div class="crumb">← INSTRUMENTS</div>|<a class="crumb" href="/instruments">← INSTRUMENTS</a>|' \
-  "$target_root/index.html" > "$overlay_tmp"
-mv "$overlay_tmp" "$target_root/index.html"
+# Objects owns apparatus behavior. Surface owns this explicit public-document
+# overlay: asset base, navigation, metadata, structured data and heading
+# semantics. Check first so canonical source drift fails without a partial overlay.
+git -C "$surface_root" apply --check --directory=instrument-mpa "$overlay_patch"
+git -C "$surface_root" apply --directory=instrument-mpa "$overlay_patch"
 
 cat > "$target_root/SOURCE.json" <<EOF
 {
@@ -61,7 +63,7 @@ cat > "$target_root/SOURCE.json" <<EOF
     "js/turn2.js",
     "js/zip.js"
   ],
-  "surfaceOverlay": "index.html: set the public asset base to /instrument-mpa/ and link the existing Instruments crumb to /instruments"
+  "surfaceOverlay": "scripts/machine-portrait-surface.patch: public asset base, navigation, metadata, structured data and heading semantics"
 }
 EOF
 

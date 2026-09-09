@@ -1,0 +1,58 @@
+--- a/index.html
++++ b/index.html
+@@ -4,5 +4,38 @@
+ <meta charset="utf-8">
+-<meta name="viewport" content="width=device-width, initial-scale=1">
++<meta name="viewport" content="width=device-width, initial-scale=1">
++<base href="/instrument-mpa/">
+ <meta name="referrer" content="no-referrer">
+-<title>PROBNAYA · MPA–01 · Machine Portrait Apparatus</title>
++<title>Operate MPA–01 — Machine Portrait Apparatus | PROBNAYA</title>
++<meta name="description" content="Operate MPA–01: supply one photograph, register the pupils, inspect the 16 × 16 measurement, and issue the machine portrait record.">
++<link rel="icon" type="image/svg+xml" href="/assets/probnaya-mark.svg">
++<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
++<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
++<link rel="apple-touch-icon" href="/assets/favicon-180.png">
++<link rel="canonical" href="https://probnaya.work/instrument-mpa/">
++<meta property="og:type" content="website">
++<meta property="og:url" content="https://probnaya.work/instrument-mpa/">
++<meta property="og:site_name" content="PROBNAYA">
++<meta property="og:title" content="Operate MPA–01 — Machine Portrait Apparatus | PROBNAYA">
++<meta property="og:description" content="Supply one photograph, register the pupils, inspect the 16 × 16 measurement, and issue the machine portrait record.">
++<meta property="og:image" content="https://probnaya.work/assets/og-1200x630.png">
++<meta property="og:image:width" content="1200">
++<meta property="og:image:height" content="630">
++<meta name="twitter:card" content="summary_large_image">
++<meta name="twitter:title" content="Operate MPA–01 — Machine Portrait Apparatus | PROBNAYA">
++<meta name="twitter:description" content="Supply one photograph, register the pupils, inspect the 16 × 16 measurement, and issue the machine portrait record.">
++<meta name="twitter:image" content="https://probnaya.work/assets/og-1200x630.png">
++<script type="application/ld+json">
++{
++  "@context": "https://schema.org",
++  "@type": "SoftwareApplication",
++  "@id": "https://probnaya.work/instrument-mpa/#apparatus",
++  "name": "MPA–01",
++  "alternateName": "Machine Portrait Apparatus",
++  "url": "https://probnaya.work/instrument-mpa/",
++  "description": "An apparatus that reads one photograph on a 16 × 16 grid and issues the measurement as a portrait, record, and set of marks.",
++  "applicationCategory": "MultimediaApplication",
++  "operatingSystem": "Web",
++  "creator": { "@id": "https://probnaya.work/#laboratory", "@type": "Organization", "name": "PROBNAYA" }
++}
++</script>
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+@@ -20,4 +53,4 @@
+   <main class="main">
+-    <div class="crumb">← INSTRUMENTS</div>
+-    <div class="title-row"><span class="title">MPA–01</span><span class="m10 ls16 c-grey">PROB–MPA–01 · MACHINE PORTRAIT APPARATUS</span></div>
++    <a class="crumb" href="/instruments">← INSTRUMENTS</a>
++    <div class="title-row"><h1 class="title" style="margin:0;">MPA–01</h1><span class="m10 ls16 c-grey">PROB–MPA–01 · MACHINE PORTRAIT APPARATUS</span></div>
+     <div class="intro">
+--- a/css/apparatus.css
++++ b/css/apparatus.css
+@@ -17,2 +17,4 @@
+-html, body { margin: 0; padding: 0; background: var(--paper); }
++h1.title { margin: 0; }
++
++html, body { margin: 0; padding: 0; background: var(--paper); }
+ body { color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
