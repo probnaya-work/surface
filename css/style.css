@@ -239,6 +239,36 @@ p { text-wrap: pretty; }
 .status-observation { color: var(--mid); }
 .status-service { color: var(--blue); }
 
+/* MPA-01 is not one of the instruments listed above it: it is an apparatus, and
+   it sits below the list on its own rule so the boundary is visible before any
+   word states it. */
+.apparatus-band {
+  display: flex; flex-direction: column; gap: 16px;
+  margin-top: 34px; padding: 16px 0 26px 0;
+  border-top: 1px solid var(--ink); border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.apparatus-band:hover { background: var(--hover-bg); }
+.apparatus-band .band-head {
+  display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; align-items: baseline;
+  font-family: var(--mono); font-size: 10px;
+}
+.apparatus-band .condition {
+  display: flex; align-items: center; gap: 11px; letter-spacing: 0.2em; color: var(--body-text);
+}
+.apparatus-band .condition::before {
+  content: ""; display: block; width: 7px; height: 7px; background: var(--ink); flex-shrink: 0;
+}
+.apparatus-band .access { letter-spacing: 0.16em; color: var(--mid); }
+.apparatus-band .band-row { display: flex; flex-wrap: wrap; gap: 6px 28px; align-items: baseline; }
+.apparatus-band .id { flex: 0 0 120px; font-weight: 500; font-size: 26px; }
+.apparatus-band .name {
+  flex: 1 1 260px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; color: var(--body-text);
+}
+.apparatus-band .enter {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--blue); text-align: right;
+}
+
 .index-foot {
   display: flex; justify-content: space-between; align-items: baseline; padding: 26px 0 90px 0;
 }
@@ -306,6 +336,17 @@ p { text-wrap: pretty; }
 }
 .bench-note .label { color: var(--mid); }
 .bench-note .value { color: var(--faint); }
+
+/* The apparatus is named after the bench note, outside the instrument list it
+   is not part of. */
+.apparatus-line {
+  margin-top: 26px; display: flex; flex-wrap: wrap; gap: 14px;
+  justify-content: space-between; align-items: baseline;
+}
+.apparatus-line .label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--mid);
+}
+.apparatus-line .action-link { align-self: baseline; }
 
 /* ---------- investigations ---------- */
 
