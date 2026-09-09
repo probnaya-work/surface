@@ -238,6 +238,60 @@ p { text-wrap: pretty; }
 .status-observation { color: var(--mid); }
 .status-service { color: var(--blue); }
 
+/* ---------- index list and the apparatus in service ----------
+   The released instruments are listed together. MPA-01 is not one of them: it
+   is an apparatus, and it sits below the list on its own rule so the boundary
+   is visible before any word states it. */
+
+.index-list { max-width: 1120px; margin: 0 auto; padding: 0 40px; }
+.index-row {
+  display: grid; grid-template-columns: 120px 1fr 150px; gap: 28px; align-items: baseline;
+  padding: 26px 0; border-bottom: 1px solid var(--border);
+}
+.index-row:hover { background: var(--hover-bg); }
+.index-row .id { font-weight: 500; font-size: 26px; }
+.index-row .desc { font-weight: 300; font-size: 17px; color: var(--body-text); }
+.index-row .status { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-align: right; }
+
+.apparatus-band {
+  display: flex; flex-direction: column; gap: 16px;
+  margin-top: 34px; padding: 16px 0 26px 0;
+  border-top: 1px solid var(--ink); border-bottom: 1px solid var(--border);
+}
+.apparatus-band:hover { background: var(--hover-bg); }
+.apparatus-band .band-head {
+  display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; align-items: baseline;
+  font-family: var(--mono); font-size: 10px;
+}
+.apparatus-band .condition {
+  display: flex; align-items: center; gap: 11px; letter-spacing: 0.2em; color: var(--body-text);
+}
+.apparatus-band .condition::before {
+  content: ""; display: block; width: 7px; height: 7px; background: var(--ink); flex-shrink: 0;
+}
+.apparatus-band .access { letter-spacing: 0.16em; color: var(--mid); }
+.apparatus-band .band-row { display: flex; flex-wrap: wrap; gap: 6px 28px; align-items: baseline; }
+.apparatus-band .id { flex: 0 0 120px; font-weight: 500; font-size: 26px; }
+.apparatus-band .name {
+  flex: 1 1 260px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; color: var(--body-text);
+}
+.apparatus-band .enter {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--blue); text-align: right;
+}
+
+.index-foot {
+  display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; align-items: baseline;
+  padding: 26px 0 90px 0;
+}
+.index-foot .count {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--faint);
+}
+.index-foot .count:hover { color: var(--blue); }
+.index-foot .cta {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--blue);
+  border-bottom: 1px solid var(--blue); padding-bottom: 3px;
+}
+
 /* ---------- register of condition (index) ----------
    Rows are built by js/register.js and ordered by access, so nothing here may
    assume a fixed number of rows or a fixed order. */
@@ -360,6 +414,17 @@ p { text-wrap: pretty; }
 }
 .bench-note .label { color: var(--mid); }
 .bench-note .value { color: var(--faint); }
+
+/* The apparatus is named after the bench note, outside the instrument list it
+   is not part of. */
+.apparatus-line {
+  margin-top: 26px; display: flex; flex-wrap: wrap; gap: 14px;
+  justify-content: space-between; align-items: baseline;
+}
+.apparatus-line .label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--mid);
+}
+.apparatus-line .action-link { align-self: baseline; }
 
 /* ---------- investigations ---------- */
 
@@ -505,6 +570,16 @@ p { text-wrap: pretty; }
   .register-figure { flex: 1 1 100%; }
   .register-detail { flex: 1 1 100%; min-width: 0; }
   .register-foot { padding: 20px 0 40px 0; }
+
+  .index-list { padding: 0 18px; }
+  .index-row { grid-template-columns: 1fr; gap: 6px; padding: 20px 0; }
+  .index-row .id { font-size: 22px; }
+  .index-row .desc { font-size: 16px; }
+  .index-row .status { text-align: left; }
+  .apparatus-band .id { flex: 0 0 auto; font-size: 22px; }
+  .apparatus-band .name { flex: 1 1 100%; }
+  .apparatus-band .enter { text-align: left; }
+  .index-foot { padding: 20px 0 40px 0; }
 
   .instrument-block, .split, .lab-grid, .intake-grid, .record-open { grid-template-columns: 1fr; gap: 18px; }
   .instrument-block + .instrument-block { padding-top: 30px; }

@@ -39,7 +39,7 @@
   <div class="page">
     <div class="eyebrow-row">
       <span class="eyebrow">INSTRUMENTS</span>
-      <span class="eyebrow-meta">03 DISCLOSED</span>
+      <span class="eyebrow-meta">02 DISCLOSED</span>
     </div>
 
     <div class="instrument-block">
@@ -84,30 +84,16 @@
       </div>
     </div>
 
-    <div class="instrument-block">
-      <div class="instrument-copy">
-        <div class="head">
-          <span class="num">MPA–01</span>
-          <span class="status status-service">IN SERVICE</span>
-        </div>
-        <span class="attr-line">MPA–01 · BY PROBNAYA</span>
-        <p class="body-copy">A photograph is supplied. The apparatus takes one fixed measurement and issues what it read — a portrait, its record, and the marks it was drawn with.</p>
-        <a class="action-link" href="/instrument-mpa-01">OPEN INSTRUMENT →</a>
-      </div>
-      <div class="figure">
-        <div class="figure-plate" style="height:280px;">
-          <canvas id="cv-plate"></canvas>
-        </div>
-        <div class="figure-caption">
-          <span class="dim">FIG. 5 — ONE READING, IN MARKS</span>
-          <span class="note">256 CELLS</span>
-        </div>
-      </div>
+    <div class="bench-note">
+      <span class="label">INSTRUMENT 03 — ON THE BENCH, NOT YET NAMED</span>
+      <span class="value">NO PLATE ISSUED</span>
     </div>
 
-    <div class="bench-note">
-      <span class="label">INSTRUMENT — ON THE BENCH, NOT YET NAMED</span>
-      <span class="value">NO PLATE ISSUED</span>
+    <!-- MPA–01 is not listed above: it is an apparatus, named here only so the
+         way in is on the page the instruments are on. -->
+    <div class="apparatus-line">
+      <span class="label">APPARATUS IN SERVICE · MPA–01</span>
+      <a class="action-link" href="/instrument-mpa-01">ENTER THE APPARATUS →</a>
     </div>
   </div>
 </div>
@@ -133,7 +119,6 @@
 <script>
   Apparatus.mount(document.getElementById('cv-step'), (S) => Apparatus.buildStepLanes(S));
   Apparatus.mount(document.getElementById('cv-raster'), (S) => Apparatus.buildRaster(S));
-  Apparatus.mount(document.getElementById('cv-plate'), (S) => Apparatus.buildPlate(S));
 </script>
 </body>
 </html>
