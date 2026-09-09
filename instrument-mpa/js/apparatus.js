@@ -703,7 +703,7 @@ function renderSource() {
     : placed === 1
       ? "Now click the centre of the subject's left pupil."
       : "Click the centre of the subject's right pupil, directly on the photograph.");
-  setText("regNowLabel", complete ? "BOTH PUPILS MARKED" : placed === 1 ? "CLICK NOW · 02 SUBJECT LEFT PUPIL" : "CLICK NOW · 01 SUBJECT RIGHT PUPIL");
+  setText("regNowLabel", complete ? "BOTH PUPILS MARKED" : placed === 1 ? "CLICK NOW · 02 SUBJECT'S LEFT PUPIL" : "CLICK NOW · 01 SUBJECT'S RIGHT PUPIL");
   setText("regNowSide", complete ? "WINDOW FIXED AT 4.2 × IPD" : "THE SUBJECT'S OWN " + (placed === 1 ? "LEFT" : "RIGHT") + " EYE");
   setText("regState", complete ? "2 OF 2 · COMPLETE" : placed + " OF 2");
   setText("regNote1", right ? "MARKED" : "CLICK NOW");
