@@ -1,4 +1,5 @@
 import postgres from 'postgres';
+import { SESSION_IDLE_MS } from './constants.js';
 
 class TransactionConflict extends Error {}
 
@@ -292,10 +293,10 @@ export class PostgresStore {
     return session(row);
   }
 
-  async setSessionCsrf(tokenHash, csrfHash, now) {
+  async touchSession(tokenHash, now) {
     const rows = await this.sql`
-      UPDATE access_sessions s SET csrf_hash = ${csrfHash}, last_active_at = ${date(now)},
-        idle_expires_at = LEAST(${date(now + 30 * 60 * 1000)}, absolute_expires_at)
+      UPDATE access_sessions s SET last_active_at = ${date(now)},
+        idle_expires_at = LEAST(${date(now + SESSION_IDLE_MS)}, absolute_expires_at)
       FROM access_holders h
       WHERE s.token_hash = ${tokenHash} AND s.revoked_at IS NULL AND s.holder_id = h.id AND h.condition = 'active'
         AND s.idle_expires_at > CURRENT_TIMESTAMP AND s.absolute_expires_at > CURRENT_TIMESTAMP

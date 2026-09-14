@@ -41,6 +41,13 @@ export class AccessService {
     return keyedHash(this.config.networkHashKey, network);
   }
 
+  // CSRF tokens are derived from the opaque cookie token, so a session's token is
+  // stable for its lifetime: reading status never has to mutate or rotate it,
+  // concurrent tabs share it, and a lost response can be recovered by asking again.
+  csrfToken(kind, token) {
+    return keyedHash(this.config.sessionHashKey, `csrf-token:${kind}:${token}`);
+  }
+
   newBinding(existing) {
     const token = typeof existing === 'string' && /^[A-Za-z0-9_-]{43}$/.test(existing) ? existing : randomToken();
     return { token, hash: this.tokenHash('preauth', token), fresh: token !== existing };
@@ -48,7 +55,7 @@ export class AccessService {
 
   newSession(holderId, credentialId, lastVerifiedAt, now = this.clock()) {
     const token = randomToken();
-    const csrf = randomToken();
+    const csrf = this.csrfToken('session', token);
     return {
       token,
       csrf,
@@ -247,7 +254,7 @@ export class AccessService {
     const session = await this.store.getSession(tokenHash, now);
     if (!session) throw unauthorized();
     if (requireCsrf && typeof csrf !== 'string') throw forbidden();
-    if (csrf !== undefined && !safeEqual(session.csrfHash, this.tokenHash('csrf', csrf))) throw forbidden();
+    if (csrf !== undefined && !safeEqual(this.csrfToken('session', sessionToken), csrf)) throw forbidden();
     if (recent && now - session.lastVerifiedAt > RECENT_AUTH_MS) throw forbidden('VERIFY PRESENCE REQUIRED');
     const holder = await this.store.findHolder(session.holderId);
     return { tokenHash, session, holder, now };
@@ -265,15 +272,14 @@ export class AccessService {
       token = replacement.token;
       session = replacement.record;
     }
-    const csrf = randomToken();
-    const ok = await this.store.setSessionCsrf(session.tokenHash, this.tokenHash('csrf', csrf), auth.now);
+    const ok = await this.store.touchSession(session.tokenHash, auth.now);
     if (!ok) throw unauthorized();
     const credentials = await this.store.listCredentials(session.holderId);
     const recovery = await this.store.hasActiveRecoveryCodes(session.holderId);
     return {
       token,
       rotated: token !== sessionToken,
-      csrf,
+      csrf: this.csrfToken('session', token),
       holder: this.publicHolder(auth.holder),
       lastVerifiedAt: new Date(session.lastVerifiedAt).toISOString(),
       record: {
@@ -344,8 +350,9 @@ export class AccessService {
     return result;
   }
 
-  async addKeyOptions({ sessionToken, csrf, payload }) {
+  async addKeyOptions({ sessionToken, csrf, payload, network }) {
     const auth = await this.authenticated(sessionToken, csrf, { recent: true, requireCsrf: true });
+    await this.limit('add-key', auth.session.holderId, network, { limit: 12 });
     exactObject(payload, ['label']);
     const label = credentialLabel(payload.label);
     const credentials = await this.store.listCredentials(auth.session.holderId);
@@ -385,6 +392,7 @@ export class AccessService {
 
   async replaceRecoveryCodes({ sessionToken, csrf, network }) {
     const auth = await this.authenticated(sessionToken, csrf, { recent: true, requireCsrf: true });
+    await this.limit('replace-recovery-codes', auth.session.holderId, network, { limit: 6, windowMs: 10 * 60_000, blockMs: 10 * 60_000 });
     const recovery = this.makeRecoverySet(auth.session.holderId, auth.now);
     const replacement = this.newSession(auth.session.holderId, auth.session.credentialId, auth.session.lastVerifiedAt, auth.now);
     replacement.record.absoluteExpiresAt = auth.session.absoluteExpiresAt;
@@ -406,7 +414,7 @@ export class AccessService {
     const code = credentialLabel(payload.code);
     const now = this.clock();
     const token = randomToken();
-    const csrf = randomToken();
+    const csrf = this.csrfToken('recovery-session', token);
     const recoverySession = {
       id: randomUUID(),
       tokenHash: this.tokenHash('recovery-session', token),
@@ -418,19 +426,32 @@ export class AccessService {
     const audit = { id: randomUUID(), type: 'recovery-code-accepted', outcome: 'success', occurredAt: now, networkHash: this.networkHash(network) };
     const used = await this.store.beginRecovery({ codeHash: this.recoveryHash(code), session: recoverySession, audit, now });
     if (!used) throw new AccessError(400, 'recovery_failed', GENERIC_RECOVERY_ERROR);
-    return { token, csrf };
+    return { token, csrf, expiresAt: new Date(recoverySession.expiresAt).toISOString() };
   }
 
   async recoveryAuth(token, csrf) {
     if (typeof token !== 'string') throw unauthorized();
     const tokenHash = this.tokenHash('recovery-session', token);
     const session = await this.store.getRecoverySession(tokenHash, this.clock());
-    if (!session || !safeEqual(session.csrfHash, this.tokenHash('csrf', csrf))) throw unauthorized();
+    if (!session || !safeEqual(this.csrfToken('recovery-session', token), csrf)) throw unauthorized();
     return { tokenHash, session };
   }
 
-  async recoveryRegistrationOptions({ recoveryToken, csrf, payload }) {
+  // Recovery authority is already bound to the HttpOnly recovery cookie. A page
+  // reload, a cancelled authenticator prompt, or a lost response must not burn
+  // another single-use code while that authority is still valid.
+  async recoveryResume({ recoveryToken, network }) {
+    if (typeof recoveryToken !== 'string') throw unauthorized();
+    const tokenHash = this.tokenHash('recovery-session', recoveryToken);
+    await this.limit('recovery-resume', tokenHash, network, { limit: 12 });
+    const session = await this.store.getRecoverySession(tokenHash, this.clock());
+    if (!session) throw unauthorized();
+    return { csrf: this.csrfToken('recovery-session', recoveryToken), expiresAt: new Date(session.expiresAt).toISOString() };
+  }
+
+  async recoveryRegistrationOptions({ recoveryToken, csrf, payload, network }) {
     const auth = await this.recoveryAuth(recoveryToken, csrf);
+    await this.limit('recovery-registration', auth.tokenHash, network, { limit: 12 });
     exactObject(payload, ['label']);
     const label = credentialLabel(payload.label);
     const holder = await this.store.findHolder(auth.session.holderId);

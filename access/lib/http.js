@@ -68,9 +68,41 @@ export function expireCookie(name, production) {
   return cookie(name, '', { production, maxAge: 0 });
 }
 
-export function clientNetwork(req) {
-  const value = req.headers?.['x-vercel-forwarded-for'] || req.headers?.['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+// Production runs only behind Vercel, which overwrites `X-Forwarded-For` with the
+// connecting client address. `X-Vercel-Forwarded-For` is not documented as
+// overwritten, so it is never trusted. Local profiles use the socket only.
+export function clientNetwork(req, { production } = {}) {
+  const value = production
+    ? req.headers?.['x-forwarded-for'] || 'unknown'
+    : req.socket?.remoteAddress || 'unknown';
   return String(value).split(',')[0].trim().slice(0, 128);
+}
+
+// A same-site sibling origin can still send cookies with a simple GET. Browsers
+// label such requests; anything other than same-origin or direct navigation is
+// refused before session bookkeeping is touched.
+export function requireSameOriginFetch(req) {
+  const site = req.headers?.['sec-fetch-site'];
+  if (site !== undefined && site !== 'same-origin' && site !== 'none') {
+    throw new AccessError(403, 'cross_site_request', 'REQUEST NOT AUTHORIZED');
+  }
+}
+
+const LOG_CODE = /^[A-Za-z0-9_]{1,40}$/;
+
+// Operational log lines carry only bounded identifiers: never request bodies,
+// cookies, CSRF values, challenges, credentials, codes, or driver messages.
+export function logOutcome(logger, { method, action, error }) {
+  const entry = { event: 'access.request', method, action: action || null };
+  if (error instanceof AccessError) {
+    Object.assign(entry, { outcome: 'rejected', status: error.status, code: error.code });
+    logger.warn(JSON.stringify(entry));
+  } else {
+    const code = typeof error?.code === 'string' && LOG_CODE.test(error.code) ? error.code : null;
+    const name = typeof error?.name === 'string' && LOG_CODE.test(error.name) ? error.name : 'Error';
+    Object.assign(entry, { outcome: 'error', status: 500, error: name, code });
+    logger.error(JSON.stringify(entry));
+  }
 }
 
 export function sendJSON(res, status, body, extraHeaders = {}) {

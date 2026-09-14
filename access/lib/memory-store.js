@@ -106,11 +106,10 @@ export class MemoryStore {
     return structuredClone(session);
   }
 
-  async setSessionCsrf(tokenHash, csrfHash, now) {
+  async touchSession(tokenHash, now) {
     const session = this.sessions.get(tokenHash);
     const holder = session && this.holders.get(session.holderId);
     if (!holder || holder.condition !== 'active' || !session || session.revokedAt || session.idleExpiresAt <= now || session.absoluteExpiresAt <= now) return false;
-    session.csrfHash = csrfHash;
     session.lastActiveAt = now;
     session.idleExpiresAt = Math.min(now + 30 * 60 * 1000, session.absoluteExpiresAt);
     return true;
