@@ -9,12 +9,39 @@ import {
   SESSION_COOKIE_PRODUCTION,
 } from './constants.js';
 
-function requireSecret(env, name) {
+function requireSecret(env, name, production) {
   const value = env[name];
   if (typeof value !== 'string' || Buffer.byteLength(value) < 32) {
     throw new Error(`${name} must contain at least 32 bytes`);
   }
+  // Production keys must look like encoded random material (for example
+  // `openssl rand -base64 32`), not a padded word or a repeated character.
+  if (production && (value.length < 43 || new Set(value).size < 10)) {
+    throw new Error(`${name} must be at least 32 random bytes encoded as base64 or hex`);
+  }
   return value;
+}
+
+// postgres.js validates the server certificate and hostname only for
+// `sslmode=verify-full`; `require`, `prefer`, and `allow` disable validation.
+function requireVerifiedDatabaseTransport(databaseURL) {
+  let url;
+  try {
+    url = new URL(databaseURL);
+  } catch {
+    throw new Error('DATABASE_URL must be a PostgreSQL connection URL');
+  }
+  if (url.protocol !== 'postgres:' && url.protocol !== 'postgresql:') {
+    throw new Error('DATABASE_URL must be a PostgreSQL connection URL');
+  }
+  if (url.searchParams.get('sslmode') !== 'verify-full') {
+    throw new Error('Production DATABASE_URL must use sslmode=verify-full');
+  }
+  // postgres.js forwards unrecognized query parameters to the server as startup
+  // settings, so libpq-only options fail every connection at request time.
+  for (const name of ['channel_binding', 'sslrootcert', 'sslcert', 'sslkey', 'sslpassword', 'sslcrl']) {
+    if (url.searchParams.has(name)) throw new Error(`Production DATABASE_URL must not include libpq-only parameter ${name}`);
+  }
 }
 
 export function loadConfig(env = process.env) {
@@ -24,6 +51,14 @@ export function loadConfig(env = process.env) {
   }
 
   const production = profile === 'production';
+
+  // On Vercel, only the Production environment may run Access at all.
+  // Preview and development deployments never authenticate.
+  if (env.VERCEL) {
+    if (!production) throw new Error('Only the production profile may run on Vercel');
+    if (env.VERCEL_ENV !== 'production') throw new Error('Access runs only in the Vercel Production environment');
+  }
+
   const memory = env.ACCESS_USE_MEMORY_STORE === 'true';
   if (production && memory) {
     throw new Error('The in-memory store is forbidden in production');
@@ -39,13 +74,16 @@ export function loadConfig(env = process.env) {
     rpID = 'localhost';
   }
 
-  if (production && (env.WEBAUTHN_ORIGIN || env.WEBAUTHN_RP_ID)) {
+  if (production && (env.WEBAUTHN_ORIGIN || env.WEBAUTHN_RP_ID || env.ACCESS_LOCAL_ORIGIN)) {
     throw new Error('Production WebAuthn origin and RP ID are constants, not environment settings');
   }
+  if (production && (env.ACCESS_DEV_ENROLLMENT_TOKEN || env.ACCESS_DEV_PUBLIC_ID)) {
+    throw new Error('Development enrollment settings are forbidden in production');
+  }
 
-  const sessionHashKey = requireSecret(env, 'SESSION_HASH_KEY');
-  const recoveryHashKey = requireSecret(env, 'RECOVERY_HASH_KEY');
-  const networkHashKey = requireSecret(env, 'NETWORK_HASH_KEY');
+  const sessionHashKey = requireSecret(env, 'SESSION_HASH_KEY', production);
+  const recoveryHashKey = requireSecret(env, 'RECOVERY_HASH_KEY', production);
+  const networkHashKey = requireSecret(env, 'NETWORK_HASH_KEY', production);
   if (new Set([sessionHashKey, recoveryHashKey, networkHashKey]).size !== 3) {
     throw new Error('Session, recovery, and network hash keys must be distinct');
   }
@@ -53,6 +91,7 @@ export function loadConfig(env = process.env) {
   if (!memory && !env.DATABASE_URL) {
     throw new Error('DATABASE_URL is required unless the local test memory store is enabled');
   }
+  if (production) requireVerifiedDatabaseTransport(env.DATABASE_URL);
 
   return Object.freeze({
     profile,
