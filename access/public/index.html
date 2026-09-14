@@ -51,7 +51,7 @@
         <h1>Replace a lost path.</h1>
         <p class="supporting">Try another passkey, another device, or a registered security key first. A recovery code can only register a replacement key; it does not open the authenticated boundary.</p>
         <form data-form="recovery" novalidate>
-          <label>RECOVERY CODE<input name="code" type="text" required autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+          <label data-recovery-code>RECOVERY CODE<input name="code" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
           <label>NEW KEY LABEL<input name="label" type="text" value="RECOVERY PASSKEY" maxlength="48" required autocomplete="off"></label>
           <button class="button" type="submit">REPLACE ACCESS KEY</button>
         </form>
