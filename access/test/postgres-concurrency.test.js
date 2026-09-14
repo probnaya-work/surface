@@ -133,6 +133,9 @@ if (!databaseURL) {
     throw new Error(`Expected a database lock wait behind backend ${blockerPid}`);
   }
 
+  // Pauses a transaction immediately after the first matching statement and
+  // resolves `hit` with that transaction's backend PID, so a test can prove a
+  // competitor is waiting on this transaction's locks instead of sleeping.
   function pauseAfter(store, predicate) {
     const hit = deferred();
     const release = deferred();
@@ -145,7 +148,8 @@ if (!databaseURL) {
           const result = await transaction(parts, ...values);
           if (!used && predicate(parts.join('?'))) {
             used = true;
-            hit.resolve();
+            const [{ pid }] = await transaction`SELECT pg_backend_pid() AS pid`;
+            hit.resolve(pid);
             await release.promise;
           }
           return result;
@@ -227,16 +231,26 @@ if (!databaseURL) {
     const legitimate = await prepareRecovery(f, f.auth.recoveryCodes[1], competing.service);
     const pause = pauseAfter(f.store, (query) => query.includes('UPDATE access_recovery_sessions'));
     const first = f.service.recoveryRegistrationVerify(attacker.input);
-    await pause.hit;
-    const second = competing.service.recoveryRegistrationVerify(legitimate.input);
-    const secondState = await Promise.race([
-      second.then(() => 'settled', () => 'settled'),
-      delay(100).then(() => 'blocked'),
-    ]);
-    pause.release();
+    let second;
+    try {
+      const firstPid = await pause.hit;
+      second = competing.service.recoveryRegistrationVerify(legitimate.input);
+      second.catch(() => {});
+      await waitForBlockedBy(firstPid);
+    } finally {
+      pause.release();
+    }
     const outcomes = await Promise.allSettled([first, second]);
-    assert.equal(outcomes.filter((outcome) => outcome.status === 'fulfilled').length, 1, `second completion was ${secondState}`);
+    assert.equal(outcomes.filter((outcome) => outcome.status === 'fulfilled').length, 1);
     assert.equal((await f.store.listCredentials(f.holder.id)).length, 2);
+    const winner = outcomes[0].status === 'fulfilled' ? attacker : legitimate;
+    const loser = winner === attacker ? legitimate : attacker;
+    const winnerCodes = outcomes.find((outcome) => outcome.status === 'fulfilled').value.recoveryCodes;
+    const winnerLogin = await f.service.authenticationOptions({ network: '192.0.2.9' });
+    await f.service.authenticationVerify({ preauthToken: winnerLogin.binding.token, payload: { ceremonyId: winnerLogin.ceremonyId, credential: winner.key.authentication(winnerLogin.options, f.holder.webauthnUserId) }, network: '192.0.2.9' });
+    const loserLogin = await f.service.authenticationOptions({ network: '192.0.2.9' });
+    await assert.rejects(() => f.service.authenticationVerify({ preauthToken: loserLogin.binding.token, payload: { ceremonyId: loserLogin.ceremonyId, credential: loser.key.authentication(loserLogin.options, f.holder.webauthnUserId) }, network: '192.0.2.9' }), /authentication_failed/);
+    assert.ok(await f.service.recoveryBegin({ payload: { code: winnerCodes[0] }, network: '192.0.2.10' }));
   });
 
   test('IR-02: recovery invalidation defeats concurrent session rotation', async () => {
@@ -246,13 +260,25 @@ if (!databaseURL) {
     const recovery = await prepareRecovery(f, f.auth.recoveryCodes[0], recoveryService);
     const pause = pauseAfter(f.store, (query) => query.includes('UPDATE access_sessions SET revoked_at'));
     const rotation = f.service.status(f.auth.token);
-    await pause.hit;
-    const completion = recoveryService.recoveryRegistrationVerify(recovery.input);
-    await delay(100);
-    pause.release();
-    const rotated = await rotation;
+    rotation.catch(() => {});
+    let completion;
+    try {
+      const rotationPid = await pause.hit;
+      completion = recoveryService.recoveryRegistrationVerify(recovery.input);
+      completion.catch(() => {});
+      await waitForBlockedBy(rotationPid);
+    } finally {
+      pause.release();
+    }
     await completion;
-    await assert.rejects(() => recoveryService.status(rotated.token), /unauthorized/);
+    // Rotation commits first, so recovery must revoke its successor. Status may
+    // observe that revocation before it returns; both outcomes are secure.
+    const rotated = await rotation.catch((error) => {
+      assert.match(error.message, /unauthorized/);
+      return null;
+    });
+    if (rotated) await assert.rejects(() => recoveryService.status(rotated.token), /unauthorized/);
+    await assert.rejects(() => recoveryService.status(f.auth.token), /unauthorized/);
   });
 
   test('IR-03: logout invalidation prevents a queued credential revocation', async () => {
@@ -291,19 +317,20 @@ if (!databaseURL) {
     const entered = deferred();
     const release = deferred();
     const suspension = suspender.sql.begin(async (sql) => {
+      const [{ pid }] = await sql`SELECT pg_backend_pid() AS pid`;
       await sql`UPDATE access_holders SET condition = 'suspended' WHERE id = ${f.holder.id}`;
-      entered.resolve();
+      entered.resolve(pid);
       await release.promise;
     });
-    await entered.promise;
+    const suspenderPid = await entered.promise;
     const completion = f.service.recoveryRegistrationVerify(prepared.input);
-    const completionState = await Promise.race([
-      completion.then(() => 'settled', () => 'settled'),
-      delay(100).then(() => 'blocked'),
-    ]);
-    assert.equal(completionState, 'blocked');
-    release.resolve();
-    await suspension;
+    completion.catch(() => {});
+    try {
+      await waitForBlockedBy(suspenderPid);
+    } finally {
+      release.resolve();
+      await suspension;
+    }
     await assert.rejects(() => completion, /recovery_failed|unauthorized/);
     await f.store.sql`UPDATE access_holders SET condition = 'active' WHERE id = ${f.holder.id}`;
     await assert.rejects(
