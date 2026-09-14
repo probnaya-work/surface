@@ -1,19 +1,11 @@
-import { readdir, readFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import postgres from 'postgres';
+import { applyMigrations } from '../lib/migrations.js';
 
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const migrationRoot = resolve(root, 'migrations');
-const migrations = (await readdir(migrationRoot)).filter((name) => /^\d+.*\.sql$/.test(name)).sort();
-const sql = postgres(process.env.DATABASE_URL, { max: 1 });
+const sql = postgres(process.env.DATABASE_URL, { max: 1, onnotice: () => {} });
 try {
-  const [{ exists }] = await sql`SELECT to_regclass('access_holders') IS NOT NULL AS exists`;
-  for (const name of migrations) {
-    if (name.startsWith('001_') && exists) continue;
-    await sql.unsafe(await readFile(resolve(migrationRoot, name), 'utf8'));
-  }
+  const applied = await applyMigrations(sql);
+  process.stdout.write(`Applied: ${applied.join(', ') || 'none'}\n`);
 } finally {
   await sql.end();
 }
