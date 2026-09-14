@@ -1,0 +1,23 @@
+{
+  "name": "@probnaya/access",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "prepare:browser": "node scripts/copy-browser-bundle.mjs",
+    "dev": "node scripts/dev-server.mjs",
+    "migrate": "node scripts/migrate.mjs",
+    "create-enrollment": "node scripts/create-enrollment.mjs",
+    "test": "node --test test/*.test.js",
+    "test:postgres": "node --test test/postgres-concurrency.test.js",
+    "check": "npm run prepare:browser && npm test"
+  },
+  "dependencies": {
+    "@simplewebauthn/browser": "14.0.0",
+    "@simplewebauthn/server": "14.0.2",
+    "postgres": "3.4.9"
+  }
+}
