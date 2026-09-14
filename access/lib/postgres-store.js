@@ -133,6 +133,68 @@ export class PostgresStore {
     });
   }
 
+  // Operator path for first enrollment. A new public identifier creates a pending
+  // holder; an existing pending holder receives a fresh grant and every earlier
+  // unconsumed grant expires. Holders that already hold credentials, or are
+  // suspended, are refused: a grant is never a way into an established record.
+  async issueEnrollmentGrant({ holder: item, grant, now }) {
+    return this.sql.begin(async (sql) => {
+      const [existing] = await sql`SELECT * FROM access_holders WHERE public_id = ${item.publicId} FOR UPDATE`;
+      let holderId = item.id;
+      let created = false;
+      if (!existing) {
+        await sql`INSERT INTO access_holders (id, public_id, webauthn_user_id, condition, created_at, updated_at) VALUES (${item.id}, ${item.publicId}, ${item.webauthnUserId}, 'pending', ${date(now)}, ${date(now)})`;
+        created = true;
+      } else if (existing.condition !== 'pending') {
+        return { issued: false, condition: existing.condition };
+      } else {
+        holderId = existing.id;
+        await sql`UPDATE access_enrollment_grants SET expires_at = LEAST(expires_at, ${date(now)}) WHERE holder_id = ${holderId} AND consumed_at IS NULL`;
+      }
+      await sql`INSERT INTO access_enrollment_grants (id, holder_id, token_hash, created_at, expires_at, consumed_at, operator_note) VALUES (${grant.id}, ${holderId}, ${grant.tokenHash}, ${date(now)}, ${date(grant.expiresAt)}, null, ${grant.operatorNote || null})`;
+      await insertAudit(sql, { id: grant.auditId, holderId, type: 'enrollment-grant-issued', outcome: 'operator', occurredAt: now });
+      return { issued: true, created, holderId };
+    });
+  }
+
+  // Suspension is an incident-containment state. The migration 002 trigger
+  // invalidates ordinary and recovery sessions in this same transaction.
+  // Reactivation restores `active` only when an active credential remains;
+  // otherwise the holder returns to `pending` and needs a new enrollment grant.
+  async setHolderCondition({ publicId, action, now, auditId }) {
+    return this.sql.begin(async (sql) => {
+      const [existing] = await sql`SELECT * FROM access_holders WHERE public_id = ${publicId} FOR UPDATE`;
+      if (!existing) return { changed: false, reason: 'unknown-holder' };
+      let next;
+      if (action === 'suspend') {
+        if (existing.condition === 'suspended') return { changed: false, reason: 'already-suspended', condition: existing.condition };
+        next = 'suspended';
+      } else if (action === 'reactivate') {
+        if (existing.condition !== 'suspended') return { changed: false, reason: 'not-suspended', condition: existing.condition };
+        const [{ count }] = await sql`SELECT count(*)::int AS count FROM access_credentials WHERE holder_id = ${existing.id} AND revoked_at IS NULL`;
+        next = count > 0 ? 'active' : 'pending';
+      } else {
+        throw new Error('Unknown holder condition action');
+      }
+      await sql`UPDATE access_holders SET condition = ${next}, updated_at = ${date(now)} WHERE id = ${existing.id}`;
+      await insertAudit(sql, { id: auditId, holderId: existing.id, type: action === 'suspend' ? 'holder-suspended' : 'holder-reactivated', outcome: 'operator', occurredAt: now });
+      return { changed: true, condition: next };
+    });
+  }
+
+  // Bounded retention for authority that can no longer be used. Audit events,
+  // holders, credentials, grants, and recovery codes are never pruned here.
+  async pruneExpired({ now, retentionMs }) {
+    const cutoff = date(now - retentionMs);
+    return this.sql.begin(async (sql) => {
+      const ceremonies = await sql`DELETE FROM access_ceremonies WHERE expires_at < ${cutoff}`;
+      const rateLimits = await sql`DELETE FROM access_rate_limits WHERE window_started_at < ${cutoff} AND blocked_until < ${cutoff}`;
+      const sessions = await sql`DELETE FROM access_sessions WHERE COALESCE(revoked_at, LEAST(idle_expires_at, absolute_expires_at)) < ${cutoff}`;
+      const recoverySessions = await sql`DELETE FROM access_recovery_sessions WHERE expires_at < ${cutoff}`;
+      return { ceremonies: ceremonies.count, rateLimits: rateLimits.count, sessions: sessions.count, recoverySessions: recoverySessions.count };
+    });
+  }
+
   async findGrant(tokenHash, now) {
     const [row] = await this.sql`SELECT * FROM access_enrollment_grants WHERE token_hash = ${tokenHash} AND consumed_at IS NULL AND expires_at > ${date(now)} LIMIT 1`;
     return row && { id: row.id, holderId: row.holder_id, tokenHash: row.token_hash, createdAt: ms(row.created_at), expiresAt: ms(row.expires_at), consumedAt: null };

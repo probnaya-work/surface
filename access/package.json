@@ -11,6 +11,8 @@
     "dev": "node scripts/dev-server.mjs",
     "migrate": "node scripts/migrate.mjs",
     "create-enrollment": "node scripts/create-enrollment.mjs",
+    "holder-condition": "node scripts/set-holder-condition.mjs",
+    "prune-expired": "node scripts/prune-expired.mjs",
     "test": "node --test test/*.test.js",
     "test:postgres": "node --test test/postgres-concurrency.test.js",
     "check": "npm run prepare:browser && npm test"
