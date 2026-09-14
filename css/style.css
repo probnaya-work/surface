@@ -71,6 +71,23 @@ p { text-wrap: pretty; }
 
 .nav-right { display: flex; align-items: center; gap: 24px; }
 
+.recognized-return, .access-entry {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.13em;
+  white-space: nowrap;
+}
+.recognized-return .return-label { color: var(--body-text); }
+.recognized-return .return-holder { color: var(--ink); }
+.recognized-return:hover .return-holder { color: var(--blue); }
+.access-entry { color: var(--blue); }
+.access-entry::before { content: ""; width: 5px; height: 5px; background: currentColor; }
+.holder-presence-mark { display: inline-block; width: 17px; height: 17px; color: var(--ink); }
+.holder-presence-mark svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.35; overflow: visible; }
+.holder-presence-mark .presence-axis { stroke: var(--blue); stroke-width: 1; }
+.holder-presence-mark .presence-neutral { display: none; fill: var(--ink); stroke: none; }
+html[data-portrait="unissued"] .holder-presence-mark .presence-issued { display: none; }
+html[data-portrait="unissued"] .holder-presence-mark .presence-neutral { display: block; }
+
 .nav-link { cursor: pointer; display: flex; align-items: center; gap: 8px; }
 .nav-link span.label {
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; white-space: nowrap;
@@ -459,6 +476,13 @@ p { text-wrap: pretty; }
 @media (max-width: 760px) {
   .site-header, .site-footer { display: none; }
   .mobile-header { display: flex; }
+  .mobile-header .recognized-return {
+    margin-left: auto; margin-right: 13px; gap: 6px;
+    font-size: 8px; letter-spacing: 0.09em;
+  }
+  .mobile-header .holder-presence-mark { width: 14px; height: 14px; }
+  .mobile-header .recognized-return .return-label { display: none; }
+  .mobile-header .access-entry { margin-left: auto; margin-right: 13px; font-size: 8px; }
   .bottom-nav.has-tabs { display: grid; }
 
   .main { padding-top: var(--header-h-mobile); padding-bottom: var(--bottom-nav-h); }
@@ -491,4 +515,8 @@ p { text-wrap: pretty; }
   .register-plate { height: 150px; }
   .record-row { grid-template-columns: 1fr; gap: 10px; }
   .record-row .status { text-align: left; }
+}
+
+@media (min-width: 761px) and (max-width: 1120px) {
+  .site-header .brand-tag { display: none; }
 }

@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROB–H–0087 — PROBNAYA Interior Prototype</title>
+<meta name="description" content="An isolated design prototype for the authenticated interior of PROBNAYA.">
+<link rel="icon" type="image/svg+xml" href="../assets/probnaya-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="interior-header">
+  <a class="brand" href="../" aria-label="PROBNAYA public surface">
+    <span class="holder-representation" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="3.5" y="3.5" width="25" height="25"></rect><path class="representation-axis" d="M1 16h30M16 1v30"></path><g class="representation-issued"><circle cx="16" cy="16" r="9"></circle><circle cx="16" cy="16" r="5"></circle></g><rect class="representation-neutral" x="13" y="13" width="6" height="6"></rect></svg></span>
+    <span>PROBNAYA</span>
+  </a>
+  <nav class="interior-nav" aria-label="Interior">
+    <button type="button" data-route="current">CURRENT</button>
+    <button type="button" data-route="held">HELD</button>
+    <button type="button" data-route="history">HISTORY</button>
+  </nav>
+  <button class="holder-control" type="button" data-route="standing" aria-label="Open relationship and Access information">
+    <span>RELATION</span><strong>PROB–H–0087</strong>
+  </button>
+</header>
+
+<main id="interior-view" tabindex="-1"></main>
+
+<nav class="mobile-nav" aria-label="Interior">
+  <button type="button" data-route="current">CURRENT</button>
+  <button type="button" data-route="held">HELD</button>
+  <button type="button" data-route="history">HISTORY</button>
+  <a href="../lab/">PUBLIC</a>
+</nav>
+
+<template id="view-current">
+  <div class="interior-page current-page">
+    <section class="page-heading">
+      <div>
+        <p class="kicker">PROB–H–0087 · 14 SEPTEMBER 2026</p>
+        <h1>Current</h1>
+      </div>
+      <button class="relation-summary" type="button" data-route="standing">
+        <span>RELATION ESTABLISHED 02 MAY 2024</span>
+        <strong>ACTIVE · ACCESS MAINTAINED</strong>
+      </button>
+    </section>
+
+    <section class="primary-matter" aria-labelledby="addressed-title">
+      <div class="matter-index">
+        <span class="signal-square" aria-hidden="true"></span>
+        <p>ADDRESSED TO YOU</p>
+        <strong>ONE UNREAD</strong>
+        <span>RECEIVED 14 SEP · 09:32</span>
+      </div>
+      <div class="matter-body">
+        <p class="matter-id">PROB–COR–006 · CORRESPONDENCE</p>
+        <h2 id="addressed-title">A note before disclosure</h2>
+        <p class="matter-deck">The interruption work has survived three independent runs. A field note is available to you before public disclosure.</p>
+        <p class="matter-excerpt">“The first finding is narrower than the question: a running agent can be stopped without losing the task, but only when the record of the interruption is treated as part of the work.”</p>
+        <button class="text-action" type="button" data-open="correspondence">READ CORRESPONDENCE →</button>
+      </div>
+    </section>
+
+    <section class="open-matter" aria-labelledby="open-title">
+      <header class="section-rule"><h2 id="open-title">OPEN BETWEEN US</h2><span>01 INVESTIGATION</span></header>
+      <button class="work-row" type="button" data-open="investigation">
+        <span class="row-id">PROB–017/H</span>
+        <span class="row-title"><strong>Interruption as a primitive of machine work</strong><small>COMMISSION ACCEPTED · FIELD NOTE 03 AVAILABLE</small></span>
+        <span class="row-state">OPEN · PRIVATE</span>
+        <span class="row-arrow" aria-hidden="true">→</span>
+      </button>
+    </section>
+
+    <section class="held-matter" aria-labelledby="held-title">
+      <header class="section-rule"><h2 id="held-title">HELD BY YOU</h2><button type="button" data-route="held">03 OBJECTS →</button></header>
+      <button class="held-feature" type="button" data-open="object">
+        <span class="object-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="held-copy"><small>PROB–OBJ.000184 · ISSUED 18 JUNE 2026</small><strong>Machine Portrait / issue 0184</strong><span>PORTRAIT · RECORD · EIGHT MARKS</span></span>
+        <span class="row-arrow" aria-hidden="true">→</span>
+      </button>
+    </section>
+
+    <footer class="interior-foot">
+      <span>PROB–H–0087 · RELATION ACTIVE</span>
+      <a href="../lab/">CONTINUE THROUGH PUBLIC PROBNAYA →</a>
+    </footer>
+  </div>
+</template>
+
+<template id="view-current-empty">
+  <div class="interior-page current-page empty-page">
+    <section class="page-heading">
+      <div><p class="kicker">PROB–H–0142 · 14 SEPTEMBER 2026</p><h1>Current</h1></div>
+      <button class="relation-summary" type="button" data-route="standing"><span>RELATION ESTABLISHED TODAY</span><strong>ACTIVE · ACCESS ESTABLISHED</strong></button>
+    </section>
+    <section class="empty-condition" aria-labelledby="nothing-open">
+      <span class="neutral-field" aria-hidden="true"><i></i></span>
+      <div><p class="matter-id">CURRENT CONDITION</p><h2 id="nothing-open">Nothing open.</h2></div>
+      <dl><dt>CORRESPONDENCE</dt><dd>00</dd><dt>INVESTIGATIONS</dt><dd>00</dd></dl>
+    </section>
+    <footer class="interior-foot"><span>PROB–H–0142 · RELATION ACTIVE</span><a href="../lab/">CONTINUE THROUGH PUBLIC PROBNAYA →</a></footer>
+  </div>
+</template>
+
+<template id="view-held">
+  <div class="interior-page collection-page">
+    <section class="page-heading">
+      <div><p class="kicker">PROB–H–0087 · ISSUED AND RETAINED</p><h1>Held</h1></div>
+      <p class="heading-note">Objects remain attached to this relation after the apparatus, instrument, or occasion that issued them has passed.</p>
+    </section>
+    <div class="collection-list">
+      <button class="collection-row" type="button" data-open="object">
+        <span class="collection-number">01</span>
+        <span class="object-presence" aria-hidden="true"><svg viewBox="0 0 96 72"><rect x="17" y="1" width="62" height="70"></rect><circle cx="48" cy="36" r="22"></circle><circle cx="48" cy="36" r="14"></circle><path class="presence-accent" d="M9 36h78M48 8v56"></path></svg></span>
+        <span class="collection-id">PROB–OBJ.000184<small>18 JUN 2026</small></span><span class="collection-title">Machine Portrait / issue 0184<small>MPA–01 · PORTRAIT · RECORD · MARKS</small></span><span class="collection-state">ISSUED</span><span>→</span>
+      </button>
+      <div class="collection-row">
+        <span class="collection-number">02</span>
+        <span class="object-presence" aria-hidden="true"><svg viewBox="0 0 96 72"><rect x="1" y="10" width="94" height="52"></rect><path d="M1 23h94M1 36h94M1 49h94"></path><path class="presence-accent" d="M18 10v52M48 10v52M78 10v52"></path></svg></span>
+        <span class="collection-id">PROB–OBJ.000096<small>07 FEB 2025</small></span><span class="collection-title">057 / one workday<small>FIELD CAPTURE · 24 HOURS</small></span><span class="collection-state">ISSUED</span><span></span>
+      </div>
+      <div class="collection-row">
+        <span class="collection-number">03</span>
+        <span class="object-presence" aria-hidden="true"><svg viewBox="0 0 96 72"><path d="M1 15h94M1 29h94M1 43h94M1 57h94"></path><path class="presence-accent" d="M20 15v14h22v14h25v14h18"></path><rect x="17" y="12" width="6" height="6"></rect><rect x="82" y="54" width="6" height="6"></rect></svg></span>
+        <span class="collection-id">PROB–OBJ.000031<small>02 MAY 2024</small></span><span class="collection-title">0x2F / task trace<small>FOUR-LANE PERSISTENCE RECORD</small></span><span class="collection-state">ISSUED</span><span></span>
+      </div>
+    </div>
+    <footer class="interior-foot"><span>03 OBJECTS · 07 REPRESENTATIONS</span><button type="button" data-route="history">EARLIER RELATION →</button></footer>
+  </div>
+</template>
+
+<template id="view-held-empty">
+  <div class="interior-page collection-page empty-page">
+    <section class="page-heading"><div><p class="kicker">PROB–H–0142 · ISSUED AND RETAINED</p><h1>Held</h1></div><p class="heading-note">Objects issued by PROBNAYA remain attached to this relation.</p></section>
+    <section class="empty-condition empty-condition--held" aria-labelledby="nothing-held"><span class="neutral-field" aria-hidden="true"><i></i></span><div><p class="matter-id">00 OBJECTS</p><h2 id="nothing-held">Nothing issued.</h2></div><dl><dt>REPRESENTATION</dt><dd>UNISSUED</dd></dl></section>
+    <footer class="interior-foot"><span>00 OBJECTS · 00 REPRESENTATIONS</span><button type="button" data-route="history">HISTORY →</button></footer>
+  </div>
+</template>
+
+<template id="view-history">
+  <div class="interior-page history-page">
+    <section class="page-heading">
+      <div><p class="kicker">PROB–H–0087 · ACCUMULATED RELATION</p><h1>History</h1></div>
+      <p class="heading-note">Correspondence, issues, grants, and work are ordered here only after they cease to be current.</p>
+    </section>
+    <ol class="history-list">
+      <li><time>2026 · 03 AUG</time><span>PROB–ACC–021</span><strong>Access to 057 field notes</strong><em>GRANTED · UNTIL DISCLOSURE</em></li>
+      <li><time>2026 · 18 JUN</time><span>PROB–OBJ.000184</span><strong>Machine Portrait / issue 0184</strong><em>ISSUED</em></li>
+      <li><time>2025 · 11 DEC</time><span>PROB–COR–004</span><strong>The instrument remained running</strong><em>RECEIVED · READ</em></li>
+      <li><time>2025 · 19 JUN</time><span>PROB–ACC–014</span><strong>Second key established</strong><em>ACTIVE</em></li>
+      <li><time>2025 · 07 FEB</time><span>PROB–OBJ.000096</span><strong>057 / one workday</strong><em>ISSUED</em></li>
+      <li><time>2024 · 02 MAY</time><span>PROB–H–0087</span><strong>Relation established</strong><em>ACTIVE</em></li>
+    </ol>
+  </div>
+</template>
+
+<template id="view-history-empty">
+  <div class="interior-page history-page empty-page">
+    <section class="page-heading"><div><p class="kicker">PROB–H–0142 · ACCUMULATED RELATION</p><h1>History</h1></div><p class="heading-note">Completed correspondence, issues, grants, and work accumulate here.</p></section>
+    <section class="empty-condition empty-condition--history" aria-labelledby="nothing-earlier"><span class="neutral-field" aria-hidden="true"><i></i></span><div><p class="matter-id">EARLIER RELATION</p><h2 id="nothing-earlier">No earlier events.</h2></div><dl><dt>ESTABLISHED</dt><dd>14 SEP 2026</dd></dl></section>
+  </div>
+</template>
+
+<template id="view-standing">
+  <div class="interior-page standing-page detail-page">
+    <button class="back-action" type="button" data-route="current">← CURRENT</button>
+    <section class="detail-heading">
+      <div><p class="kicker">RELATION AT PROBNAYA</p><h1>PROB–H–0087</h1></div>
+      <span class="condition"><i></i>ACTIVE</span>
+    </section>
+    <div class="standing-layout">
+      <section class="standing-statement">
+        <p>Relation active.<br>Established 02 May 2024.</p>
+        <dl>
+          <dt>CORRESPONDENCE</dt><dd>04 RECEIVED · 01 UNREAD</dd>
+          <dt>HELD</dt><dd>03 OBJECTS</dd>
+          <dt>WORK</dt><dd>01 OPEN · PRIVATE</dd>
+        </dl>
+        <div class="relation-representation">
+          <span class="holder-representation" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="3.5" y="3.5" width="25" height="25"></rect><path class="representation-axis" d="M1 16h30M16 1v30"></path><g class="representation-issued"><circle cx="16" cy="16" r="9"></circle><circle cx="16" cy="16" r="5"></circle></g><rect class="representation-neutral" x="13" y="13" width="6" height="6"></rect></svg></span>
+          <span><small>ISSUED REPRESENTATION</small><strong data-representation-state>PROB–OBJ.000184</strong></span>
+          <button type="button" data-open="object">VIEW →</button>
+        </div>
+      </section>
+      <section class="access-separation">
+        <header class="section-rule"><h2>ACCESS</h2><span>ACCESS.PROBNAYA.WORK</span></header>
+        <dl>
+          <dt>KEYS</dt><dd>02 ACTIVE</dd>
+          <dt>RECOVERY</dt><dd>ESTABLISHED</dd>
+          <dt>LAST ENTRY</dt><dd>14 SEP 2026 · 09:41 WEST</dd>
+        </dl>
+        <a class="line-action" data-access-record href="https://access.probnaya.work/" rel="noreferrer"><span>OPEN ACCESS</span><span>KEYS &amp; RECOVERY ↗</span></a>
+        <a class="line-action line-action--quiet" data-access-end href="https://access.probnaya.work/" rel="noreferrer"><span>END RECOGNITION</span><span>ACCESS ↗</span></a>
+      </section>
+      <section class="public-separation">
+        <header class="section-rule"><h2>PUBLIC PROBNAYA</h2><span>RECOGNIZED</span></header>
+        <a class="line-action" href="../lab/"><span>ENTER PUBLIC SURFACE</span><span>THE LABORATORY →</span></a>
+      </section>
+    </div>
+  </div>
+</template>
+
+<template id="view-correspondence">
+  <article class="interior-page detail-page correspondence-page">
+    <button class="back-action" type="button" data-route="current">← CURRENT</button>
+    <section class="detail-heading">
+      <div><p class="kicker">PROB–COR–006 · CORRESPONDENCE</p><h1>A note before disclosure</h1></div>
+      <span class="condition"><i></i>RECEIVED</span>
+    </section>
+    <div class="reading-layout">
+      <aside class="detail-meta"><dl><dt>ISSUED</dt><dd>14 SEP 2026</dd><dt>TO</dt><dd>PROB–H–0087</dd><dt>FROM</dt><dd>PROBNAYA</dd><dt>FORM</dt><dd>LETTER · DIGITAL</dd><dt>STATE</dt><dd>READ</dd></dl></aside>
+      <div class="letter">
+        <div class="letter-head"><span>PROBNAYA / CORRESPONDENCE</span><span>PROB–COR–006</span></div>
+        <p>Bogart—</p>
+        <p>We have kept the interruption work private while the result could still change. It has now survived three independent runs.</p>
+        <p>The first finding is narrower than the question: a running agent can be stopped without losing the task, but only when the record of the interruption is treated as part of the work rather than as an error around it.</p>
+        <p>You have access to field note 03 before disclosure. It includes the failed run from 3 September because removing it would make the conclusion cleaner and less true.</p>
+        <p>We expect to disclose PROB–017 on 21 September. Until then, the note remains inside this relation and should not be circulated.</p>
+        <p class="signoff">PROBNAYA<br>14 September 2026</p>
+        <button class="enclosure" type="button" data-open="investigation"><span>ENCLOSURE 01 · PROB–017 / FIELD NOTE 03</span><span>OPEN →</span></button>
+      </div>
+    </div>
+  </article>
+</template>
+
+<template id="view-investigation">
+  <article class="interior-page detail-page investigation-page">
+    <button class="back-action" type="button" data-route="current">← CURRENT</button>
+    <section class="detail-heading">
+      <div><p class="kicker">PROB–017/H · COMMISSIONED INVESTIGATION</p><h1>Interruption as a primitive of machine work</h1></div>
+      <span class="condition"><i></i>OPEN · PRIVATE</span>
+    </section>
+    <div class="investigation-layout">
+      <aside class="detail-meta"><dl><dt>ACCEPTED</dt><dd>02 APR 2026</dd><dt>RELATION</dt><dd>PROB–H–0087</dd><dt>DISCLOSURE</dt><dd>EXPECTED 21 SEP</dd><dt>FIELD NOTES</dt><dd>03</dd></dl></aside>
+      <div class="investigation-body">
+        <p class="lede">Can a running machine process be interrupted without treating interruption as failure?</p>
+        <section><header class="section-rule"><h2>CURRENT FINDING</h2><span>RUN 03</span></header><p>A task survives transfer only when the interruption itself enters the task record. Continuity is produced by the record, not by the uninterrupted presence of one agent.</p></section>
+        <section><header class="section-rule"><h2>AVAILABLE TO THIS RELATION</h2><span>BEFORE DISCLOSURE</span></header><button class="field-note" type="button"><span>FIELD NOTE 03 · 11 SEP 2026</span><strong>Three runs, including one failed transfer</strong><em>READING REPRESENTED IN PROTOTYPE</em></button></section>
+      </div>
+    </div>
+  </article>
+</template>
+
+<template id="view-object">
+  <article class="interior-page detail-page object-page">
+    <button class="back-action" type="button" data-route="held">← HELD</button>
+    <section class="detail-heading">
+      <div><p class="kicker">PROB–OBJ.000184 · ISSUED OBJECT</p><h1>Machine Portrait / issue 0184</h1></div>
+      <span class="condition"><i></i>HELD</span>
+    </section>
+    <div class="object-layout">
+      <div class="portrait-plate" aria-label="Representative machine portrait plate">
+        <svg viewBox="0 0 500 500" role="img" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="64" y="64" width="372" height="372"></rect><circle cx="250" cy="250" r="150"></circle><circle cx="250" cy="250" r="122"></circle><circle cx="250" cy="250" r="91"></circle><circle cx="250" cy="250" r="57"></circle><path d="M84 250h332M250 84v332" class="blue-line"></path><path d="M142 161c34-44 79-62 125-50 58 15 94 63 98 123-17 67-63 111-135 126-59-14-101-56-119-115 4-35 14-63 31-84Z"></path></g></svg>
+        <span>REPRESENTATION 01 · PORTRAIT</span>
+      </div>
+      <div class="object-copy">
+        <p class="lede">One fixed measurement, issued through MPA–01 and retained under PROB–H–0087.</p>
+        <dl><dt>ISSUE</dt><dd>0184 · 18 JUNE 2026</dd><dt>APPARATUS</dt><dd>MPA–01</dd><dt>MEASUREMENT</dt><dd>16 × 16 · FIVE LEVELS</dd><dt>ISSUED BY</dt><dd>PROBNAYA</dd><dt>HOLDER</dt><dd>PROB–H–0087</dd></dl>
+        <div class="representations"><header class="section-rule"><h2>REPRESENTATIONS</h2><span>03</span></header><button type="button">01 · PORTRAIT · A4 <span>PDF ↓</span></button><button type="button">02 · MEASUREMENT RECORD <span>PDF ↓</span></button><button type="button">03 · EIGHT MARKS · A4 <span>PDF ↓</span></button></div>
+      </div>
+    </div>
+  </article>
+</template>
+
+<div class="prototype-notice" id="prototype-notice" hidden role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
