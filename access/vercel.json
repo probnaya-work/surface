@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci",
+  "outputDirectory": "public",
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
@@ -19,12 +22,5 @@
         { "key": "Cache-Control", "value": "no-store, max-age=0" }
       ]
     }
-  ],
-  "rewrites": [
-    { "source": "/api/access", "destination": "/api/access.js" },
-    { "source": "/", "destination": "/public/index.html" },
-    { "source": "/access.css", "destination": "/public/access.css" },
-    { "source": "/app.js", "destination": "/public/app.js" },
-    { "source": "/assets/:path*", "destination": "/public/assets/:path*" }
   ]
 }
