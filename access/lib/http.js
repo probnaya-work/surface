@@ -111,10 +111,10 @@ export function sendJSON(res, status, body, extraHeaders = {}) {
   res.end(JSON.stringify(body));
 }
 
-export function sendError(res, error) {
+export function sendError(res, error, extraHeaders = {}) {
   const recognized = error instanceof AccessError;
   const status = recognized ? error.status : 500;
-  const headers = recognized && error.retryAfter ? { 'Retry-After': String(error.retryAfter) } : {};
+  const headers = { ...extraHeaders, ...(recognized && error.retryAfter ? { 'Retry-After': String(error.retryAfter) } : {}) };
   sendJSON(res, status, {
     ok: false,
     error: recognized ? error.publicMessage : 'ACCESS SERVICE UNAVAILABLE',

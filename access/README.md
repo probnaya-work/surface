@@ -10,7 +10,7 @@ See `../docs/access-architecture.md`, `../docs/access-threat-model.md`, and `../
 
 1. Run `npm ci`.
 2. Copy `.env.example` values into your shell or an untracked local environment file. Generate three different secrets with `openssl rand -base64 32`.
-3. For disposable UI/ceremony development, set `ACCESS_ENV=development`, `ACCESS_LOCAL_ORIGIN=http://localhost:4174`, and `ACCESS_USE_MEMORY_STORE=true`. Set an explicit base64url `ACCESS_DEV_ENROLLMENT_TOKEN` if the local enrollment screen is needed.
+3. For disposable UI/ceremony development, set `ACCESS_ENV=development`, `ACCESS_LOCAL_ORIGIN=http://localhost:4174`, and `ACCESS_USE_MEMORY_STORE=true`. Set `ACCESS_PUBLIC_ORIGIN=http://localhost:4173` to let the locally served public site and Interior read the relation (`GET /api/relation`) and to point Access's fixed Interior and logout destinations at it. Set an explicit base64url `ACCESS_DEV_ENROLLMENT_TOKEN` if the local enrollment screen is needed.
 4. Run `npm run prepare:browser` and `npm run dev`, then open `http://localhost:4174/`.
 5. Run `npm test` or `npm run check`.
 

@@ -1,6 +1,8 @@
 export const RP_NAME = 'PROBNAYA';
 export const PRODUCTION_RP_ID = 'access.probnaya.work';
 export const PRODUCTION_ORIGIN = 'https://access.probnaya.work';
+// The one public origin that may read the holder relation with credentials.
+export const PRODUCTION_PUBLIC_ORIGIN = 'https://probnaya.work';
 
 export const CEREMONY_TTL_MS = 5 * 60 * 1000;
 export const SESSION_IDLE_MS = 30 * 60 * 1000;

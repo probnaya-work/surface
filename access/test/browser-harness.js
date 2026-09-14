@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { createHandler } from '../api/access.js';
+import { createRelationHandler } from '../api/relation.js';
 import { loadConfig } from '../lib/config.js';
 import { AccessService } from '../lib/service.js';
 import { createWebAuthn } from '../lib/webauthn.js';
@@ -38,6 +39,7 @@ export class Browser {
     this.runtime = runtime;
     this.logger = logger;
     this.handler = createHandler({ runtime: async () => runtime, logger });
+    this.relationHandler = createRelationHandler({ runtime: async () => runtime, logger });
     this.host = host ?? new URL(runtime.config.origin).host;
     this.origin = origin === undefined ? runtime.config.origin : origin;
     this.network = network;
@@ -50,7 +52,7 @@ export class Browser {
     return [...this.jar].map(([name, value]) => `${name}=${value}`).join('; ');
   }
 
-  async send({ method, body, headers = {} }) {
+  async send({ method, body, headers = {}, handler = this.handler }) {
     const responseHeaders = new Map();
     const response = await new Promise((resolve) => {
       const res = {
@@ -70,7 +72,7 @@ export class Browser {
           ...headers,
         },
       };
-      this.handler(req, res);
+      handler(req, res);
     });
     const cookies = [].concat(responseHeaders.get('set-cookie') || []);
     for (const raw of cookies) {
@@ -86,6 +88,12 @@ export class Browser {
     const response = await this.send({ method: 'GET', headers });
     if (response.body.csrf) this.csrf = response.body.csrf;
     return response;
+  }
+
+  // A credentialed fetch from the public site to the relation read. The public
+  // origin and same-site label are what a browser sends from probnaya.work.
+  relation(headers = { origin: this.runtime.config.publicOrigin, 'sec-fetch-site': 'same-site' }, method = 'GET') {
+    return this.send({ method, headers, handler: this.relationHandler });
   }
 
   async post(action, data = {}, { csrf = this.csrf, headers = {} } = {}) {

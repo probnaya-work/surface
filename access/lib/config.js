@@ -2,6 +2,7 @@ import {
   PREAUTH_COOKIE_DEVELOPMENT,
   PREAUTH_COOKIE_PRODUCTION,
   PRODUCTION_ORIGIN,
+  PRODUCTION_PUBLIC_ORIGIN,
   PRODUCTION_RP_ID,
   RECOVERY_COOKIE_DEVELOPMENT,
   RECOVERY_COOKIE_PRODUCTION,
@@ -74,7 +75,17 @@ export function loadConfig(env = process.env) {
     rpID = 'localhost';
   }
 
-  if (production && (env.WEBAUTHN_ORIGIN || env.WEBAUTHN_RP_ID || env.ACCESS_LOCAL_ORIGIN)) {
+  // The public site reads the relation cross-origin. Production fixes it; local
+  // development may name one explicit localhost origin or leave the read closed.
+  let publicOrigin = PRODUCTION_PUBLIC_ORIGIN;
+  if (!production) {
+    publicOrigin = env.ACCESS_PUBLIC_ORIGIN || null;
+    if (publicOrigin !== null && (!/^http:\/\/localhost:\d{2,5}$/.test(publicOrigin) || publicOrigin === origin)) {
+      throw new Error('ACCESS_PUBLIC_ORIGIN must be a different explicit http://localhost:<port> origin');
+    }
+  }
+
+  if (production && (env.WEBAUTHN_ORIGIN || env.WEBAUTHN_RP_ID || env.ACCESS_LOCAL_ORIGIN || env.ACCESS_PUBLIC_ORIGIN)) {
     throw new Error('Production WebAuthn origin and RP ID are constants, not environment settings');
   }
   if (production && (env.ACCESS_DEV_ENROLLMENT_TOKEN || env.ACCESS_DEV_PUBLIC_ID)) {
@@ -97,6 +108,7 @@ export function loadConfig(env = process.env) {
     profile,
     production,
     origin,
+    publicOrigin,
     rpID,
     sessionHashKey,
     recoveryHashKey,

@@ -260,7 +260,8 @@ export class AccessService {
     return { tokenHash, session, holder, now };
   }
 
-  async status(sessionToken) {
+  // Idle refresh and the fifteen-minute rotation shared by every session read.
+  async currentSession(sessionToken) {
     const auth = await this.authenticated(sessionToken);
     let token = sessionToken;
     let session = auth.session;
@@ -274,13 +275,38 @@ export class AccessService {
     }
     const ok = await this.store.touchSession(session.tokenHash, auth.now);
     if (!ok) throw unauthorized();
+    return { token, rotated: token !== sessionToken, session, holder: auth.holder };
+  }
+
+  // The relation as the public site may know it: holder identifier and Access
+  // condition only. No CSRF token, credential label, or management reference.
+  async relation(sessionToken) {
+    const { token, rotated, session, holder } = await this.currentSession(sessionToken);
+    const credentials = await this.store.listCredentials(session.holderId, false);
+    const active = credentials.filter((credential) => !credential.revokedAt);
+    const recovery = await this.store.hasActiveRecoveryCodes(session.holderId);
+    return {
+      token,
+      rotated,
+      relation: {
+        holder: this.publicHolder(holder),
+        establishedAt: credentials.length ? new Date(credentials[0].issuedAt).toISOString() : null,
+        lastVerifiedAt: new Date(session.lastVerifiedAt).toISOString(),
+        keys: active.length,
+        recovery,
+      },
+    };
+  }
+
+  async status(sessionToken) {
+    const { token, rotated, session, holder } = await this.currentSession(sessionToken);
     const credentials = await this.store.listCredentials(session.holderId);
     const recovery = await this.store.hasActiveRecoveryCodes(session.holderId);
     return {
       token,
-      rotated: token !== sessionToken,
+      rotated,
       csrf: this.csrfToken('session', token),
-      holder: this.publicHolder(auth.holder),
+      holder: this.publicHolder(holder),
       lastVerifiedAt: new Date(session.lastVerifiedAt).toISOString(),
       record: {
         credentials: credentials.map((credential, index) => ({

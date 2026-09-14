@@ -1,7 +1,7 @@
 # PROBNAYA access — threat model
 
 Status: implementation baseline, updated after security review, 2026-09-14
-Scope: `PROBNAYA → ACCESS → authenticated`, credential management, sessions, and recovery. The future account interior is out of scope, but future private material is treated as protected data.
+Scope: `PROBNAYA → ACCESS → authenticated`, credential management, sessions, recovery, and the read-only relation read used by the public-origin Interior. Interior content has no production source yet; future private material is treated as protected data.
 
 ## Assets
 
@@ -119,3 +119,11 @@ Re-run this threat model before adding account content, administrator functions,
 - [OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
 - [OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
 - [MDN secure cookie configuration](https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Cookies)
+
+## Relation read (public origin)
+
+- **Script on `https://probnaya.work` reads the relation.** Any script running on the public origin — including an injected one — can learn the holder identifier, key count, recovery condition, and establishment time of a browser with a session, and can keep that session's idle lifetime alive. It cannot obtain the session token or CSRF token, change credentials or recovery, or end the session. The public site's script supply chain is therefore part of this boundary; it carries no user-supplied markup and loads only first-party scripts plus Vercel Analytics.
+- **Sibling or look-alike origins.** Refused by exact Origin; they receive no CORS headers, so a browser withholds the response.
+- **Concurrent rotation.** Two tabs can race the fifteen-minute rotation; the loser receives 401 once. The public client retries once when it previously held recognition.
+- **Stale recognition.** The public origin's `probnaya:recognized` localStorage value only decides whether to ask Access; it is cleared by any 401 and never displayed as recognition.
+

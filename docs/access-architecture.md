@@ -1,7 +1,7 @@
 # PROBNAYA access — production architecture
 
 Status: implementation decision record, 2026-09-14
-Scope ends at the authenticated boundary. Earlier account-interior exploration has been removed and is not a production dependency.
+Scope ends at the authenticated boundary. The PROBNAYA Interior lives on the public origin (`https://probnaya.work/interior/`) and reads the holder relation through the one cross-origin read described in *Relation read for public PROBNAYA*; it is not part of Access.
 
 ## Summary
 
@@ -233,16 +233,33 @@ base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'
 
 Also: `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, restrictive `Permissions-Policy`, `Cross-Origin-Opener-Policy: same-origin`, and `Cache-Control: no-store` for access HTML/API. HSTS remains a deployment requirement. The public production site is untouched.
 
-## Minimal authenticated destination
+## Authenticated boundary and fixed destinations
 
-After authentication, the server returns only:
+After PRESENT KEY, and after the first-enrollment recovery codes are acknowledged, the Access page replaces itself with the fixed Interior URL `https://probnaya.work/interior/`. After logout it replaces itself with `https://probnaya.work/`. Both come from the `probnaya-public-origin` meta element written into `public/index.html` (the local dev server substitutes `ACCESS_PUBLIC_ORIGIN`); the client accepts only `https://probnaya.work` or an explicit localhost origin. No request, query, or fragment can choose a destination.
 
-- `AUTHENTICATED`;
-- public holder identifier;
-- last verification time;
-- actions to view the security-facing Access record or close the session.
+The Access page itself still contains only:
 
-It contains no correspondence, objects, account taxonomy, or speculative interior.
+- `AUTHENTICATED`, the public holder identifier, and last verification time, with `INTERIOR →`, `ACCESS RECORD`, and `END SESSION`;
+- `#record` — opens the Access record directly (linked from Interior / RELATION / OPEN ACCESS);
+- `#end` — a deliberate END SESSION confirmation (linked from Interior / RELATION / END SESSION); the logout POST is unchanged;
+- `#expired` — the ordinary entry, with `SESSION ENDED. PRESENT KEY TO CONTINUE.`
+
+Fragments only select a view. Without a live session every fragment shows the entry.
+
+It contains no correspondence, objects, account taxonomy, or interior.
+
+## Relation read for public PROBNAYA
+
+`GET /api/relation` (`api/relation.js`) is the only Access response a sibling origin may read. It exists so the Interior and recognized public pages can know, from Access and nothing else, whether this browser holds a session.
+
+- Exact `Origin` equal to `publicOrigin`: the compiled constant `https://probnaya.work` in production; in local development only an explicit, different `http://localhost:<port>` from `ACCESS_PUBLIC_ORIGIN`, otherwise closed. Production refuses `ACCESS_PUBLIC_ORIGIN`.
+- `Sec-Fetch-Site` must be absent or `same-site`. `same-origin`, `cross-site`, and `none` are refused. Host is checked first, as for `/api/access`.
+- GET only, no body, credentialed CORS: `Access-Control-Allow-Origin: https://probnaya.work`, `Access-Control-Allow-Credentials: true`, `Vary: Origin`, `Cache-Control: no-store`. A refused origin receives no CORS headers.
+- Response: `{ holder: { publicId }, establishedAt, lastVerifiedAt, keys, recovery }`. `establishedAt` is the issue time of the holder's first credential, including revoked ones. It never returns a CSRF token, credential label, management reference, or any session value, so it cannot authorize or drive a mutation; every mutation still requires the Access origin and the synchronizer token.
+- Session bookkeeping is the same as the Access page's own status read (`AccessService.currentSession`): idle refresh and fifteen-minute rotation, never an extension of the absolute lifetime. Moving through public PROBNAYA therefore keeps an active holder's session alive. `/api/access` GET keeps refusing `same-site` (IR-05); the relation read is a separate, narrower endpoint.
+- An anonymous `401` is normal and not logged; other refusals log one `access.request` line with `action: "relation"`.
+
+`Cross-Origin-Resource-Policy: same-origin` from `vercel.json` still applies; browsers do not enforce CORP on CORS-mode requests, and the credentialed fetch is CORS-mode.
 
 ## Operator procedures
 
