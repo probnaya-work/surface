@@ -85,7 +85,7 @@ A ceremony is atomically consumed before verification is completed, including fa
 - holder and authenticating credential foreign keys
 - issued, last-active, renewal, idle-expiry, absolute-expiry, revoked timestamps
 - last WebAuthn verification timestamp
-- HMAC/hash of synchronizer CSRF token
+- HMAC/hash of the session's derived CSRF token (retained for schema compatibility; validation recomputes the token)
 
 No authorization state lives in the cookie. No token is stored in `localStorage` or `sessionStorage`.
 
@@ -174,10 +174,11 @@ Every authenticated request enforces idle and absolute expiry server-side. Renew
 
 ## CSRF and request validation
 
-- Every action request is POST with `Content-Type: application/json` and a small byte limit. GET status still refreshes CSRF/idle state and is tracked as a remaining low-severity availability issue from the independent review.
+- Every action request is POST with `Content-Type: application/json` and a small byte limit.
+- GET status is refused unless `Sec-Fetch-Site` is absent, `same-origin`, or `none`, so a same-site sibling origin cannot drive session bookkeeping. It refreshes idle expiry and performs the fifteen-minute rotation, but never changes the CSRF token of a live session (IR-05 closed).
 - Exact request schema; reject unknown fields, arrays where objects are expected, oversized strings, and malformed base64url.
 - Exact `Origin` required for all POSTs, including login and recovery; missing origin is rejected outside explicit test harnesses.
-- Authenticated mutations require a synchronizer token in `X-PROBNAYA-CSRF`, compared in constant time with server session state.
+- Authenticated mutations require the synchronizer token in `X-PROBNAYA-CSRF`. The token is `HMAC(SESSION_HASH_KEY, "csrf-token:session:" + session cookie token)`: stable for one session token, shared by concurrent tabs, replaced whenever the session rotates, compared in constant time, and never derivable without the server key. Recovery sessions use the same construction under a distinct purpose label.
 - SameSite Strict is defense in depth, not the only CSRF control.
 - No client-controlled redirect destination.
 - API responses set `Cache-Control: no-store`, `Pragma: no-cache`, `Referrer-Policy: no-referrer`, and content-type explicitly.
@@ -202,7 +203,7 @@ Normal order remains:
 
 No email link, SMS, question, `PROB–H` identifier, or operator-known fact authenticates a person.
 
-A recovery code is rate-limited and atomically consumed only while its holder is active. Success does not open the authenticated boundary. It creates a ten-minute, one-purpose, HttpOnly recovery session that may complete exactly one `recovery-registration` ceremony. Completing that ceremony under the holder lock adds a passkey, replaces its exact source code set, consumes competing recovery sessions, invalidates all ordinary sessions, records audit events, and then requires normal passkey authentication. Replacing a recovery set while authenticated follows the same holder lock protocol and requires recent VERIFY PRESENCE.
+A recovery code is rate-limited and atomically consumed only while its holder is active. Success does not open the authenticated boundary. It creates a ten-minute, one-purpose, HttpOnly recovery session that may complete exactly one `recovery-registration` ceremony. The browser can recover its CSRF token for an open recovery session through `recovery-resume` (exact Origin, HttpOnly recovery cookie, rate-limited), so a cancelled authenticator prompt, a reload, or a lost options response never spends another code. Completing that ceremony under the holder lock adds a passkey, replaces its exact source code set, consumes competing recovery sessions, invalidates all ordinary sessions, records audit events, and then requires normal passkey authentication. Replacing a recovery set while authenticated follows the same holder lock protocol and requires recent VERIFY PRESENCE.
 
 ## Migrations
 
@@ -215,9 +216,10 @@ Durable database limits are required even if Vercel WAF is configured:
 - authentication options/verification: per network and per pre-auth binding;
 - enrollment: per network and grant;
 - recovery: per network, with a longer fixed block after the threshold;
-- VERIFY PRESENCE and credential mutations: per session/holder and network.
+- VERIFY PRESENCE, add-key options, and recovery-code replacement: per holder and network;
+- recovery-registration options and recovery-resume: per recovery session and network.
 
-Initial code defaults will be conservative and documented next to tests. Production WAF thresholds, database connection capacity, and alert thresholds remain operational review items. Public responses are generic `429` with `Retry-After`; audit data does not expose raw IP.
+Defaults live next to each call in `access/lib/service.js` and are exercised in `access/test/handler.test.js`. The production network identity is the first `X-Forwarded-For` address, which Vercel overwrites; `X-Vercel-Forwarded-For` is not trusted. Production WAF thresholds, database connection capacity, and alert thresholds remain operational review items. Public responses are generic `429` with `Retry-After`; audit data does not expose raw IP.
 
 ## Security headers for `/access` and `/api/access`
 
@@ -241,6 +243,14 @@ After authentication, the server returns only:
 - actions to view the security-facing Access record or close the session.
 
 It contains no correspondence, objects, account taxonomy, or speculative interior.
+
+## Operator procedures
+
+`access/scripts/` provides the only operator paths: `migrate`, `create-enrollment` (new pending holder, or replacement grant for a still-pending holder; refuses active/suspended holders), `set-holder-condition` (suspend/reactivate under the holder row lock with an audit event; reactivation without an active credential returns the holder to `pending`), and `prune-expired` (bounded retention that never touches audit events, holders, credentials, grants, or codes).
+
+## Operational logging
+
+The handler writes one JSON line per rejected or failed request: event, method, known action name, outcome, status, and a bounded code (application code, SQLSTATE, or Node/driver code). It never logs bodies, cookies, CSRF values, challenges, credentials, recovery codes, grants, database URLs, or driver messages. Anonymous status reads (the signed-out page load) are not logged.
 
 ## Deployment and operational decisions still requiring human review
 

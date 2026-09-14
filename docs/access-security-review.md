@@ -71,3 +71,47 @@ Verification snapshot:
 - **IR-07 (HARDENING) remains:** add-key and recovery-registration option/verify paths still lack dedicated application rate limits and bounded pending-state controls.
 
 The implementation should be described as having passed the documented repository tests under the stated assumptions—not as categorically “secure.”
+
+## Production-completion pass
+
+Date: 2026-09-14. Branch: `design/interior-access-integration` (contains all of `feat/access-production` and `main`'s deployment hardening); only `access/` and the Access documents were changed. Verified against fresh PostgreSQL 17.6 databases, the real handler under the production configuration profile, and a real Chromium page driving the shipped `app.js` and SimpleWebAuthn browser bundle through an in-page WebCrypto authenticator.
+
+### Defects found and corrected
+
+| ID | Defect | Correction | Evidence |
+|---|---|---|---|
+| PC-01 | `access/vercel.json` rewrote `/`, `/app.js`, `/access.css`, and `/assets/*` to `/public/…`. With the “Other” preset Vercel serves `public/` itself as the static root, so those destinations do not exist and the deployed page would not load. | Explicit `framework: null`, `outputDirectory: "public"`, `installCommand: "npm ci"`; rewrites removed. | Vercel build documentation; must be confirmed on the first deployment. |
+| PC-02 | Every form handler disabled its inputs before reading `FormData`; browsers omit disabled controls, so ESTABLISH ACCESS, RECOVER ACCESS, and ADD ANOTHER KEY always sent `null` and failed with `REQUEST COULD NOT BE PROCESSED`. Unit tests never exercised the browser form path. | Forms are read before they are disabled. | Reproduced in a real browser; full enrollment → logout → usernameless login → add key → cancelled presence → code replacement → revocation → recovery (cancel, reload, resume, complete) → login with the new key then passed in the same browser. |
+| PC-03 | Production accepted any `DATABASE_URL`; postgres.js uses plaintext without `sslmode` and skips certificate validation for `sslmode=require`. | Production requires `sslmode=verify-full` and rejects libpq-only parameters (`channel_binding`, `sslrootcert`, …) that postgres.js would forward as invalid startup settings. | `config.test.js`; against a TLS-enabled local server, `require` connected to a self-signed certificate and `verify-full` refused it (`DEPTH_ZERO_SELF_SIGNED_CERT`); `channel_binding=require` failed every connection with SQLSTATE `42704`. |
+| PC-04 | Recovery CSRF lived only in page memory. A cancelled authenticator prompt, reload, or lost options response left no usable authority, and the client's retry spent another single-use code. | Recovery CSRF is derived from the HttpOnly recovery token; `recovery-resume` returns it to the same browser; the client keeps an open recovery and never re-submits a code while it is valid. | `handler.test.js` and `postgres-lifecycle.test.js` recovery cases; real-browser cancel + reload flow. |
+| PC-05 | Rate-limit identity trusted `X-Vercel-Forwarded-For` before `X-Forwarded-For`. Vercel documents overwriting only the latter. | Production uses only the first `X-Forwarded-For` address; local profiles use the socket. | `handler.test.js`; mutation check. Deployed spoofing check is in the checklist. |
+| PC-06 | Nothing prevented a preview deployment, or a development/test profile, from running on Vercel with production data. | On Vercel, only `ACCESS_ENV=production` with `VERCEL_ENV=production` starts. Production also rejects development enrollment variables and `ACCESS_LOCAL_ORIGIN`, and requires encoded-random-looking keys. | `config.test.js`. |
+| PC-07 | Unexpected errors (including database outages) were swallowed without any log line, and failed attempts were not observable anywhere. | One bounded JSON log line per rejected or failed request; no secrets, bodies, driver messages, or URLs. | `handler.test.js` log-content assertions; `postgres-lifecycle.test.js` unreachable-database case. |
+| PC-08 | An expired or undelivered first-enrollment grant stranded its pending holder (the script could only create new holders), and suspension existed only as raw SQL. | `create-enrollment` issues a replacement grant to a still-pending holder and expires earlier grants; `set-holder-condition` suspends/reactivates under the holder lock with audit events; `prune-expired` provides bounded retention; `lib/migrations.js` makes the runner testable. | `postgres-lifecycle.test.js`; CLI runs against a fresh database. |
+| PC-09 | Native WebAuthn and session failures showed raw platform text or left the holder on a stale view. | Cancel/timeout, already-registered, unsupported authenticator, expired session, stale CSRF, rate limit, unreachable service, unconfirmed enrollment, and closed recovery each map to a fixed, non-enumerating message. | Real-browser checks for cancel and ended session. |
+
+### Disposition of previously documented items
+
+| Item | Decision | Reason |
+|---|---|---|
+| IR-05 GET status mutates CSRF | **Implemented before production** | A frontend integration depends on concurrent tabs and repeated status reads not invalidating each other. CSRF is now derived per session token and status reads refuse same-site/cross-site fetch metadata. |
+| IR-07 missing mutation limits | **Implemented where cheap; remainder safe to defer** | Add-key options, recovery-code replacement, recovery-registration options, and recovery-resume are limited. Verify steps are bounded by one-shot ceremonies; GET status remains unlimited in the application and relies on WAF. |
+| RR-01 lock waits outliving deadlines | **No longer applicable** | Closed by `clock_timestamp()` rechecks; all four regressions preserved and passing. |
+| RR-02 MemoryStore parity | **Safe to defer** | Production rejects MemoryStore. Every ceremony now also runs through the production-profile handler on PostgreSQL. |
+| RR-03 schedule determinism | **Implemented** | IR-01, IR-02, and IR-04 now prove the competitor is blocked on the paused transaction via `pg_blocking_pids` and always release barriers; IR-02 accepts both secure orderings; IR-01 also checks winner codes and loser-key login. Removing the rotation holder lock or reinstating the original IR-01 query shape fails the suite. |
+| Recovery final-response loss | **Safe to defer** | The committed key authenticates; the client explains this and the holder replaces codes from the record. Losing the `recovery-begin` response *and* its cookie still spends that code by design. |
+| First-enrollment response loss | **Safe to defer** | Same shape: the key authenticates; the record still shows `CODES ACTIVE` for codes never seen, so the holder must replace them. |
+| Retained old credentials after recovery | **Safe to defer (policy)** | Automatic revocation could remove a still-legitimate path. The client now instructs the holder to revoke lost or exposed keys after recovery. |
+| Provider TLS / pooler | **Code enforced; provider choice is infrastructure** | TLS verification is fail-closed. Prepared-statement/pooler compatibility, CA trust, region, and connection limits depend on the provider decision. |
+| Proxy/header validation | **Implemented; deployment verification required** | See PC-05. |
+| Audit/operational gaps | **Logging implemented; alert routing is infrastructure** | Failed attempts are logged, not audited in the database. |
+| Lock/statement timeouts | **Safe to defer** | No `lock_timeout` is set; a stalled holder lock delays requests up to the Function duration, and `clock_timestamp()` rechecks still refuse expired authority afterward. |
+| Rotation response loss / concurrent rotation | **Safe to defer** | Fails closed: the affected tab returns to PRESENT KEY. |
+| Branch reconciliation with `main` | **No longer applicable on this branch** | `2e77470 fix(security): harden deployment boundary` is an ancestor. This branch also carries Interior prototype work that is outside Access and must be separated before any production merge. |
+
+### Verification snapshot
+
+- Access suite with PostgreSQL: **70/70** (`npm run check`); PostgreSQL suites: **27/27**, stable across five consecutive runs.
+- Repository suite: **138/138**. JavaScript syntax: **50/50** files. `git diff --check`: clean.
+- `npm audit`: 0 vulnerabilities in `access/` (all and production dependencies) and at the repository root. The shipped browser bundle is byte-identical to the pinned package.
+- Mutation checks: ten introduced regressions (CSRF rotation on GET, fetch-metadata guard removed, trusting `X-Vercel-Forwarded-For`, accepting `sslmode=require`, allowing preview environments, non-derived recovery CSRF, stale grant retention, reactivation without credentials, logging driver messages, removed add-key limit) are each caught by a failing test.
