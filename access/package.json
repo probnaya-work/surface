@@ -14,7 +14,7 @@
     "holder-condition": "node scripts/set-holder-condition.mjs",
     "prune-expired": "node scripts/prune-expired.mjs",
     "test": "node --test test/*.test.js",
-    "test:postgres": "node --test test/postgres-concurrency.test.js",
+    "test:postgres": "node --test test/postgres-concurrency.test.js test/postgres-lifecycle.test.js",
     "check": "npm run prepare:browser && npm test"
   },
   "dependencies": {
