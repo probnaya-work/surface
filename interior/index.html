@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" data-state="verifying">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<title>Interior — PROBNAYA</title>
+<link rel="icon" type="image/svg+xml" href="/assets/probnaya-mark.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/interior/interior.css">
+</head>
+<body>
+<a class="skip" href="#interior-view">Skip to content</a>
+
+<header class="interior-header">
+  <a class="brand" href="/" aria-label="PROBNAYA — public site">
+    <svg viewBox="0 0 32 32" width="15" height="15" aria-hidden="true"><rect x="4" y="3" width="20" height="26" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="14" y="14" width="17" height="3" fill="currentColor"></rect></svg>
+    <span>PROBNAYA</span>
+  </a>
+  <nav class="interior-nav" aria-label="Interior">
+    <a href="#current" data-section="current">CURRENT</a>
+    <a href="#held" data-section="held">HELD</a>
+    <a href="#history" data-section="history">HISTORY</a>
+  </nav>
+  <a class="holder-control" href="#relation" data-section="relation" hidden>
+    <span class="holder-mark" data-holder-mark></span>
+    <span class="holder-id" data-holder-id></span>
+  </a>
+</header>
+
+<main id="interior-view" tabindex="-1" aria-live="polite"></main>
+
+<nav class="mobile-nav" aria-label="Interior">
+  <a href="#current" data-section="current">CURRENT</a>
+  <a href="#held" data-section="held">HELD</a>
+  <a href="#history" data-section="history">HISTORY</a>
+  <a class="mobile-public" href="/">PUBLIC</a>
+</nav>
+
+<script src="/js/relation.js"></script>
+<script type="module" src="/interior/interior.js"></script>
+</body>
+</html>

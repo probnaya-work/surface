@@ -3,5 +3,15 @@
   "redirects": [
     { "source": "/index",      "destination": "/", "permanent": true },
     { "source": "/index.html", "destination": "/", "permanent": true }
+  ],
+  "headers": [
+    {
+      "source": "/interior(/.*)?",
+      "headers": [
+        { "key": "Cache-Control",   "value": "no-store, max-age=0" },
+        { "key": "X-Robots-Tag",    "value": "noindex, nofollow, noarchive" },
+        { "key": "Referrer-Policy", "value": "no-referrer" }
+      ]
+    }
   ]
 }
