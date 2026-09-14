@@ -1,14 +1,17 @@
 import { createReadStream } from 'node:fs';
-import { stat } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import handler from '../api/access.js';
+import relationHandler from '../api/relation.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../public');
 const origin = process.env.ACCESS_LOCAL_ORIGIN;
 if (!origin || !/^http:\/\/localhost:\d{2,5}$/.test(origin)) throw new Error('Set ACCESS_LOCAL_ORIGIN=http://localhost:<port>');
 const port = Number(new URL(origin).port);
+// Local stand-in for the production public origin written into index.html.
+const publicOrigin = process.env.ACCESS_PUBLIC_ORIGIN;
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml' };
 
 const securityHeaders = {
@@ -25,6 +28,7 @@ const securityHeaders = {
 createServer(async (req, res) => {
   Object.entries(securityHeaders).forEach(([name, value]) => res.setHeader(name, value));
   if (req.url?.split('?', 1)[0] === '/api/access') return handler(req, res);
+  if (req.url?.split('?', 1)[0] === '/api/relation') return relationHandler(req, res);
   const pathname = decodeURIComponent(new URL(req.url || '/', origin).pathname);
   const relative = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
   const target = resolve(root, relative);
@@ -32,6 +36,9 @@ createServer(async (req, res) => {
   try {
     if (!(await stat(target)).isFile()) throw new Error('not file');
     res.setHeader('Content-Type', types[extname(target)] || 'application/octet-stream');
+    if (publicOrigin && relative === 'index.html') {
+      return res.end((await readFile(target, 'utf8')).replaceAll('https://probnaya.work', publicOrigin));
+    }
     createReadStream(target).pipe(res);
   } catch {
     res.statusCode = 404;

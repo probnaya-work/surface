@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="probnaya-public-origin" content="https://probnaya.work">
   <title>PROBNAYA — Access</title>
   <link rel="stylesheet" href="/access.css">
   <script defer src="/assets/simplewebauthn-browser-14.0.0.min.js"></script>
@@ -13,7 +14,7 @@
 <body>
   <main class="shell" aria-live="polite">
     <header class="masthead">
-      <a class="wordmark" href="https://probnaya.work" rel="noreferrer">PROBNAYA</a>
+      <a class="wordmark" href="https://probnaya.work/" rel="noreferrer" data-public-link>PROBNAYA</a>
       <span class="section-mark">ACCESS</span>
     </header>
 
@@ -65,10 +66,24 @@
         <h1 class="holder" data-holder></h1>
         <p class="verified">LAST VERIFIED <time data-verified></time></p>
         <div class="boundary-actions">
-          <button class="button" type="button" data-action="record">ACCESS RECORD</button>
-          <button class="text-button" type="button" data-action="logout">CLOSE</button>
+          <a class="button" href="https://probnaya.work/interior/" rel="noreferrer" data-interior-link>INTERIOR →</a>
+          <button class="text-button" type="button" data-action="record">ACCESS RECORD</button>
+          <button class="text-button" type="button" data-action="show-end">END SESSION</button>
         </div>
         <p class="status" data-status="boundary" role="status"></p>
+      </div>
+    </section>
+
+    <section class="view boundary" data-view="end" hidden>
+      <div class="entry-center">
+        <p class="eyebrow">END SESSION</p>
+        <h1 class="holder" data-end-holder></h1>
+        <p class="verified">PRESENT KEY TO ENTER AGAIN</p>
+        <div class="boundary-actions">
+          <button class="button" type="button" data-action="logout">END SESSION</button>
+          <a class="text-button" href="https://probnaya.work/interior/" rel="noreferrer" data-interior-link>← INTERIOR</a>
+        </div>
+        <p class="status" data-status="end" role="status"></p>
       </div>
     </section>
 

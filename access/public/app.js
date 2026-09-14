@@ -5,6 +5,24 @@
   const state = { csrf: null, session: null, recovery: null, returnAfterCodes: 'boundary' };
   const views = new Map([...document.querySelectorAll('[data-view]')].map((node) => [node.dataset.view, node]));
 
+  // Fixed destinations on the public PROBNAYA origin. The origin is written into
+  // the page, never read from the URL, so no request can choose where Access sends
+  // an authenticated holder.
+  const publicOrigin = (() => {
+    const value = document.querySelector('meta[name="probnaya-public-origin"]')?.content;
+    return /^(https:\/\/probnaya\.work|http:\/\/localhost:\d{2,5})$/.test(value || '') ? value : 'https://probnaya.work';
+  })();
+  const INTERIOR = `${publicOrigin}/interior/`;
+  const PUBLIC = `${publicOrigin}/`;
+  document.querySelectorAll('[data-interior-link]').forEach((link) => { link.href = INTERIOR; });
+  document.querySelectorAll('[data-public-link]').forEach((link) => { link.href = PUBLIC; });
+
+  // The Interior links here for key maintenance (#record) and for ending the
+  // session (#end). Anything else opens the ordinary entry or boundary.
+  const requested = ['record', 'end'].includes(location.hash.slice(1)) ? location.hash.slice(1) : null;
+  const expired = location.hash === '#expired';
+  if (location.hash) history.replaceState(null, '', location.pathname);
+
   const MESSAGES = Object.freeze({
     unreachable: 'ACCESS SERVICE UNREACHABLE. CHECK THE CONNECTION AND TRY AGAIN.',
     cancelled: 'THE AUTHENTICATOR DID NOT COMPLETE. NOTHING WAS CHANGED.',
@@ -116,6 +134,7 @@
     state.csrf = session.csrf;
     document.querySelector('[data-holder]').textContent = session.holder.publicId;
     document.querySelector('[data-record-holder]').textContent = session.holder.publicId;
+    document.querySelector('[data-end-holder]').textContent = session.holder.publicId;
     document.querySelector('[data-verified]').textContent = formatDate(session.lastVerifiedAt);
     document.querySelector('[data-verified]').dateTime = session.lastVerifiedAt;
     document.querySelector('[data-recovery-state]').textContent = session.record.recovery;
@@ -143,8 +162,14 @@
       if (error instanceof RequestError && error.status === 401) return false;
       throw error;
     }
-    if (reveal) show('boundary');
+    if (reveal) show(requested || 'boundary');
     return true;
+  }
+
+  // Leaving Access for the Interior replaces this entry, so browser Back from
+  // CURRENT does not land on a finished ceremony.
+  function enterInterior() {
+    location.replace(INTERIOR);
   }
 
   async function presentKey(button) {
@@ -157,7 +182,8 @@
       const result = await api('authentication-verify', { ceremonyId: start.ceremonyId, credential });
       state.csrf = result.csrf;
       status('entry');
-      await loadSession();
+      if (requested) return void (await loadSession());
+      enterInterior();
     } catch (error) {
       const failedVerification = error instanceof RequestError && error.status === 400;
       status('entry', failedVerification ? MESSAGES.presentFailed : message(error), true);
@@ -329,12 +355,11 @@
       await api('logout');
       state.csrf = null;
       state.session = null;
-      show('entry');
-      status('entry', 'SESSION CLOSED.');
+      location.replace(PUBLIC);
     } catch (error) {
       // A session that has already ended is closed from the holder's point of view.
-      if (error instanceof RequestError && (error.status === 401 || error.status === 403)) return endSession('SESSION CLOSED.');
-      status('boundary', message(error), true);
+      if (error instanceof RequestError && (error.status === 401 || error.status === 403)) return location.replace(PUBLIC);
+      status(button.closest('[data-view]')?.dataset.view || 'boundary', message(error), true);
     } finally {
       busy(button, false);
     }
@@ -347,8 +372,10 @@
       status('entry', MESSAGES.recoveryComplete);
       return;
     }
+    // The first key is established: the holder crosses directly into the Interior.
+    if (state.returnAfterCodes === 'boundary') return enterInterior();
     try {
-      if (!(await loadSession({ reveal: state.returnAfterCodes === 'boundary' }))) return endSession();
+      if (!(await loadSession({ reveal: false }))) return endSession();
       if (state.returnAfterCodes === 'record') show('record');
     } catch (error) {
       endSession(message(error));
@@ -366,6 +393,7 @@
     if (action === 'home') return show('entry');
     if (action === 'boundary') return show('boundary');
     if (action === 'record') return show('record');
+    if (action === 'show-end') return show('end');
     if (action === 'verify') return verifyPresence(button);
     if (action === 'replace-codes') return replaceCodes(button);
     if (action === 'codes-stored') return codesStored();
@@ -376,7 +404,11 @@
   document.querySelector('[data-form="recovery"]').addEventListener('submit', (event) => { event.preventDefault(); recover(event.currentTarget); });
   document.querySelector('[data-form="add-key"]').addEventListener('submit', (event) => { event.preventDefault(); addKey(event.currentTarget); });
 
-  loadSession().then((present) => { if (!present) show('entry'); }, (error) => {
+  loadSession().then((present) => {
+    if (present) return;
+    show('entry');
+    if (expired) status('entry', MESSAGES.sessionEnded);
+  }, (error) => {
     show('entry');
     status('entry', message(error), true);
   });
