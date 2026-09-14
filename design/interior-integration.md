@@ -61,7 +61,7 @@ This avoids an avatar menu and does not confuse visiting the public surface with
 
 ## Prototype boundary
 
-`integration-access/` preserves the production Access UI, language, state sequence, and CSS without adding integration controls or prototype notation to the rendered interface. It runs at a separate localhost origin; that origin and this document are the explicit prototype boundary.
+`integration-access/` preserves the production Access UI, language, state sequence, and loads the merged production Access stylesheet directly, without adding integration controls or prototype notation to the rendered interface. It runs at a separate localhost origin; that origin and this document are the explicit prototype boundary.
 
 The handoff is a query plus tab-scoped mock state behind the unchanged interface. It does not read Access cookies, invoke WebAuthn, create credentials, authorize private data, or imitate a production session token. The production Access implementation was run separately and inspected without modification.
 
