@@ -1,7 +1,7 @@
 # PROBNAYA access — production architecture
 
 Status: implementation decision record, 2026-09-14
-Scope ends at the authenticated boundary. `account-prototype/` and `design/account-take.md` remain exploration material and are not production dependencies.
+Scope ends at the authenticated boundary. Earlier account-interior exploration has been removed and is not a production dependency.
 
 ## Summary
 
