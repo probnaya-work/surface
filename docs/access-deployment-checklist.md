@@ -41,7 +41,7 @@ Set only server-side, encrypted environment values:
 - [ ] `NETWORK_HASH_KEY` — a third different `openssl rand -base64 32`
 - [ ] Scope all five to the Vercel **Production** environment only. The runtime refuses to start when `VERCEL_ENV` is not `production`, and refuses any non-production profile on Vercel.
 
-Startup fails closed for: missing or shared keys; keys shorter than 43 characters or with fewer than 10 distinct characters; `WEBAUTHN_ORIGIN`, `WEBAUTHN_RP_ID`, `ACCESS_LOCAL_ORIGIN`, `ACCESS_USE_MEMORY_STORE`, `ACCESS_DEV_ENROLLMENT_TOKEN`, or `ACCESS_DEV_PUBLIC_ID`; a database URL without `sslmode=verify-full` or with libpq-only parameters. Production origin/RP ID are compiled constants.
+Startup fails closed for: missing or shared keys; keys shorter than 43 characters or with fewer than 10 distinct characters; `WEBAUTHN_ORIGIN`, `WEBAUTHN_RP_ID`, `ACCESS_LOCAL_ORIGIN`, `ACCESS_PUBLIC_ORIGIN`, `ACCESS_USE_MEMORY_STORE`, `ACCESS_DEV_ENROLLMENT_TOKEN`, or `ACCESS_DEV_PUBLIC_ID`; a database URL without `sslmode=verify-full` or with libpq-only parameters. Production origin/RP ID are compiled constants.
 
 `SESSION_HASH_KEY` also hashes enrollment grants, so the operator running `create-enrollment` needs it. Rotating it invalidates every session, pending grant, and open recovery; rotating `RECOVERY_HASH_KEY` invalidates every unused recovery code; rotating `NETWORK_HASH_KEY` resets rate-limit buckets.
 
@@ -64,10 +64,14 @@ Startup fails closed for: missing or shared keys; keys shorter than 43 character
 - [ ] Confirm a preview deployment of the Access project returns `ACCESS SERVICE UNAVAILABLE` (no production variables) and never reaches the production database.
 - [ ] Send a request with a forged `X-Forwarded-For` and `X-Vercel-Forwarded-For` to the production hostname and confirm the rate-limit identity follows the real client address (Vercel documents overwriting `X-Forwarded-For`; the runtime trusts only that header).
 - [ ] Confirm a `GET /api/access` with `Sec-Fetch-Site: same-site` returns 403.
+- [ ] Confirm `GET /api/relation` from `https://probnaya.work` with the session cookie returns 200 with `Access-Control-Allow-Origin: https://probnaya.work` and `Access-Control-Allow-Credentials: true`, returns a readable 401 without a session, and returns 403 without CORS headers for `https://www.probnaya.work`, sibling subdomains, preview hosts, and a missing Origin.
+- [ ] From the deployed public site, confirm the credentialed relation fetch succeeds in Safari, Firefox, and Chromium (same-site cookie, no third-party-cookie blocking), and that the deployed `Cross-Origin-Resource-Policy` header does not block it.
 - [ ] Confirm session cookies use `__Host-probnaya_session; Path=/; Secure; HttpOnly; SameSite=Strict` with no `Domain`.
 - [ ] Confirm API and HTML responses use `Cache-Control: no-store`.
 - [ ] Run `npm ci`, `npm run check`, and `npm audit --omit=dev` from `access/` using the committed lockfile.
 - [ ] Set `ACCESS_TEST_DATABASE_URL` to an isolated, disposable database on the exact provider, version, and connection path (direct or pooled) production will use, and run `npm run test:postgres`. The suites create and drop only their own randomized schemas.
+- [ ] Deploy the public site with `/interior/` and confirm `interior/fixtures.js` is absent from the deployment (it is in `.vercelignore`) and `/interior/` responses carry `Cache-Control: no-store` and `X-Robots-Tag: noindex`.
+- [ ] Walk public → ENTER → PRESENT KEY → Interior, public ↔ Interior while recognized, RELATION → END SESSION → public → PRESENT KEY again, and first enrollment → Interior on production hosts.
 - [ ] Exercise registration, usernameless authentication, cross-device authentication, hardware security keys, add/revoke, recovery, logout, and expiry on the supported browser/device matrix.
 - [ ] Perform a second independent application-security review of the remediation and resolve every HIGH/MEDIUM finding before release.
 

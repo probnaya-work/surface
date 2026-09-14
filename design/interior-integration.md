@@ -1,93 +1,95 @@
-# Public → Access → Interior integration
+# Public → Access → Interior
 
-Status: working design prototype, not production authentication.
+Status: integrated with production Access. Interior content (correspondence, investigations, issued objects, the issued representation) has no production source yet; see *Content boundary*.
 
 ## One product path
 
-Public PROBNAYA now exposes one quiet action, **ENTER**, in the existing desktop and mobile header. It does not presume whether a relation already exists. ENTER moves to Access, where the existing distinction remains:
-
-- **PRESENT KEY** for a returning holder;
-- **ESTABLISH ACCESS** for a person holding an operator-issued enrollment grant;
-- **RECOVER ACCESS** for replacement of a lost path.
-
-The public action is intentionally plain. SIGN UP, REGISTER, and CREATE ACCOUNT would describe a generic software account rather than the PROBNAYA relation; ESTABLISH ACCESS remains visible where its grant and first passkey can be understood.
+Public PROBNAYA shows one quiet path in the existing desktop and mobile header: **ENTER** for anyone Access does not recognize, or the holder's return path for anyone it does. ENTER opens `https://access.probnaya.work/`, where **PRESENT KEY**, **ESTABLISH ACCESS**, and **RECOVER ACCESS** are unchanged.
 
 ### First entry
 
 1. Public PROBNAYA / ENTER.
-2. Access / ESTABLISH ACCESS.
-3. Enrollment grant and key label / CREATE PASSKEY.
-4. Browser-owned WebAuthn registration ceremony.
-5. Successful server verification atomically activates the holder, consumes the grant, inserts the first credential, creates the first session, and issues recovery codes. This is the moment the relation becomes established.
-6. Recovery codes are shown once and explicitly acknowledged, preserving the production Access sequence.
-7. The holder crosses directly into warm Interior / CURRENT.
-
-The example first holder is PROB–H–0142. CURRENT states NOTHING OPEN; HELD states NOTHING ISSUED; HISTORY states NO EARLIER EVENTS. Counts are zero. There are no onboarding panels, invented correspondence, or tutorial tasks.
+2. Access / ESTABLISH ACCESS / enrollment grant / CREATE PASSKEY.
+3. Browser-owned WebAuthn registration; the server atomically activates the holder, consumes the grant, stores the credential, opens the session, and issues recovery codes.
+4. Recovery codes are acknowledged once.
+5. Access replaces itself with `https://probnaya.work/interior/` → CURRENT.
 
 ### Returning entry
 
-1. Public PROBNAYA / ENTER.
-2. Access / PRESENT KEY.
-3. Browser-owned WebAuthn authentication ceremony.
-4. Warm Interior / CURRENT.
+Public PROBNAYA / ENTER → Access / PRESENT KEY → native WebAuthn → Interior / CURRENT. Access replaces its own history entry on the way, so Back from CURRENT returns to the Access boundary (`AUTHENTICATED · INTERIOR → · ACCESS RECORD · END SESSION`), never to a finished ceremony.
 
-The production Access boundary remains useful on browser Back and for credential maintenance, but it is not an extra destination in the forward journey.
+### Leaving
+
+- **Public PROBNAYA is not leaving.** The wordmark, `PUBLIC` (mobile), `CONTINUE THROUGH PUBLIC PROBNAYA →`, and RELATION / SESSION / `PUBLIC PROBNAYA · REMAIN RECOGNIZED →` all go to public pages; the session is untouched.
+- **Ending the session is deliberate and lives in one place:** RELATION / SESSION / `END SESSION · ACCESS →`. It opens Access `#end`, which names the holder, states `PRESENT KEY TO ENTER AGAIN`, and offers `END SESSION` or `← INTERIOR`. The unchanged logout POST closes the session and Access replaces itself with `https://probnaya.work/`. Recognition and the representation disappear; ENTER returns; `/interior/` and Back both lead to PRESENT KEY.
+
+No avatar, account menu, or settings centre was added.
+
+## How recognition works
+
+Access is the only authority. `js/relation.js` asks `GET https://access.probnaya.work/api/relation` with the browser's own Access cookie (credentialed CORS, exact origin `https://probnaya.work`). The response is the holder identifier, key count, recovery condition, establishment time, and last verification — no token of any kind. The endpoint is specified in `docs/access-architecture.md`.
+
+- **Interior** asks on load, on route changes after 60 s, when the tab becomes visible, and when restored from history. It renders nothing until Access answers. `401` → Access (`#expired` when this browser was recognized before). Unreachable → `Access unreachable.` with `ASK ACCESS AGAIN` and `PUBLIC PROBNAYA`; it never redirects in a loop. The page empties itself on `pagehide`, so a history snapshot holds no holder content.
+- **Public pages** ask only when `localStorage['probnaya:recognized']` is set. The Interior sets that hint after a successful read; any `401` clears it. The hint decides whether to ask, never what to show. Unrecognized visitors never contact Access.
+- Session idle refresh and rotation are Access's, so moving through public PROBNAYA keeps an active session alive and never extends its absolute lifetime.
 
 ## Issued representation
 
-An issued Machine Portrait can represent the holder because it is already a PROBNAYA object with an issuing apparatus, identifier, date, measurement record, and retained representations. It is not user-uploaded and cannot be edited as profile decoration.
+A holder is represented by an issued MPA–01 Machine Portrait, or by the apparatus field until one is issued. `js/representation.js` draws an issued portrait from its measured 16 × 16 matrix only through the apparatus' own mark authority, `instrument-mpa/js/turn2.js`:
 
-- In the Interior header, the issued portrait geometry occupies the small mark position beside the unchanged PROBNAYA wordmark. The wordmark and the separate relation identifier keep institution and holder legible at once.
-- RELATION states ISSUED REPRESENTATION / PROB–OBJ.000184 and links to the object. It does not repeat the full portrait.
-- HELD remains the authoritative object/provenance surface.
-- If no Machine Portrait has been issued, the same position contains a canonical neutral apparatus field: square extent, orthogonal axes, fixed center. It is identical for every unissued holder and is labeled REPRESENTATION / UNISSUED in RELATION.
-- Obtaining a Machine Portrait would replace the neutral field as a consequence of issue, not as profile customization.
+- below 96 px: **2A RASTER** (one level per cell, whole-pixel exact);
+- from 96 px: **2C CONCENTRIC**, the principal mark of the issued PORTRAIT face, including the blue fiducial cell.
 
-On public PROBNAYA, the institutional mark is never replaced. Public paper remains cool #EFF0F2; a reduced representation plus INTERIOR / PROB–H provides the return path. This retains recognition without importing Interior identity chrome into the public institution.
+The portrait keeps the paper it was issued on (`#EFF0F2`) inside a hairline edge, square and uncropped, so it reads as an object with extent rather than a profile photograph. The unissued field is identical for every holder: square extent, orthogonal axes, fixed centre.
 
-## Public is not leave
+Where it appears, and only there:
 
-ENTER PUBLIC SURFACE and the persistent public return path do not alter the authenticated condition. The holder can move through the homepage, /lab, /lab/001, and instrument/project pages while the public composition and palette remain intact.
+| Surface | Size | Role |
+|---|---|---|
+| Interior header, beside `PROB–H–…` | 20 px raster | who is inside; opens RELATION |
+| RELATION / REPRESENTATION | 176 px plate (96 px mobile) | the holder's representation, with issue ID and date |
+| HELD / 01 · MACHINE PORTRAIT | 232 px plate | the object, with provenance and `VIEW OBJECT →` |
+| HELD / object | up to 448 px plate | the full issued object |
+| Public header return path | 16 px raster | `▦ INTERIOR PROB–H–…` |
 
-Session termination is an Access authority, reached deliberately from RELATION as **END RECOGNITION**:
+CURRENT and HISTORY do not repeat it. The public PROBNAYA mark is never replaced. Obtaining a portrait is never prompted: an unissued relation states `REPRESENTATION · UNISSUED` and nothing more.
 
-1. Interior / RELATION / END RECOGNITION.
-2. The unchanged Access authenticated boundary opens.
-3. Its existing CLOSE action closes the session.
-4. Public PROBNAYA remains; holder ID and representation disappear; ENTER returns.
-5. Direct Interior entry again requires PRESENT KEY.
+### Return path on public pages
 
-This avoids an avatar menu and does not confuse visiting the public surface with ending the session.
+The portrait alone would read as an avatar; the identifier alone is abstract. The combined treatment — issued raster, `INTERIOR`, holder ID — reads as an issued object with provenance and names where the link goes. Mobile keeps the raster and ID and drops the word, and fits at 320 px on every page that loads `js/site.js`.
 
-## Prototype boundary
+## First-entry state
 
-`integration-access/` preserves the production Access UI, language, state sequence, and loads the merged production Access stylesheet directly, without adding integration controls or prototype notation to the rendered interface. It runs at a separate localhost origin; that origin and this document are the explicit prototype boundary.
+A newly established holder (Access-proven facts only):
 
-The handoff is a query plus tab-scoped mock state behind the unchanged interface. It does not read Access cookies, invoke WebAuthn, create credentials, authorize private data, or imitate a production session token. The production Access implementation was run separately and inspected without modification.
+- **CURRENT** — for the first 24 hours the primary matter is the one real current fact: `Relation established.` with ACCESS `01 KEY`, RECOVERY `ESTABLISHED`, REPRESENTATION `UNISSUED`; then `OPEN BETWEEN US · NOTHING OPEN`. Afterwards: `Nothing open.` with `CORRESPONDENCE · NONE UNREAD` and `INVESTIGATIONS · NONE OPEN`.
+- **HELD** — `Nothing issued.` with `OBJECTS 00` and `REPRESENTATION UNISSUED`.
+- **HISTORY** — one event: `Relation established`, dated from Access.
+- **RELATION** — unissued field, standing counts at `00`, `01 KEY`, `RECOVERY ESTABLISHED`, last entry, OPEN ACCESS, and the session actions.
 
-Scenario starts:
+No onboarding cards, tours, illustrations, or invented content.
 
-- First entry: http://localhost:4182/?recognized=0&journey=first
-- Returning holder with issued portrait: http://localhost:4182/?recognized=0&journey=populated
-- Returning holder without issued portrait: http://localhost:4182/?recognized=0&journey=unissued
+## Content boundary
 
-## Production integration questions
+Access proves identity, keys, recovery, establishment, and session. Nothing in production yet supplies correspondence, commissioned investigations, issued objects, or a holder ↔ issued-portrait link (MPA–01 V1 issues client-side with no registry). Production therefore renders the first-entry content state for every holder.
 
-The current Access architecture intentionally ends at its own authenticated boundary. Its host-only, SameSite=Strict, HttpOnly cookie is not available to probnaya.work, and Access currently permits no client-controlled post-authentication destination. The following require an explicit production architecture decision before this prototype can become real:
+`interior/fixtures.js` supplies populated content for two local holders only, so populated states can be rendered against a real local Access session. It is excluded from deployment by `.vercelignore` and imported only on `localhost`:
 
-- How Interior receives server-verifiable holder authority without exposing the Access session token or broadening the Access cookie.
-- The permanent Interior origin and its own server-side authorization/session boundary.
-- A fixed, allowlisted post-authentication handoff from Access to Interior; an arbitrary return URL must not be introduced.
-- A fixed post-logout destination after the Access logout POST succeeds.
-- How public pages know recognition is still valid or expired without treating client storage as authority.
-- Which issued MPA–01 representation is canonical for the header mark, and how issue/revocation/withholding changes are delivered to Interior.
+- `PROB–H–0087` — unread correspondence, one open investigation, two issued objects, and an issued portrait whose matrix was derived by MPA–01 from the synthetic specimen in `objects/machine-portrait/test/fixtures/`;
+- `PROB–H–0119` — the same relation without a portrait.
 
-These are recorded rather than answered in client code. Production WebAuthn, recovery, session rotation, credential mutation, database authorization, RP ID, and origin policy remain unchanged.
+## Local run
 
-## Rendered verification
+Serve the public site on `http://localhost:4173` (`.claude/dev-server.js`) and Access on `http://localhost:4174` with `ACCESS_ENV=development`, `ACCESS_LOCAL_ORIGIN=http://localhost:4174`, `ACCESS_PUBLIC_ORIGIN=http://localhost:4173`, `ACCESS_USE_MEMORY_STORE=true`, three 32-byte keys, and `ACCESS_DEV_ENROLLMENT_TOKEN` / `ACCESS_DEV_PUBLIC_ID` naming the holder to enroll (`PROB–H–0087`, `PROB–H–0119`, or any other ID for the unpopulated state).
 
-- Full first-entry, returning, unissued, public-return, Access-record, and end-recognition paths were exercised in the browser.
-- Interior route Back/Forward was verified across CURRENT and HELD.
-- Cross-origin Back returns to the authenticated Access boundary; Forward returns to Interior.
-- Public recognition and unauthenticated ENTER were checked on the homepage, /lab, /lab/001, and 0x2F.
-- Desktop, intermediate, 389px, and 320px layouts were checked with document width equal to viewport width.
+## Rendered verification (2026-09-15)
+
+Run in Chromium against the real local Access server, with WebAuthn ceremonies performed by an in-page WebCrypto P-256 authenticator and verified by the server:
+
+- first enrollment → codes → CURRENT; CURRENT / HELD / HISTORY / RELATION for unissued-empty, issued-populated, and unissued-populated holders;
+- public ↔ Interior while recognized on `/`, `/lab`, `/lab/001`, `/instruments`, `/instrument-0x2f`, `/instrument-057`, `/instrument-mpa-01`, `/investigations`, `/intake`, `/record`;
+- RELATION → OPEN ACCESS → Access record → add key → RELATION shows `02 KEYS`;
+- RELATION → END SESSION → public with ENTER; Back and direct `/interior/` → PRESENT KEY; PRESENT KEY → CURRENT; Back → Access boundary;
+- unknown session (server restarted) → Access `SESSION ENDED. PRESENT KEY TO CONTINUE.`; Access stopped → `Access unreachable.`, public pages fall back to ENTER;
+- 1280 × 800, 375 × 812, and 320 × 700: document width equals viewport width on every Interior route and public page checked;
+- keyboard order: skip link, wordmark, CURRENT / HELD / HISTORY, relation, content; route changes move focus to the page heading.

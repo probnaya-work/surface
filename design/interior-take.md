@@ -24,7 +24,7 @@ The immediate post-authentication destination is CURRENT. It answers what change
 
 The interior uses warm gray `#E9E8E3` rather than the public cool gray `#EFF0F2`. The shift is intentionally small but systemic: every gap, rule, reading surface, and fixed navigation bar belongs to the interior condition. Ink and institutional blue remain unchanged, as do Archivo, Geist Mono, 1px rules, square geometry, and the basic typographic discipline.
 
-This is not light versus dark and it is not a themed account shell. The public surface remains cooler and more open; the interior is slightly denser and warmer because its content is addressed and retained. When the holder moves through a public page, the public material returns unchanged and a single `RETURN / PROB–H–0087` path preserves recognition.
+This is not light versus dark and it is not a themed account shell. The public surface remains cooler and more open; the interior is slightly denser and warmer because its content is addressed and retained. When the holder moves through a public page, the public material returns unchanged and a single return path — issued representation, `INTERIOR`, holder ID — preserves recognition.
 
 ## Implemented interaction
 
@@ -33,13 +33,13 @@ This is not light versus dark and it is not a themed account shell. The public s
 - Full reading surfaces for one correspondence, one issued Machine Portrait, and one private commissioned investigation.
 - A relationship view that states standing and directs key or recovery work to Access without becoming a settings center.
 - A working move into `/lab` while remaining locally recognized, with a return path injected into existing public headers.
-- Tab-scoped local mock state only. `?recognized=1` and `?recognized=0` operate only on local hosts and have no relationship to Access cookies, APIs, or production data.
+- Recognition and session state come from Access (`GET /api/relation`); see design/interior-integration.md.
 
 ## Focused refinement
 
-- HELD retains one ruled register rather than becoming a gallery. Each row now carries a small unframed measurement trace derived from the issued form: portrait plate, 24-hour field, or four-lane task record. The trace gives the object physical specificity without becoming a thumbnail, tile, or preview surface.
-- RELATION now states `ACTIVE`, its established date, counts, Access condition, and public recognition directly. Explanations of credential boundaries and prototype architecture were removed; the Access host and the `KEYS & RECOVERY` action make the separation operationally clear.
-- CURRENT, HELD, and HISTORY moved from a `132px` ceiling to `102px`, with the common wide rendering reduced from roughly `119px` to `95px`. Mobile moved from `66px` to `54px`. They still establish place, but no longer compete with the current matter or held objects.
+- HELD retains one ruled register rather than becoming a gallery. An issued Machine Portrait leads it as an object — the plate drawn from its record on its own paper, with issue, apparatus, measurement, and holder — and other issued objects follow as ruled rows with a small unframed measurement trace. Nothing is a card, tile, or thumbnail grid.
+- RELATION states conditions only: REPRESENTATION, STANDING (established, correspondence, held, investigations), ACCESS (`02 KEYS`, `RECOVERY ESTABLISHED`, last entry, `OPEN ACCESS →`), and SESSION (`PUBLIC PROBNAYA · REMAIN RECOGNIZED →`, `END SESSION · ACCESS →`). No prose about origins or security architecture.
+- CURRENT, HELD, and HISTORY moved from a `132px` ceiling to `102px`, then, in the integration pass, to `62px` (`clamp(42px, 4.8vw, 62px)`) with `38px` on mobile. Weight and tracking are unchanged; the headings name the place and leave the current matter, the held portrait, and the relation to carry the page.
 
 ## Rejected mechanisms
 
