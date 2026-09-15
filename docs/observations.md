@@ -279,8 +279,7 @@ A later addition by the sender, after the first `obs-body` inside the same `<li>
 - [ ] Section 4 applied and verified.
 - [ ] Gmail filter and labels created (section 5).
 - [ ] One controlled real submission received, with an attachment, and then deleted.
-- [ ] First batch of about a dozen real observations prepared on an unpushed branch, each through section 6.
-- [ ] In the launch release together: the first batch; `<meta name="robots" content="noindex">` removed from `observations.html`; `https://probnaya.work/observations` added to `sitemap.xml`; the navigation and homepage entry already present in the branch.
+- [x] Launch release: `<meta name="robots" content="noindex">` removed from `observations.html`; `https://probnaya.work/observations` added to `sitemap.xml`; OBSERVATIONS in the desktop and mobile navigation; the homepage entry. The page opened with no published observations and shows the field until the first is published (section 6).
 - [ ] After deploy: desktop, mobile, and a recognized holder's header checked in production; one test submission through production; each published sender told.
 
 ---

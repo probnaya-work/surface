@@ -102,6 +102,11 @@ p { text-wrap: pretty; }
 }
 .nav-dot { width: 5px; height: 5px; background: var(--blue); display: block; flex-shrink: 0; }
 
+/* The navigation holds two groups: the laboratory's own work, then what arrives
+   from outside it — Observations, and problems brought to the laboratory. A rule
+   divides them; nothing labels them. */
+.nav-divided { height: 16px; padding-left: 24px; border-left: 1px solid var(--faint-line); }
+
 .nav-cta {
   cursor: pointer; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
   color: var(--blue); border: 1px solid var(--blue); padding: 7px 14px;
@@ -126,21 +131,25 @@ p { text-wrap: pretty; }
 .bottom-nav {
   display: none;
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(4, auto);
   border-top: 1px solid var(--ink);
   background: rgba(239, 240, 242, 0.96);
   backdrop-filter: blur(6px);
 }
 .bottom-nav a {
-  display: flex; align-items: center; justify-content: center; gap: 7px;
-  height: var(--bottom-nav-h);
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  height: var(--bottom-nav-h); padding: 0 6px; white-space: nowrap;
   border-right: 1px solid var(--border);
-  font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.06em;
   color: var(--ink);
 }
 .bottom-nav a:last-child { border-right: none; background: var(--ink); color: var(--paper); }
 .bottom-nav a:last-child:hover { color: var(--paper); }
 .bottom-nav .nav-dot { width: 5px; height: 5px; background: var(--blue); display: block; }
+/* Four tabs, each as wide as its label needs, divided into the same two groups as
+   the desktop header: an ink rule before OBSERVATIONS. */
+.bottom-nav a.nav-divided { border-left: 1px solid var(--ink); }
+.bottom-nav a:has(+ a.nav-divided) { border-right: none; }
 
 /* ---------- layout shell ---------- */
 
@@ -789,6 +798,32 @@ p { text-wrap: pretty; }
 .obs-receipt .stamp { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--blue); }
 .obs-receipt .line { margin: 0; font-weight: 300; font-size: 22px; }
 
+/* Homepage: Observations is not PROBNAYA's work. The laboratory's index closes,
+   and Observations opens after it across its own ink rule, labelled as material
+   from outside the laboratory. A different status, in the same system. */
+.index-foot:has(+ .observations-threshold) { padding-bottom: 26px; }
+.observations-threshold { margin-top: 84px; }
+.threshold-labels {
+  display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; align-items: baseline;
+  padding-bottom: 12px; border-bottom: 1px solid var(--ink);
+}
+.threshold-labels span { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; }
+.threshold-labels span:first-child { color: var(--body-text); }
+.threshold-labels span:last-child { color: var(--faint); }
+.observations-band {
+  display: grid; grid-template-columns: 120px 1fr 150px; column-gap: 28px; align-items: baseline;
+  padding: 28px 0 96px 0;
+}
+.observations-band .title {
+  grid-column: 2; grid-row: 1;
+  font-weight: 300; font-size: 30px; line-height: 1.2; letter-spacing: -0.01em; color: var(--ink);
+}
+.observations-band .desc { grid-column: 2; grid-row: 2; margin-top: 10px; font-weight: 300; font-size: 17px; color: var(--body-text); }
+.observations-band .read {
+  grid-column: 3; grid-row: 1; text-align: right;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--ink);
+}
+.observations-band:hover .read, .observations-band:hover .title { color: var(--blue); }
 
 /* ============================================================
    MOBILE — structural changes from the approved design: simplified
@@ -877,6 +912,12 @@ p { text-wrap: pretty; }
   .obs-form input[type="text"], .obs-form input[type="email"] { font-size: 16px; }
   .obs-send-grid { grid-template-columns: 1fr; row-gap: 24px; padding-top: 24px; }
   .obs-form textarea { font-size: 18px; }
+  .index-foot:has(+ .observations-threshold) { padding-bottom: 24px; }
+  .observations-threshold { margin-top: 48px; }
+  .observations-band { grid-template-columns: 1fr; padding: 22px 0 40px 0; }
+  .observations-band .title { grid-column: 1; grid-row: 1; font-size: 24px; }
+  .observations-band .desc { grid-column: 1; grid-row: 2; font-size: 16px; }
+  .observations-band .read { grid-column: 1; grid-row: 3; text-align: left; margin-top: 14px; }
   .obs-opening { grid-template-columns: 1fr; padding: 26px 0 18px 0; }
   .obs-opening-from { padding-bottom: 12px; }
   .obs-opening h1 { font-size: 40px; }
@@ -885,6 +926,21 @@ p { text-wrap: pretty; }
   .obs-plate { height: 340px; margin-bottom: 28px; }
 }
 
-@media (min-width: 761px) and (max-width: 1120px) {
+/* The descriptor steps aside while the header needs its width. With four links and
+   a recognized holder's return path, that is up to 1220px. */
+@media (min-width: 761px) and (max-width: 1220px) {
   .site-header .brand-tag { display: none; }
+}
+
+/* 761–940px. The header carries four links in two groups, the entry or return
+   path, and the call to action. Every item keeps its place and its name. The
+   header tightens its spacing and tracking, and the call to action takes the short
+   form the mobile tab bar already uses (its accessible name is unchanged). */
+@media (min-width: 761px) and (max-width: 940px) {
+  .site-header { padding: 0 20px; gap: 16px; }
+  .site-header .nav-right { gap: 16px; }
+  .site-header .nav-divided { padding-left: 16px; }
+  .site-header .nav-link span.label, .site-header .recognized-return, .site-header .access-entry { letter-spacing: 0.1em; }
+  .site-header .nav-cta { padding: 7px 12px; letter-spacing: 0.1em; }
+  .site-header .nav-cta-rest { display: none; }
 }

@@ -62,7 +62,8 @@
   <div class="nav-right">
     <a class="nav-link" href="/instruments"><span class="label">INSTRUMENTS</span></a>
     <a class="nav-link" href="/investigations"><span class="label">INVESTIGATIONS</span></a>
-    <a class="nav-cta" href="/intake">SUBMIT A PROBLEM</a>
+    <a class="nav-link nav-divided" href="/observations"><span class="label">OBSERVATIONS</span></a>
+    <a class="nav-cta" href="/intake" aria-label="Submit a problem">SUBMIT<span class="nav-cta-rest"> A PROBLEM</span></a>
   </div>
 </header>
 
@@ -130,6 +131,21 @@
       <a class="count" href="/investigations">17 INVESTIGATIONS ON RECORD · 4 DISCLOSED</a>
       <a class="cta" href="/intake">BRING US AN INTERESTING PROBLEM →</a>
     </div>
+
+    <!-- Observations are not PROBNAYA's work: the material comes from outside the
+         laboratory. The laboratory's index closes first; Observations opens after
+         it, across its own rule, as a different space rather than another row. -->
+    <section class="observations-threshold" id="observations" aria-labelledby="observations-title">
+      <div class="threshold-labels">
+        <span>FROM OUTSIDE THE LABORATORY</span>
+        <span>SENT BY OTHERS · PUBLISHED BY PROBNAYA</span>
+      </div>
+      <a class="observations-band" href="/observations">
+        <span class="title" id="observations-title">Observations</span>
+        <span class="desc">What other people noticed and sent to PROBNAYA</span>
+        <span class="read">READ →</span>
+      </a>
+    </section>
   </div>
 
 </main>
@@ -146,6 +162,7 @@
 <nav class="bottom-nav has-tabs">
   <a href="/instruments"><span>INSTRUMENTS</span></a>
   <a href="/investigations"><span>INVESTIGATIONS</span></a>
+  <a class="nav-divided" href="/observations"><span>OBSERVATIONS</span></a>
   <a href="/intake"><span>SUBMIT</span></a>
 </nav>
 

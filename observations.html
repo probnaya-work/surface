@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Observations — PROBNAYA</title>
 <meta name="description" content="What other people noticed and sent to PROBNAYA, published in the order PROBNAYA published them.">
-<meta name="robots" content="noindex">
 <link rel="icon" type="image/svg+xml" href="assets/probnaya-mark.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
@@ -20,9 +19,8 @@
 <!-- Observations. Published observations are written into the list below by hand,
      following docs/observations.md; there is no generator and no content store.
      Sending posts to /api/observations, which delivers one message to the PROBNAYA
-     mailbox. The page stays noindex until launch. Until the first observation is
-     published, js/observations-field.js draws a field in the reading area; it is
-     not mounted once the list has an item. -->
+     mailbox. Until the first observation is published, js/observations-field.js
+     draws a field in the reading area; it is not mounted once the list has an item. -->
 
 <header class="site-header">
   <div class="brand-group">
@@ -35,7 +33,8 @@
   <div class="nav-right">
     <a class="nav-link" href="/instruments"><span class="label">INSTRUMENTS</span></a>
     <a class="nav-link" href="/investigations"><span class="label">INVESTIGATIONS</span></a>
-    <a class="nav-cta" href="/intake">SUBMIT A PROBLEM</a>
+    <a class="nav-link nav-divided" href="/observations" aria-current="page"><span class="nav-dot"></span><span class="label">OBSERVATIONS</span></a>
+    <a class="nav-cta" href="/intake" aria-label="Submit a problem">SUBMIT<span class="nav-cta-rest"> A PROBLEM</span></a>
   </div>
 </header>
 
@@ -128,6 +127,7 @@
 <nav class="bottom-nav has-tabs">
   <a href="/instruments"><span>INSTRUMENTS</span></a>
   <a href="/investigations"><span>INVESTIGATIONS</span></a>
+  <a class="nav-divided" href="/observations" aria-current="page"><span class="nav-dot"></span><span>OBSERVATIONS</span></a>
   <a href="/intake"><span>SUBMIT</span></a>
 </nav>
 
