@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Observations — PROBNAYA</title>
+<meta name="description" content="What other people noticed and sent to PROBNAYA, published in the order PROBNAYA published them.">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="assets/probnaya-mark.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Observations. Published observations are written into the list below by hand,
+     following docs/observations.md; there is no generator and no content store.
+     Sending posts to /api/observations, which delivers one message to the PROBNAYA
+     mailbox. The page stays noindex until launch. -->
+
+<header class="site-header">
+  <div class="brand-group">
+    <a class="brand-mark" href="/">
+      <svg viewBox="0 0 32 32" width="15" height="15" style="display:block; flex-shrink:0; overflow:visible;"><rect x="4" y="3" width="20" height="26" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="14" y="14" width="17" height="3" fill="currentColor"></rect></svg>
+      <span class="brand-name">PROBNAYA</span>
+    </a>
+    <a class="brand-tag" href="/lab">INDEPENDENT COMPUTATIONAL LABORATORY</a>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="/instruments"><span class="label">INSTRUMENTS</span></a>
+    <a class="nav-link" href="/investigations"><span class="label">INVESTIGATIONS</span></a>
+    <a class="nav-cta" href="/intake">SUBMIT A PROBLEM</a>
+  </div>
+</header>
+
+<header class="mobile-header">
+  <a class="brand-name" href="/">PROBNAYA</a>
+  <span class="crumb">OBS</span>
+</header>
+
+<main class="main">
+  <div class="page observations-page">
+
+    <!-- PROBNAYA speaks only in the frame: this rule, the margin, and the send
+         section. Everything set in sentence case beside a signature belongs to
+         the person who signed it. -->
+    <header class="obs-opening">
+      <p class="obs-opening-from">FROM OUTSIDE<br>THE LABORATORY</p>
+      <h1>Observations</h1>
+      <p class="obs-opening-by">SENT BY OTHERS · PUBLISHED BY PROBNAYA</p>
+    </header>
+
+    <ol class="obs-sequence" aria-label="Published observations">
+      <!-- Published observations are added here, earliest first, in the frozen
+           grammar: PUBLISHED / FROM margin, the material, the signature.
+           See docs/observations.md before adding anything. -->
+    </ol>
+
+    <section class="obs-send" id="send" aria-labelledby="send-open">
+      <button class="obs-send-open" id="send-open" type="button" aria-expanded="false" aria-controls="obs-send-panel">SEND AN OBSERVATION <span aria-hidden="true">→</span></button>
+
+      <div class="obs-send-grid" id="obs-send-panel" hidden>
+        <div class="obs-margin">
+          <p class="obs-terms">PROBNAYA READS EVERYTHING SENT AND PUBLISHES SOME OF IT, AS SENT. IF YOURS IS PUBLISHED, YOU WILL BE TOLD. SEND ONLY WHAT YOU MAY SHARE, AND NOTHING THAT IDENTIFIES SOMEONE WITHOUT THEIR AGREEMENT.</p>
+        </div>
+
+        <div class="obs-body">
+          <form class="obs-form" id="obs-form" novalidate>
+            <label class="obs-field">
+              <span class="obs-label">WHAT YOU ARE SENDING</span>
+              <textarea name="material" rows="6" maxlength="40000" required></textarea>
+            </label>
+            <div class="obs-attach">
+              <label class="obs-attach-button">ATTACH A FILE +<input type="file" name="attachment" accept="image/*,.heic,.heif,application/pdf,.pdf,text/plain,.txt,.md"></label>
+              <span class="obs-attach-names" data-attach-names aria-live="polite">OPTIONAL</span>
+              <button class="obs-attach-remove" type="button" data-attach-remove hidden>REMOVE</button>
+            </div>
+
+            <label class="obs-field">
+              <span class="obs-label">NAME OR INITIALS · LEAVE BLANK TO REMAIN UNSIGNED</span>
+              <input type="text" name="name" maxlength="120" autocomplete="name">
+            </label>
+
+            <label class="obs-field">
+              <span class="obs-label">CONTEXT · OPTIONAL</span>
+              <input type="text" name="context" maxlength="160">
+            </label>
+
+            <label class="obs-field">
+              <span class="obs-label">EMAIL · NEVER PUBLISHED</span>
+              <input type="email" name="email" maxlength="200" autocomplete="email" inputmode="email" required>
+            </label>
+
+            <div class="obs-trap" aria-hidden="true">
+              <label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+            </div>
+
+            <button class="obs-submit" type="submit">SEND TO PROBNAYA →</button>
+            <p class="obs-status" data-status role="status" aria-live="polite" hidden></p>
+          </form>
+
+          <div class="obs-receipt" hidden tabindex="-1">
+            <span class="stamp">RECEIVED</span>
+            <p class="line">If it is published, you will be told.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <a href="/lab">PROBNAYA · WHAT THIS LABORATORY IS →</a>
+  <a class="standing" href="/instrument-mpa-01" data-standing>
+    <span class="standing-mark" hidden></span>
+    <span class="standing-line"></span>
+  </a>
+  <span class="stamp" data-stamp></span>
+</footer>
+
+<nav class="bottom-nav has-tabs">
+  <a href="/instruments"><span>INSTRUMENTS</span></a>
+  <a href="/investigations"><span>INVESTIGATIONS</span></a>
+  <a href="/intake"><span>SUBMIT</span></a>
+</nav>
+
+<script src="js/apparatus.js"></script>
+<script src="js/records.js"></script>
+<script src="js/register.js"></script>
+<script src="js/site.js"></script>
+<script src="js/observation-attachment.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // Mirrors api/observations.js. The endpoint enforces every limit itself.
+  const MAX_REQUEST_BYTES = 4_400_000;
+  const MAX_MATERIAL = 40_000;
+  const REQUEST_TIMEOUT_MS = 60_000;
+
+  const MESSAGES = {
+    preparing: 'PREPARING THE FILE…',
+    sending: 'SENDING…',
+    material_required: 'WRITE OR PASTE WHAT YOU ARE SENDING.',
+    material_too_long: 'THE TEXT IS LONGER THAN 40,000 CHARACTERS. SEND IT TO MAIL@PROBNAYA.WORK INSTEAD.',
+    name_too_long: 'THE NAME IS LONGER THAN 120 CHARACTERS.',
+    context_too_long: 'THE CONTEXT IS LONGER THAN 160 CHARACTERS.',
+    email_required: 'AN EMAIL ADDRESS IS NEEDED SO PROBNAYA CAN WRITE TO YOU. IT IS NEVER PUBLISHED.',
+    email_invalid: 'THAT EMAIL ADDRESS DOES NOT LOOK COMPLETE.',
+    email_too_long: 'THAT EMAIL ADDRESS IS TOO LONG.',
+    too_large: 'FILES UP TO 3 MB. SEND THE TEXT AND MENTION THE FILE; IF NEEDED, WE WILL ASK FOR IT.',
+    unsupported: 'ONLY PHOTOGRAPHS, SCREENSHOTS, PDF, OR PLAIN TEXT CAN BE ATTACHED.',
+    unreadable: 'THAT FILE COULD NOT BE READ. REMOVE IT OR CHOOSE ANOTHER.',
+    empty: 'THAT FILE IS EMPTY.',
+    network: 'NOT SENT. CHECK THE CONNECTION AND TRY AGAIN. NOTHING WAS RECEIVED.',
+    unavailable: 'SENDING IS UNAVAILABLE AT THE MOMENT. NOTHING WAS RECEIVED. TRY AGAIN LATER, OR WRITE TO MAIL@PROBNAYA.WORK.',
+    refused: 'NOT SENT. CHECK THE FORM AND TRY AGAIN.',
+  };
+  const SERVER_CODES = {
+    material_required: 'material_required', material_too_long: 'material_too_long',
+    name_too_long: 'name_too_long', context_too_long: 'context_too_long',
+    email_required: 'email_required', email_invalid: 'email_invalid', email_too_long: 'email_too_long',
+    attachment_too_large: 'too_large', payload_too_large: 'too_large',
+    unsupported_attachment: 'unsupported', invalid_attachment: 'unreadable',
+  };
+
+  const opener = document.getElementById('send-open');
+  const panel = document.getElementById('obs-send-panel');
+  const form = document.getElementById('obs-form');
+  const receipt = document.querySelector('.obs-receipt');
+  const status = form.querySelector('[data-status]');
+  const submit = form.querySelector('.obs-submit');
+  const fileInput = form.elements.namedItem('attachment');
+  const fileLabel = form.querySelector('[data-attach-names]');
+  const removeFile = form.querySelector('[data-attach-remove]');
+  const fields = {
+    material: form.elements.namedItem('material'),
+    name: form.elements.namedItem('name'),
+    context: form.elements.namedItem('context'),
+    email: form.elements.namedItem('email'),
+    website: form.elements.namedItem('website'),
+  };
+
+  let attachment = null;   // prepared result from ObservationAttachment.prepare
+  let preparing = null;    // the preparation in progress, if any
+  let sending = false;
+
+  // --- opening ---------------------------------------------------------------
+  function openSend() {
+    panel.hidden = false;
+    opener.setAttribute('aria-expanded', 'true');
+    if (!form.hidden) fields.material.focus({ preventScroll: true });
+  }
+  opener.addEventListener('click', () => {
+    if (panel.hidden) openSend();
+    else { panel.hidden = true; opener.setAttribute('aria-expanded', 'false'); }
+  });
+  if (location.hash === '#send') openSend();
+
+  // --- status ----------------------------------------------------------------
+  function megabytes(bytes) { return bytes < 10_000 ? `${Math.max(1, Math.round(bytes / 1000))} KB` : `${(bytes / 1_000_000).toFixed(2)} MB`; }
+
+  function showStatus(key, { error = false } = {}) {
+    status.textContent = MESSAGES[key] || MESSAGES.refused;
+    status.classList.toggle('is-error', error);
+    status.hidden = false;
+  }
+  function clearStatus() {
+    status.hidden = true;
+    status.textContent = '';
+    status.classList.remove('is-error');
+    for (const field of Object.values(fields)) field.removeAttribute('aria-invalid');
+  }
+  function fail(key, field) {
+    showStatus(key, { error: true });
+    if (field) { field.setAttribute('aria-invalid', 'true'); field.focus(); }
+    else status.focus?.();
+  }
+  function updateSubmit() {
+    submit.disabled = sending || Boolean(preparing);
+  }
+
+  // --- the one attachment ----------------------------------------------------
+  function clearFile() {
+    attachment = null;
+    preparing = null;
+    fileInput.value = '';
+    fileLabel.textContent = 'OPTIONAL';
+    removeFile.hidden = true;
+    updateSubmit();
+  }
+
+  fileInput.addEventListener('change', () => {
+    clearStatus();
+    attachment = null;
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) { clearFile(); return; }
+
+    fileLabel.textContent = `${file.name} · ${megabytes(file.size)}`;
+    removeFile.hidden = false;
+    showStatus('preparing');
+
+    const run = window.ObservationAttachment.prepare(file)
+      .catch(() => ({ ok: false, reason: 'unreadable' }))
+      .then((result) => {
+        if (preparing !== run) return;             // a newer choice replaced this one
+        preparing = null;
+        if (!result.ok) {
+          clearFile();
+          fail(result.reason in MESSAGES ? result.reason : 'unreadable');
+          return;
+        }
+        attachment = result;
+        fileLabel.textContent = result.prepared
+          ? `${result.name} · ${megabytes(result.originalBytes)} → ${megabytes(result.blob.size)} · PREPARED FOR SENDING`
+          : `${file.name} · ${megabytes(file.size)}`;
+        clearStatus();
+        updateSubmit();
+      });
+    preparing = run;
+    updateSubmit();
+  });
+
+  removeFile.addEventListener('click', () => { clearStatus(); clearFile(); fileInput.focus(); });
+
+  // --- sending ---------------------------------------------------------------
+  async function post(body) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      return await fetch('/api/observations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (sending) return;
+    if (preparing) { showStatus('preparing'); return; }
+    clearStatus();
+
+    const material = fields.material.value.trim();
+    const email = fields.email.value.trim();
+    if (!material) return fail('material_required', fields.material);
+    if (fields.material.value.length > MAX_MATERIAL) return fail('material_too_long', fields.material);
+    if (!email) return fail('email_required', fields.email);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return fail('email_invalid', fields.email);
+
+    sending = true;
+    updateSubmit();
+    showStatus('sending');
+    try {
+      const payload = {
+        material: fields.material.value,
+        name: fields.name.value,
+        context: fields.context.value,
+        email,
+        website: fields.website.value,
+      };
+      if (attachment) {
+        payload.attachment = {
+          name: attachment.name,
+          data: await window.ObservationAttachment.toBase64(attachment.blob),
+          prepared: attachment.prepared,
+          originalBytes: attachment.originalBytes,
+        };
+      }
+      const body = JSON.stringify(payload);
+      if (new Blob([body]).size > MAX_REQUEST_BYTES) return fail('too_large');
+
+      let response;
+      try {
+        response = await post(body);
+      } catch {
+        return fail('network');
+      }
+      let data = null;
+      try { data = await response.json(); } catch { /* not JSON, for example the platform's own 413 */ }
+
+      if (response.ok && data && data.ok) {
+        clearStatus();
+        form.hidden = true;
+        receipt.hidden = false;
+        receipt.focus();
+        return;
+      }
+      if (response.status === 413) return fail('too_large');
+      if (response.status >= 500) return fail('unavailable');
+      const key = data && SERVER_CODES[data.code];
+      const field = data && data.field && fields[data.field];
+      return fail(key || 'refused', field || undefined);
+    } finally {
+      sending = false;
+      updateSubmit();
+    }
+  });
+})();
+</script>
+</body>
+</html>
