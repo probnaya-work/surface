@@ -2,7 +2,8 @@
   "cleanUrls": true,
   "redirects": [
     { "source": "/index",      "destination": "/", "permanent": true },
-    { "source": "/index.html", "destination": "/", "permanent": true }
+    { "source": "/index.html", "destination": "/", "permanent": true },
+    { "source": "/access(/.*)?", "destination": "https://access.probnaya.work/", "permanent": true }
   ],
   "headers": [
     {
