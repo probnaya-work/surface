@@ -8,20 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
 // path in the existing header: ENTER for everyone else, or a return to the
 // Interior carrying the holder's issued representation and identifier.
 // Recognition comes from Access through js/relation.js; nothing here is authority.
+//
+// The path lives in a `.relation-slot` written into every header, so the header
+// is complete before any script runs. A visitor without the recognition hint is
+// already known to be shown ENTER, which the page carries statically. For a
+// hinted visitor an inline script in <head> marks the document
+// `data-relation="pending"` before first paint, which keeps the slot empty until
+// Access answers; the answer is then written into the slot and the mark removed
+// in the same task, so nothing is ever shown and then replaced.
 (function recognition() {
-  const headers = () => [
-    ...document.querySelectorAll('.site-header .nav-right'),
-    ...document.querySelectorAll('.mobile-header'),
-  ];
-
   function place(make) {
-    document.querySelectorAll('[data-recognition]').forEach(node => node.remove());
-    for (const container of headers()) {
-      const node = make();
-      node.dataset.recognition = '';
-      if (container.classList.contains('mobile-header')) container.insertBefore(node, container.querySelector('.crumb'));
-      else container.prepend(node);
-    }
+    for (const slot of document.querySelectorAll('.relation-slot')) slot.replaceChildren(make());
+    delete document.documentElement.dataset.relation;
   }
 
   function enter(access) {

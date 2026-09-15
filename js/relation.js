@@ -8,6 +8,7 @@
 // `probnaya:recognized` in localStorage is a hint, not authority: it only
 // decides whether a public page should ask at all, so visitors who have never
 // entered do not contact Access on every page view. An absent session clears it.
+// Each public page's <head> reads the same key before first paint (see js/site.js).
 //
 // Relation content — correspondence, investigations, issued objects, and the
 // issued representation — has no production source yet. In production every
