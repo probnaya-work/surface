@@ -616,6 +616,11 @@ p { text-wrap: pretty; }
 
 .obs-sequence { list-style: none; margin: 0; padding: 36px 0 0 0; }
 
+/* Before the first publication only: the field (js/observations-field.js) stands
+   in the reading area and is not mounted once the sequence holds an observation. */
+.obs-plate { position: relative; height: 400px; margin: 0 0 40px 0; }
+.obs-plate canvas { display: block; width: 100%; height: 100%; }
+
 .observation {
   display: grid; grid-template-columns: 184px minmax(0, 640px); column-gap: 56px;
   padding: 64px 0 72px 0;
@@ -877,6 +882,7 @@ p { text-wrap: pretty; }
   .obs-opening h1 { font-size: 40px; }
   .obs-opening-by { grid-column: 1; }
   .obs-opening + .obs-sequence { padding-top: 20px; }
+  .obs-plate { height: 340px; margin-bottom: 28px; }
 }
 
 @media (min-width: 761px) and (max-width: 1120px) {

@@ -20,7 +20,9 @@
 <!-- Observations. Published observations are written into the list below by hand,
      following docs/observations.md; there is no generator and no content store.
      Sending posts to /api/observations, which delivers one message to the PROBNAYA
-     mailbox. The page stays noindex until launch. -->
+     mailbox. The page stays noindex until launch. Until the first observation is
+     published, js/observations-field.js draws a field in the reading area; it is
+     not mounted once the list has an item. -->
 
 <header class="site-header">
   <div class="brand-group">
@@ -134,6 +136,7 @@
 <script src="js/register.js"></script>
 <script src="js/site.js"></script>
 <script src="js/observation-attachment.js"></script>
+<script src="js/observations-field.js"></script>
 <script>
 (function () {
   'use strict';

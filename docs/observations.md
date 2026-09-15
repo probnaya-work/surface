@@ -11,6 +11,7 @@ Observations is where PROBNAYA publishes things other people noticed and sent to
 | Part | File | Does |
 |---|---|---|
 | Send form | `observations.html` (send section and inline script) | Collects the material, one optional file, an optional name and context, and an email address. Shows preparing, sending, received, and failure states. |
+| Field before the first publication | `js/observations-field.js` | While `<ol class="obs-sequence">` has no `<li>`, draws the field in the reading area. It is not mounted once the list holds an observation, so publishing the first one removes it with no other edit. |
 | Attachment preparation | `js/observation-attachment.js` | Checks the file's content signature and, only when the file exceeds the transport budget, prepares an image to fit. |
 | Endpoint | `api/observations.js` | Validates everything again, checks content signatures, and sends one plain-text message to `mail@probnaya.work` with `Reply-To` set to the sender and the file attached. Stores nothing. |
 | Tests | `test/observations.test.js` | Endpoint behaviour with a mocked mailer. No real mail. |
