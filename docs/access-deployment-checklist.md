@@ -48,16 +48,45 @@ Absent request-mail settings do not stop Access: only REQUEST ACCESS answers `RE
 
 `SESSION_HASH_KEY` also hashes enrollment grants, so the operator running `create-enrollment` needs it. Rotating it invalidates every session, every outstanding establishment link, and open recovery; rotating `RECOVERY_HASH_KEY` invalidates every unused recovery code; rotating `NETWORK_HASH_KEY` resets rate-limit buckets.
 
-## Request mail — must be completed before REQUEST ACCESS is enabled
+## Request mail
 
-The public intake handler (`api/intake.js`) signs in to Google Workspace SMTP with an **app password for the primary Workspace account** (`.env.example`), sending as `mail@probnaya.work`. A Google app password is not scoped to sending: it can also read that account's mail over IMAP/POP unless an administrator disables those protocols. The repository cannot show which account `SMTP_USER` is in production or whether IMAP/POP are disabled. Access therefore does **not** reuse that credential.
+v1 sends access requests through the same Google Workspace SMTP account as the public intake handler (`api/intake.js`), sending as `mail@probnaya.work`. That account authenticates with an app password (`.env.example`). A Google app password is not scoped to sending: it can also read the account's mail over IMAP/POP unless an administrator disables those protocols. Anyone who obtains the credential from the public-site or Access Production environment could therefore read `mail@probnaya.work`, including requests and unconsumed establishment links. This trust boundary is **accepted for v1** at the current scale (decision 2026-09-15; see `docs/access-threat-model.md`).
 
-- [ ] Create a dedicated Workspace user (for example `access-requests@probnaya.work`) used only to send access requests. Do not make it an alias of, or delegate it to, the account that receives `mail@probnaya.work`, and do not grant it delegated access to any other mailbox.
-- [ ] Enable 2-Step Verification on it, generate one app password, and set `ACCESS_REQUEST_SMTP_USER` / `ACCESS_REQUEST_SMTP_FROM` to its own address and `ACCESS_REQUEST_SMTP_PASS` to the app password, in the Access project's Production environment only.
-- [ ] Disable IMAP and POP for the sender account (Admin console → Apps → Google Workspace → Gmail → End User Access), so its credential can send but not read.
-- [ ] Confirm the account that owns `mail@probnaya.work` — where establishment links are sent from and retained — is not reachable by **any** deployed credential. If the public intake `SMTP_USER` is that account, either move intake to its own sender account or disable IMAP/POP for the `mail@probnaya.work` account before the first establishment link is sent. Otherwise a compromised public-site Function could read unconsumed links.
-- [ ] Send one test request from `https://access.probnaya.work/` and confirm it arrives at `mail@probnaya.work` from the sender address, with `Reply-To` equal to the entered address, and that no message reaches the entered address.
+- [ ] In the Access project's Production environment only, set `ACCESS_REQUEST_SMTP_USER`, `ACCESS_REQUEST_SMTP_PASS`, and `ACCESS_REQUEST_SMTP_FROM` to the same values as the public site's `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM` (`mail@probnaya.work`). Do not copy them into Preview or Development.
+- [ ] Send one test request from `https://access.probnaya.work/` and confirm it arrives at `mail@probnaya.work` with `Reply-To` equal to the entered address, and that no message reaches the entered address.
+- [ ] Optionally open that message with *Show original*: it should match the confirmed result for `mail@probnaya.work` (SPF, DKIM with `d=probnaya.work`, and DMARC all PASS; see *Mail authentication*), since Access uses the same account and sending path.
 - [ ] Confirm Function logs for request failures contain only `request_unavailable`, `request_ceiling`, `request_delivery_failed`, `invalid_email`, or `rate_limited`, never an address. Alert on `request_delivery_failed` and `request_ceiling`.
+- [ ] Rotating the app password must update both projects at once; a stale value surfaces as `request_delivery_failed` in Access and as intake submission failures.
+
+Future hardening, not a production requirement for v1: move request sending to a dedicated send-only Workspace user with IMAP/POP disabled, and disable IMAP/POP for the account behind `mail@probnaya.work` if no mail client needs them, so no deployed credential can read the mailbox that holds establishment links. Revisit when request volume grows or before anything is ever issued to a pending holder.
+
+## Mail authentication (probnaya.work)
+
+Status: **confirmed healthy on 2026-09-15.** No DNS or Google Workspace authentication change is required for launch.
+
+Public DNS (authoritative `ns1.vercel-dns.com`, 2026-09-15):
+
+| Record | Value | State |
+|---|---|---|
+| `MX probnaya.work` | `1 smtp.google.com.` | Correct for Google Workspace. |
+| `TXT probnaya.work` (SPF) | `v=spf1 include:_spf.google.com ~all` | One SPF record authorizing Google. Correct. |
+| `TXT google._domainkey.probnaya.work` | `v=DKIM1; k=rsa; p=…` (2048-bit) | Published and in use (below). |
+| `TXT _dmarc.probnaya.work` | `v=DMARC1; p=none` | Valid. Kept unchanged for now. |
+
+Confirmed outside the repository:
+
+- Google Admin console → Gmail → Authenticate email, `probnaya.work`: **Authenticating email with DKIM.**
+- A real message delivered from `mail@probnaya.work`, inspected with *Show original*: **SPF PASS, DKIM PASS (`d=probnaya.work`), DMARC PASS.** Alignment holds end to end for the existing Workspace SMTP path, the same path intake and Access requests use.
+- Message construction (`api/intake.js`, `access/lib/notify.js`): `From` and the envelope sender are both `mail@probnaya.work`, and the message is plain text with standard `Message-ID`, `Date`, and MIME headers. Nothing in it is expected to affect authentication.
+
+An earlier report of PROBNAYA mail landing in spam is therefore treated as a **deliverability/reputation issue, not a demonstrated authentication or configuration failure.** The leading remaining explanation, given this evidence, is sender reputation: `probnaya.work` was registered on 2026-08-31 on the `.work` TLD and has very little sending history. Content that looks like first contact with a link from a new domain can add to it. None of this is established as the definitive cause.
+
+Operational practice, not launch requirements:
+
+- [ ] Send the operator's establishment reply as a new message to the requester, not as a reply to the `ACCESS / REQUEST` notification. A reply quotes the internal notification, including the operator command, and carries the subject `Re: ACCESS / REQUEST …`.
+- [ ] Keep establishment replies plain, personal, and one-to-one. Ask early recipients to mark the message *Not spam* if it lands there; replies and rescues build reputation for a new domain.
+- [ ] Optionally add `probnaya.work` to Google Postmaster Tools (the domain already carries Google verification records) to watch reputation once volume allows.
+- [ ] If spam placement persists as volume grows, revisit DMARC reporting (`rua`) and policy then. No change is planned now.
 
 ## Vercel project and edge policy — approval required
 

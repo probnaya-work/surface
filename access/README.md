@@ -37,7 +37,7 @@ An establishment link is bearer authority for one pending holder's first key. De
 
 ## Access requests
 
-`REQUEST ACCESS` sends one message to `mail@probnaya.work` through a dedicated sender account (`ACCESS_REQUEST_SMTP_USER`, `ACCESS_REQUEST_SMTP_PASS`, `ACCESS_REQUEST_SMTP_FROM`; Production only). Access stores nothing about a request and never writes to the requester. Configuration refuses `mail@probnaya.work` as the sender; without these settings only the request action is unavailable.
+`REQUEST ACCESS` sends one message to `mail@probnaya.work` through the same Google Workspace SMTP account as public intake (`ACCESS_REQUEST_SMTP_USER`, `ACCESS_REQUEST_SMTP_PASS`, `ACCESS_REQUEST_SMTP_FROM=mail@probnaya.work`; Production only). Access stores nothing about a request and never writes to the requester. Without these settings only the request action is unavailable.
 
 ## PostgreSQL tests
 

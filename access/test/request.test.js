@@ -31,7 +31,7 @@ test('a request sends one message to the PROBNAYA mailbox and returns nothing ab
   assert.match(sent.reference, /^R–[0-9A-HJKMNP-TV-Z]{6}$/);
   assert.equal(sent.receivedAt, Date.UTC(2026, 8, 16, 20, 40, 0));
 
-  const message = requestMessage({ ...sent, from: 'access-requests@probnaya.work' });
+  const message = requestMessage({ ...sent, from: 'mail@probnaya.work' });
   assert.equal(message.to, REQUEST_RECIPIENT);
   assert.deepEqual(message.replyTo, { name: '', address: 'noor.haddad@fastmail.com' });
   assert.equal(message.subject, `ACCESS / REQUEST ${sent.reference}`);
@@ -143,13 +143,14 @@ test('request references are non-personal and distinct', () => {
   for (const reference of references) assert.match(reference, /^R–[0-9A-HJKMNP-TV-Z]{6}$/);
 });
 
+// v1 sends as mail@probnaya.work through the same Workspace account as intake.
 const requestMail = {
-  ACCESS_REQUEST_SMTP_USER: 'access-requests@probnaya.work',
+  ACCESS_REQUEST_SMTP_USER: 'operator@probnaya.work',
   ACCESS_REQUEST_SMTP_PASS: 'abcd efgh ijkl mnop',
-  ACCESS_REQUEST_SMTP_FROM: 'access-requests@probnaya.work',
+  ACCESS_REQUEST_SMTP_FROM: 'mail@probnaya.work',
 };
 
-test('request mail configuration: absent disables, complete enables, partial or shared-mailbox settings refuse to start', () => {
+test('request mail configuration: absent disables, complete enables (including mail@probnaya.work), partial or malformed settings refuse to start', () => {
   assert.equal(loadConfig(PRODUCTION_ENV).requestMail, null);
   assert.deepEqual({ ...loadConfig({ ...PRODUCTION_ENV, ...requestMail }).requestMail }, {
     transport: 'smtp', user: requestMail.ACCESS_REQUEST_SMTP_USER, pass: requestMail.ACCESS_REQUEST_SMTP_PASS, from: requestMail.ACCESS_REQUEST_SMTP_FROM,
@@ -159,10 +160,10 @@ test('request mail configuration: absent disables, complete enables, partial or 
   }
   for (const override of [
     { ACCESS_REQUEST_SMTP_USER: 'mail@probnaya.work' },
-    { ACCESS_REQUEST_SMTP_USER: 'MAIL@probnaya.work' },
-    { ACCESS_REQUEST_SMTP_FROM: 'mail@probnaya.work' },
+    { ACCESS_REQUEST_SMTP_USER: 'MAIL@probnaya.work', ACCESS_REQUEST_SMTP_FROM: 'MAIL@probnaya.work' },
+    { ACCESS_REQUEST_SMTP_USER: 'access-requests@probnaya.work', ACCESS_REQUEST_SMTP_FROM: 'access-requests@probnaya.work' },
   ]) {
-    assert.throws(() => loadConfig({ ...PRODUCTION_ENV, ...requestMail, ...override }), /dedicated account/, JSON.stringify(override));
+    assert.equal(loadConfig({ ...PRODUCTION_ENV, ...requestMail, ...override }).requestMail.transport, 'smtp', JSON.stringify(override));
   }
   assert.throws(() => loadConfig({ ...PRODUCTION_ENV, ...requestMail, ACCESS_REQUEST_SMTP_PASS: 'short' }), /app password/);
   assert.throws(() => loadConfig({ ...PRODUCTION_ENV, ...requestMail, ACCESS_REQUEST_SMTP_FROM: 'Access <a@probnaya.work>' }), /plain addresses/);
@@ -180,7 +181,7 @@ test('the SMTP notifier verifies TLS to the fixed host and sends only to the PRO
   assert.equal(createRequestNotifier(null), null);
   const calls = { transports: [], messages: [] };
   const mailer = { createTransport: (options) => { calls.transports.push(options); return { sendMail: async (message) => { calls.messages.push(message); } }; } };
-  const notifier = createRequestNotifier({ transport: 'smtp', user: 'access-requests@probnaya.work', pass: 'abcd efgh ijkl mnop', from: 'access-requests@probnaya.work' }, { mailer });
+  const notifier = createRequestNotifier({ transport: 'smtp', user: 'operator@probnaya.work', pass: 'abcd efgh ijkl mnop', from: 'mail@probnaya.work' }, { mailer });
   await notifier.send({ email: 'a@example.org', reference: 'R–4QX7NC', receivedAt: 0 });
   await notifier.send({ email: 'b@example.org', reference: 'R–4QX7ND', receivedAt: 0 });
   assert.equal(calls.transports.length, 1, 'one transport is reused');
@@ -188,8 +189,8 @@ test('the SMTP notifier verifies TLS to the fixed host and sends only to the PRO
   assert.deepEqual([options.host, options.port, options.secure], ['smtp.gmail.com', 465, true]);
   assert.equal(options.tls?.rejectUnauthorized, undefined, 'certificate verification is never disabled');
   assert.deepEqual(calls.messages.map((message) => [message.from, message.to, message.replyTo.address]), [
-    ['access-requests@probnaya.work', REQUEST_RECIPIENT, 'a@example.org'],
-    ['access-requests@probnaya.work', REQUEST_RECIPIENT, 'b@example.org'],
+    ['mail@probnaya.work', REQUEST_RECIPIENT, 'a@example.org'],
+    ['mail@probnaya.work', REQUEST_RECIPIENT, 'b@example.org'],
   ]);
 
   const written = [];
@@ -201,11 +202,12 @@ test('the SMTP notifier verifies TLS to the fixed host and sends only to the PRO
 test('the installed Nodemailer builds the request message with Reply-To and no extra recipients', async () => {
   const nodemailer = (await import('nodemailer')).default;
   const transporter = nodemailer.createTransport({ jsonTransport: true });
-  const info = await transporter.sendMail(requestMessage({ from: 'access-requests@probnaya.work', email: 'noor.haddad@fastmail.com', reference: 'R–4QX7NC', receivedAt: 0 }));
+  const info = await transporter.sendMail(requestMessage({ from: 'mail@probnaya.work', email: 'noor.haddad@fastmail.com', reference: 'R–4QX7NC', receivedAt: 0 }));
   const message = JSON.parse(info.message);
   assert.deepEqual(message.to.map((entry) => entry.address), [REQUEST_RECIPIENT]);
   assert.deepEqual(message.replyTo.map((entry) => entry.address), ['noor.haddad@fastmail.com']);
   assert.equal(message.cc, undefined);
   assert.equal(message.bcc, undefined);
   assert.deepEqual(info.envelope.to, [REQUEST_RECIPIENT], 'the SMTP envelope has one recipient');
+  assert.equal(info.envelope.from, 'mail@probnaya.work', 'the envelope sender matches From, so SPF can align with probnaya.work');
 });

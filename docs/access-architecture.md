@@ -317,7 +317,7 @@ The handler writes one JSON line per rejected or failed request: event, method, 
 ## Deployment and operational decisions still requiring human review
 
 - Select/provision PostgreSQL provider, region, backup retention, point-in-time recovery, and connection limits.
-- Provision the dedicated request-sender account and confirm it cannot read the mailbox that receives requests and sends establishment links (see the deployment checklist). v1 performs no identity-proofing beyond control of the address when the link is used; that is the intended product model, not an omission.
+- Configure request mail with the existing `mail@probnaya.work` Workspace SMTP credential (see the deployment checklist). SPF, DKIM (`d=probnaya.work`), and DMARC alignment for that path were confirmed on a real delivered message on 2026-09-15. The credential's ability to read that mailbox is an accepted v1 boundary; a dedicated send-only sender is future hardening. v1 performs no identity-proofing beyond control of the address when the link is used; that is the intended product model, not an omission.
 - Configure the separate Vercel project root, exact production hostname, DNS, TLS/HSTS, and deployment protection only after explicit approval. Do not issue credentials until the canonical hostname is verified end to end.
 - Reconcile this feature branch with `main` security-hardening history before merge.
 - Configure and review Vercel WAF limits/alerts; repository code cannot prove dashboard state.

@@ -5,7 +5,6 @@ import {
   PRODUCTION_PUBLIC_ORIGIN,
   PRODUCTION_RP_ID,
   RECOVERY_COOKIE_DEVELOPMENT,
-  REQUEST_RECIPIENT,
   RECOVERY_COOKIE_PRODUCTION,
   SESSION_COOKIE_DEVELOPMENT,
   SESSION_COOKIE_PRODUCTION,
@@ -48,11 +47,11 @@ function requireVerifiedDatabaseTransport(databaseURL) {
 
 const ADDRESS = /^[^\s@\u0000-\u001F\u007F]{1,64}@[A-Za-z0-9.-]{1,189}\.[A-Za-z]{2,63}$/;
 
-// Access requests are sent by a dedicated sender account. Its credential lives in
-// the Access runtime, so it must not be the PROBNAYA mailbox that receives
-// requests and sends establishment links: a Google app password can read the
-// account it belongs to, not only send from it. Absent settings disable only the
-// request action; partial or unsafe settings refuse to start.
+// Access requests use the same Google Workspace SMTP account as public intake
+// (sending as mail@probnaya.work). A Google app password can read the account it
+// belongs to, not only send from it; that trust boundary is accepted for v1 and
+// documented in docs/access-threat-model.md. Absent settings disable only the
+// request action; partial or malformed settings refuse to start.
 function requestMailConfig(env, production) {
   const names = ['ACCESS_REQUEST_SMTP_USER', 'ACCESS_REQUEST_SMTP_PASS', 'ACCESS_REQUEST_SMTP_FROM'];
   const present = names.filter((name) => env[name] !== undefined && env[name] !== '');
@@ -69,9 +68,6 @@ function requestMailConfig(env, production) {
   const from = env.ACCESS_REQUEST_SMTP_FROM;
   const pass = env.ACCESS_REQUEST_SMTP_PASS;
   if (!ADDRESS.test(user) || !ADDRESS.test(from)) throw new Error('ACCESS_REQUEST_SMTP_USER and ACCESS_REQUEST_SMTP_FROM must be plain addresses');
-  if ([user, from].some((address) => address.toLowerCase() === REQUEST_RECIPIENT)) {
-    throw new Error(`The request sender must be a dedicated account, not ${REQUEST_RECIPIENT}`);
-  }
   if (pass.length < 16 || /[\u0000-\u001F\u007F]/.test(pass)) throw new Error('ACCESS_REQUEST_SMTP_PASS must be an app password');
   return Object.freeze({ transport: 'smtp', user, pass, from });
 }
