@@ -1,15 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import { loadConfig } from '../lib/config.js';
-import { PostgresStore } from '../lib/postgres-store.js';
+import { openOperatorStore } from '../lib/operator.js';
 
-// Usage: node scripts/set-holder-condition.mjs PROB–H–... suspend|reactivate
+// Usage (with ACCESS_ENV and DATABASE_URL for the access_operator role):
+//   node scripts/set-holder-condition.mjs PROB–H–... suspend|reactivate
 const [publicId, action] = process.argv.slice(2);
 if (!/^PROB–H–[0-9A-Z][0-9A-Z-]{1,30}$/.test(publicId || '') || !['suspend', 'reactivate'].includes(action)) {
   throw new Error('Usage: node scripts/set-holder-condition.mjs PROB–H–... suspend|reactivate');
 }
-const config = loadConfig();
-if (config.memory) throw new Error('Holder condition changes require PostgreSQL');
-const store = new PostgresStore(config.databaseURL);
+const { store } = await openOperatorStore();
 let result;
 try {
   result = await store.setHolderCondition({ publicId, action, now: Date.now(), auditId: randomUUID() });

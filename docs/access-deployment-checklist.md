@@ -46,7 +46,7 @@ Startup fails closed for: missing or shared keys; keys shorter than 43 character
 
 Absent request-mail settings do not stop Access: only REQUEST ACCESS answers `REQUESTS CANNOT BE SENT FROM HERE AT THE MOMENT. WRITE TO MAIL@PROBNAYA.WORK.`
 
-`SESSION_HASH_KEY` also hashes enrollment grants, so the operator running `create-enrollment` needs it. Rotating it invalidates every session, every outstanding establishment link, and open recovery; rotating `RECOVERY_HASH_KEY` invalidates every unused recovery code; rotating `NETWORK_HASH_KEY` resets rate-limit buckets.
+`SESSION_HASH_KEY` is runtime session authority only (session, pre-authentication, and recovery-session token hashes, and CSRF derivation). It never leaves the Access Production environment and operators never need it: enrollment grants are stored as an unkeyed digest. Rotating it invalidates every session and open recovery, and establishment links issued with the digest survive it (legacy HMAC-format links, during the transition, do not); rotating `RECOVERY_HASH_KEY` invalidates every unused recovery code; rotating `NETWORK_HASH_KEY` resets rate-limit buckets.
 
 ## Request mail
 
@@ -119,16 +119,25 @@ Operational practice, not launch requirements:
 - [ ] Exercise registration, usernameless authentication, cross-device authentication, hardware security keys, add/revoke, recovery, logout, and expiry on the supported browser/device matrix.
 - [ ] Perform a second independent application-security review of the remediation and resolve every HIGH/MEDIUM finding before release.
 
+## Operator environment
+
+The only credential an operator needs is the Neon connection string for the `access_operator` role (branch `main`, database `neondb`, `sslmode=verify-full`, no `channel_binding`), kept in the password manager. Operators never need `SESSION_HASH_KEY` or any other Vercel application secret. Access Production's own `DATABASE_URL` is the `access_runtime` role (set 2026-09-15), which cannot create holders or grants and which operator commands refuse.
+
+- [ ] Clean trusted checkout of the deployed `main` commit, then `npm ci` in `access/`.
+- [ ] Enter the credential at a hidden prompt (zsh: `read -rs "DATABASE_URL?access_operator URL: " && export DATABASE_URL ACCESS_ENV=production`), and `unset DATABASE_URL` afterwards.
+- [ ] Every operator command prints `Connected as access_operator (production, https://access.probnaya.work)` before acting; anything else is refused.
+- [ ] Keep the database role grants (`access_runtime`, `access_operator`) under review; they are the boundary that makes grant creation an operator-only authority.
+
 ## Establishing access
 
-For each request in `mail@probnaya.work` (subject `ACCESS / REQUEST R–XXXXXX`):
+For each request in `mail@probnaya.work` (subject `ACCESS / REQUEST R–XXXXXX`), in the operator environment:
 
-- [ ] Choose the next unused `PROB–H` identifier. Run from `access/` with the operator database role and production `SESSION_HASH_KEY`:
-  `npm run create-enrollment -- --new 'PROB–H–NNNN' 'R–XXXXXX'`
-  The link on standard output is establishment authority. Do not paste it anywhere except the reply, and do not keep terminal scrollback or notes containing it.
-- [ ] Reply to the request from `mail@probnaya.work` with the link in a plain operational message (not Correspondence). State that Access will ask the device to create a passkey, that no password or account is created, when the link closes (seven days), and that nothing happens if it is ignored.
+- [ ] `npm run holders` (read-only) and choose the next unused `PROB–H` identifier.
+- [ ] `npm run create-enrollment -- --new 'PROB–H–NNNN' 'R–XXXXXX'`
+  The link on standard output is establishment authority. Do not paste it anywhere except the message to the requester, and do not keep terminal scrollback or notes containing it. If the reference already produced a grant, the command refuses and names the holder; use `--reissue` for that holder instead.
+- [ ] Send the link to the requester from `mail@probnaya.work` as a new plain operational message (not Correspondence, not a reply to the notification). State that Access will ask the device to create a passkey, that no password or account is created, when the link closes (seven days), and that nothing happens if it is ignored.
 - [ ] Never put the address in the operator note, audit data, tickets, analytics, or URL query parameters. The request reference is the only join between the mailbox and Access.
-- [ ] A lapsed or lost link: `npm run create-enrollment -- --reissue 'PROB–H–NNNN' 'R–XXXXXX'`, then reply again. The earlier link stops working.
+- [ ] A lapsed or lost link: `npm run create-enrollment -- --reissue 'PROB–H–NNNN' 'R–XXXXXX'`, then send the new link. The earlier link stops working.
 - [ ] A link sent to the wrong address or suspected of exposure: `npm run holder-condition -- 'PROB–H–NNNN' suspend` (expires every outstanding link), then `reactivate` and `--reissue` when appropriate. If a stranger established the relation first, suspend that holder and establish the person under a new identifier.
 - [ ] Never issue a link to an identifier that is active or suspended (the CLI refuses), and never issue objects or correspondence to a pending holder.
 - [ ] A person who has lost every key and recovery code cannot regain an established relation by requesting again. Only a new relation under a new identifier is possible.
@@ -138,5 +147,6 @@ For each request in `mail@probnaya.work` (subject `ACCESS / REQUEST R–XXXXXX`)
 
 - [ ] Keep `access.probnaya.work` under control during application rollback or provider migration. Do not solve an outage by changing the RP ID.
 - [ ] Prepare a backward-compatible application rollback before schema evolution.
-- [ ] Document session invalidation, credential suspension (`npm run holder-condition -- 'PROB–H–…' suspend|reactivate`), secret rotation, database compromise, and recovery-code exposure procedures. Recovery adds a key but retains existing keys: after a compromise-driven recovery the holder must revoke exposed keys from the Access record.
+- [ ] After the runtime carrying the enrollment-grant digest has been deployed for seven days, remove the legacy HMAC grant lookup (`AccessService.legacyEnrollmentGrantHash`).
+- [ ] Document session invalidation, credential suspension (`npm run holder-condition -- 'PROB–H–…' suspend|reactivate`, operator environment only), secret rotation, database compromise, and recovery-code exposure procedures. Recovery adds a key but retains existing keys: after a compromise-driven recovery the holder must revoke exposed keys from the Access record.
 - [ ] Treat combined database plus runtime-secret compromise as a credential/session/recovery incident, even though private passkey keys remain outside PROBNAYA.

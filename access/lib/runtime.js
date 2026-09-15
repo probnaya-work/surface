@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { loadConfig } from './config.js';
 import { ENROLLMENT_GRANT_MS } from './constants.js';
-import { randomToken } from './crypto.js';
+import { enrollmentGrantHash, randomToken } from './crypto.js';
 import { MemoryStore } from './memory-store.js';
 import { createRequestNotifier } from './notify.js';
 import { PostgresStore } from './postgres-store.js';
@@ -30,7 +30,7 @@ async function buildRuntime() {
     await store.seedHolder(holder, {
       id: randomUUID(),
       holderId: holder.id,
-      tokenHash: service.tokenHash('enrollment', token),
+      tokenHash: enrollmentGrantHash(token),
       createdAt: now,
       expiresAt: now + ENROLLMENT_GRANT_MS,
       consumedAt: null,

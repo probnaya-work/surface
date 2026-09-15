@@ -15,8 +15,8 @@ export const PRODUCTION_ENV = Object.freeze({
 
 // Production constants from the real configuration loader, with the store and
 // clock supplied by the test instead of the environment.
-export function productionRuntime({ store, clock, notifier = null }) {
-  const config = loadConfig(PRODUCTION_ENV);
+export function productionRuntime({ store, clock, notifier = null, env = {} }) {
+  const config = loadConfig({ ...PRODUCTION_ENV, ...env });
   const service = new AccessService({ config, store, webauthn: createWebAuthn(config), notifier, clock });
   return { config, store, service };
 }

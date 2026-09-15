@@ -12,7 +12,7 @@ import {
   SESSION_IDLE_MS,
   SESSION_ROTATE_MS,
 } from './constants.js';
-import { generateRecoveryCodes, keyedHash, normalizeRecoveryCode, randomToken, safeEqual } from './crypto.js';
+import { enrollmentGrantHash, generateRecoveryCodes, keyedHash, normalizeRecoveryCode, randomToken, safeEqual } from './crypto.js';
 import { AccessError, badRequest, forbidden, rateLimited, unauthorized } from './errors.js';
 import { base64url, credentialLabel, exactObject, requestEmail, webauthnResponse } from './validation.js';
 
@@ -44,6 +44,14 @@ export class AccessService {
 
   tokenHash(kind, token) {
     return keyedHash(this.config.sessionHashKey, `${kind}:${token}`);
+  }
+
+  // TRANSITIONAL: grants issued before the enrollment-grant digest existed were stored
+  // as HMAC(SESSION_HASH_KEY, "enrollment:" + token). They are looked up this way only
+  // when the current digest finds nothing. Remove once ENROLLMENT_GRANT_MS (seven days)
+  // has elapsed after this runtime is deployed; no new grant is ever stored this way.
+  legacyEnrollmentGrantHash(token) {
+    return this.tokenHash('enrollment', token);
   }
 
   recoveryHash(code) {
@@ -201,10 +209,12 @@ export class AccessService {
     exactObject(payload, ['grant', 'label']);
     const grantToken = base64url(payload.grant, 256);
     await this.limit('enrollment-network', '', network, { limit: 20, blockMs: 10 * 60_000 });
-    await this.limit('enrollment', this.tokenHash('enrollment', grantToken), network, { limit: 8, blockMs: 10 * 60_000 });
+    const grantHash = enrollmentGrantHash(grantToken);
+    await this.limit('enrollment', grantHash, network, { limit: 8, blockMs: 10 * 60_000 });
     const label = credentialLabel(payload.label);
     const now = this.clock();
-    const grant = await this.store.findGrant(this.tokenHash('enrollment', grantToken), now);
+    const grant = (await this.store.findGrant(grantHash, now))
+      ?? (await this.store.findGrant(this.legacyEnrollmentGrantHash(grantToken), now));
     if (!grant) throw new AccessError(400, 'enrollment_failed', GENERIC_AUTH_ERROR);
     const holder = await this.store.findHolder(grant.holderId);
     if (!holder || holder.condition !== 'pending') throw new AccessError(400, 'enrollment_failed', GENERIC_AUTH_ERROR);

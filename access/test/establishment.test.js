@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import test from 'node:test';
 import { ENROLLMENT_GRANT_MS } from '../lib/constants.js';
+import { ENROLLMENT_GRANT_DOMAIN, enrollmentGrantHash, keyedHash } from '../lib/crypto.js';
 import { MemoryStore } from '../lib/memory-store.js';
 import { getRuntime, resetRuntimeForTests } from '../lib/runtime.js';
 import { Browser, productionRuntime, recordingNotifier } from './browser-harness.js';
@@ -9,13 +10,16 @@ import { VirtualAuthenticator } from './virtual-authenticator.js';
 
 // Establishment through a link: the grant is the same primitive as before, now
 // read from the link by the page and sent only by CREATE PASSKEY.
-async function pendingHolder({ condition = 'pending', expiresIn = ENROLLMENT_GRANT_MS } = {}) {
+// `legacy` stores the grant the way grants were stored before the enrollment-grant
+// digest: HMAC(SESSION_HASH_KEY, "enrollment:" + token).
+async function pendingHolder({ condition = 'pending', expiresIn = ENROLLMENT_GRANT_MS, legacy = false } = {}) {
   let now = Date.UTC(2026, 8, 17, 11, 30, 0);
   const store = new MemoryStore();
   const runtime = productionRuntime({ store, clock: () => now, notifier: recordingNotifier() });
   const holder = { id: randomUUID(), publicId: 'PROB–H–0144', webauthnUserId: randomBytes(32).toString('base64url'), condition, createdAt: now, updatedAt: now };
   const grant = randomBytes(32).toString('base64url');
-  await store.seedHolder(holder, { id: randomUUID(), holderId: holder.id, tokenHash: runtime.service.tokenHash('enrollment', grant), createdAt: now, expiresAt: now + expiresIn, consumedAt: null });
+  const tokenHash = legacy ? keyedHash(runtime.config.sessionHashKey, `enrollment:${grant}`) : enrollmentGrantHash(grant);
+  await store.seedHolder(holder, { id: randomUUID(), holderId: holder.id, tokenHash, createdAt: now, expiresAt: now + expiresIn, consumedAt: null });
   return { store, runtime, holder, grant, advance: (ms) => { now += ms; } };
 }
 
@@ -43,6 +47,7 @@ test('local development seeds its establishment grant with the same seven-day li
     const { store } = await getRuntime();
     const [grant] = store.grants.values();
     assert.equal(grant.expiresAt - grant.createdAt, ENROLLMENT_GRANT_MS);
+    assert.equal(grant.tokenHash, enrollmentGrantHash('LOCAL-DEVELOPMENT-ENROLLMENT-TOKEN-0144'), 'dev seeding uses the grant digest');
   } finally {
     process.env = saved;
     resetRuntimeForTests();
@@ -119,4 +124,63 @@ test('an access request never creates establishment authority, even for a pendin
   assert.deepEqual({ holders: store.holders.size, grants: store.grants.size }, before);
   assert.equal(store.ceremonies.size, 0);
   assert.equal(store.sessions.size, 0);
+});
+
+test('new grants are stored as a domain-separated SHA-256 digest that needs no application secret', () => {
+  const token = 'Hk3vQ2wZ8pL0sT5yN1bR7cX4mD9fJ6aE2gU3hK5nW0q';
+  assert.equal(ENROLLMENT_GRANT_DOMAIN, 'probnaya-access/enrollment-grant/v1:');
+  assert.equal(enrollmentGrantHash(token), 'sha256:X1JRb1SsEi474TJjOANF5b1uSVXzr44tCCYV3F3FHZE', 'fixed vector');
+  assert.equal(enrollmentGrantHash.length, 1, 'the digest takes only the token');
+  assert.notEqual(enrollmentGrantHash(token), enrollmentGrantHash(`${token}x`));
+  assert.notEqual(enrollmentGrantHash(token).slice(7), keyedHash(randomBytes(32).toString('base64'), `enrollment:${token}`));
+});
+
+test('a new-format grant establishes and is stored only as its digest', async () => {
+  const { runtime, grant, store, holder } = await pendingHolder();
+  const [stored] = store.grants.values();
+  assert.equal(stored.tokenHash, enrollmentGrantHash(grant));
+  assert.equal(JSON.stringify([...store.grants]).includes(grant), false, 'the token itself is never stored');
+  assert.equal((await new Browser(runtime).enroll(new VirtualAuthenticator(), grant)).status, 200);
+  assert.equal(store.holders.get(holder.id).condition, 'active');
+  assert.ok([...store.grants.values()][0].consumedAt, 'successful registration consumes the grant');
+});
+
+test('a new-format grant does not depend on SESSION_HASH_KEY; sessions still do', async () => {
+  const { store, grant, holder } = await pendingHolder();
+  const rotated = productionRuntime({ store, clock: () => Date.UTC(2026, 8, 17, 11, 31, 0), env: { SESSION_HASH_KEY: randomBytes(32).toString('base64') } });
+  const browser = new Browser(rotated);
+  assert.equal((await browser.enroll(new VirtualAuthenticator(), grant)).status, 200, 'a runtime with another session key verifies the grant');
+  assert.equal(store.holders.get(holder.id).condition, 'active');
+  const other = productionRuntime({ store, clock: () => Date.UTC(2026, 8, 17, 11, 32, 0), env: { SESSION_HASH_KEY: randomBytes(32).toString('base64') } });
+  const stranger = new Browser(other);
+  stranger.jar = new Map(browser.jar);
+  assert.equal((await stranger.status()).status, 401, 'a session cookie is bound to the session key that issued it');
+});
+
+test('legacy HMAC grants still establish, and remain single-use, expiring, and blocked by suspension', async () => {
+  const legacy = await pendingHolder({ legacy: true });
+  const browser = new Browser(legacy.runtime);
+  assert.equal((await browser.enroll(new VirtualAuthenticator(), legacy.grant)).status, 200);
+  assert.equal(legacy.store.holders.get(legacy.holder.id).condition, 'active');
+  assert.equal((await new Browser(legacy.runtime, { network: '198.51.100.77' }).post('enrollment-options', { grant: legacy.grant, label: 'AGAIN' })).status, 400, 'replay refused');
+
+  const expired = await pendingHolder({ legacy: true });
+  expired.advance(ENROLLMENT_GRANT_MS);
+  assert.equal((await new Browser(expired.runtime).post('enrollment-options', { grant: expired.grant, label: 'LATE' })).status, 400, 'expiry refused');
+
+  const suspended = await pendingHolder({ legacy: true, condition: 'suspended' });
+  assert.equal((await new Browser(suspended.runtime).post('enrollment-options', { grant: suspended.grant, label: 'SUSPENDED' })).status, 400, 'suspended holder refused');
+
+  const opened = await pendingHolder({ legacy: true });
+  for (let read = 0; read < 5; read += 1) assert.equal((await new Browser(opened.runtime).status()).status, 401);
+  assert.equal([...opened.store.grants.values()][0].consumedAt, null, 'opening the page consumes nothing');
+});
+
+test('a legacy grant is only found through the legacy lookup, never as a bare token or digest', async () => {
+  const legacy = await pendingHolder({ legacy: true });
+  const [stored] = legacy.store.grants.values();
+  assert.equal(stored.tokenHash.startsWith('sha256:'), false);
+  for (const guess of [stored.tokenHash.replace(/[^A-Za-z0-9_-]/g, ''), enrollmentGrantHash(legacy.grant).slice(7)]) {
+    assert.equal((await new Browser(legacy.runtime, { network: `192.0.2.${guess.length}` }).post('enrollment-options', { grant: guess, label: 'GUESS' })).status, 400);
+  }
 });

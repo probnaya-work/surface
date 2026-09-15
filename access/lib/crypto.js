@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 export function randomToken(bytes = 32) {
   return randomBytes(bytes).toString('base64url');
@@ -6,6 +6,16 @@ export function randomToken(bytes = 32) {
 
 export function keyedHash(key, value) {
   return createHmac('sha256', key).update(String(value), 'utf8').digest('base64url');
+}
+
+// Enrollment grants are 256-bit random bearer tokens. An unkeyed, domain-separated
+// SHA-256 digest is enough to keep a database reader from recovering one, so grants
+// need no application secret: the access_operator database role, which alone may
+// insert holders and grants, is the whole authority to create establishment links.
+export const ENROLLMENT_GRANT_DOMAIN = 'probnaya-access/enrollment-grant/v1:';
+
+export function enrollmentGrantHash(token) {
+  return `sha256:${createHash('sha256').update(`${ENROLLMENT_GRANT_DOMAIN}${token}`, 'utf8').digest('base64url')}`;
 }
 
 export function safeEqual(left, right) {

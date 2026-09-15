@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import test from 'node:test';
 import postgres from 'postgres';
 import { REQUEST_NETWORK_LIMIT } from '../lib/constants.js';
+import { enrollmentGrantHash } from '../lib/crypto.js';
 import { applyMigrations, MIGRATION_ROOT } from '../lib/migrations.js';
 import { PostgresStore } from '../lib/postgres-store.js';
 import { Browser, captureLogger, productionRuntime, recordingNotifier } from './browser-harness.js';
@@ -70,7 +71,7 @@ if (!databaseURL) {
       const issued = await store.issueEnrollmentGrant({
         mode: 'new',
         holder: { id: randomUUID(), publicId, webauthnUserId: randomBytes(32).toString('base64url') },
-        grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', grant), expiresAt: Date.now() + 86_400_000 },
+        grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: enrollmentGrantHash(grant), expiresAt: Date.now() + 86_400_000 },
         now: Date.now(),
       });
       const browser = new Browser(runtime);
@@ -90,7 +91,7 @@ if (!databaseURL) {
     // Two pending holders with outstanding links; one is suspended before 003 exists.
     const pendingLink = async (publicId) => {
       const grant = randomBytes(32).toString('base64url');
-      const issued = await store.issueEnrollmentGrant({ mode: 'new', holder: { id: randomUUID(), publicId, webauthnUserId: randomBytes(32).toString('base64url') }, grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', grant), expiresAt: Date.now() + 86_400_000 }, now: Date.now() });
+      const issued = await store.issueEnrollmentGrant({ mode: 'new', holder: { id: randomUUID(), publicId, webauthnUserId: randomBytes(32).toString('base64url') }, grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: enrollmentGrantHash(grant), expiresAt: Date.now() + 86_400_000 }, now: Date.now() });
       return { grant, holderId: issued.holderId };
     };
     const openLink = await pendingLink('PROB–H–UPGRADEP');
@@ -134,7 +135,7 @@ if (!databaseURL) {
       const result = await store.issueEnrollmentGrant({
         mode,
         holder: { id: randomUUID(), publicId, webauthnUserId: randomBytes(32).toString('base64url') },
-        grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', grant), expiresAt: Date.now() + 86_400_000 },
+        grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: enrollmentGrantHash(grant), expiresAt: Date.now() + 86_400_000 },
         now: Date.now(),
       });
       return { grant, result };
@@ -171,7 +172,7 @@ if (!databaseURL) {
     await t.test('first-enrollment response loss: the identical retry fails and the created key authenticates', async () => {
       const grant = randomBytes(32).toString('base64url');
       const lostHolder = { id: randomUUID(), publicId: 'PROB–H–LOSTRESPONSE', webauthnUserId: randomBytes(32).toString('base64url') };
-      await store.issueEnrollmentGrant({ mode: 'new', holder: lostHolder, grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', grant), expiresAt: Date.now() + 86_400_000 }, now: Date.now() });
+      await store.issueEnrollmentGrant({ mode: 'new', holder: lostHolder, grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: enrollmentGrantHash(grant), expiresAt: Date.now() + 86_400_000 }, now: Date.now() });
       const lost = new Browser(runtime);
       const key = new VirtualAuthenticator();
       const start = await lost.expectOk('enrollment-options', { grant, label: 'LOST' });
@@ -311,7 +312,7 @@ if (!databaseURL) {
     const publicId = 'PROB–H–NOKEYS';
     const issue = async (mode) => {
       const grant = randomBytes(32).toString('base64url');
-      const result = await store.issueEnrollmentGrant({ mode, holder: { id: randomUUID(), publicId, webauthnUserId: randomBytes(32).toString('base64url') }, grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', grant), expiresAt: Date.now() + 7 * 86_400_000 }, now: Date.now() });
+      const result = await store.issueEnrollmentGrant({ mode, holder: { id: randomUUID(), publicId, webauthnUserId: randomBytes(32).toString('base64url') }, grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: enrollmentGrantHash(grant), expiresAt: Date.now() + 7 * 86_400_000 }, now: Date.now() });
       return { grant, result };
     };
     const old = await issue('new');
@@ -388,7 +389,7 @@ if (!databaseURL) {
     const results = await Promise.all(stores.map((store) => store.issueEnrollmentGrant({
       mode: 'new',
       holder: { id: randomUUID(), publicId: 'PROB–H–RACE', webauthnUserId: randomBytes(32).toString('base64url') },
-      grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', randomBytes(32).toString('base64url')), expiresAt: Date.now() + 86_400_000 },
+      grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: enrollmentGrantHash(randomBytes(32).toString('base64url')), expiresAt: Date.now() + 86_400_000 },
       now: Date.now(),
     })));
     assert.deepEqual(results.map((result) => result.issued).sort(), [false, true]);

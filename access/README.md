@@ -20,12 +20,13 @@ Localhost is a separate WebAuthn RP (`localhost`). Local credentials cannot auth
 
 ## Operator commands (PostgreSQL)
 
-All commands load the same configuration as the service. Review every migration before running it.
+`migrate` needs only `DATABASE_URL` (owner role). Every other operator command needs only `ACCESS_ENV` (`production` or `development`) and `DATABASE_URL` for the `access_operator` role (`sslmode=verify-full` in production); no application secrets. They refuse `access_runtime`, and in production any role other than `access_operator`. For local development add `ACCESS_LOCAL_ORIGIN`. Review every migration before running it.
 
 | Command | Effect |
 |---|---|
 | `npm run migrate` | Applies `001_access.sql` only when the base schema is absent, then re-applies every idempotent forward migration. |
-| `npm run create-enrollment -- --new 'PROB–H–…' ['R–XXXXXX']` | Creates a pending holder under an unused identifier and prints its establishment link (`…/#establish=<grant>`, valid seven days) once to standard output. Refuses an identifier that already exists. The optional note is the request reference from the `ACCESS / REQUEST` message, never an address. |
+| `npm run holders` | Read-only: identifiers, condition, creation date, open link, latest request reference. Allocates nothing. |
+| `npm run create-enrollment -- --new 'PROB–H–…' ['R–XXXXXX']` | Creates a pending holder under an unused identifier and prints its establishment link (`…/#establish=<grant>`, valid seven days) once to standard output. Stores only the grant digest. Refuses an identifier that already exists and a request reference that already produced a grant. The optional note is the request reference from the `ACCESS / REQUEST` message, never an address. |
 | `npm run create-enrollment -- --reissue 'PROB–H–…' ['R–XXXXXX']` | Replaces the link of a holder that is still pending and expires every earlier link. Refuses unknown, active, and suspended holders. |
 | `npm run holder-condition -- 'PROB–H–…' suspend` | Suspends a holder; the migration 002/003 trigger invalidates its ordinary and recovery sessions and expires its outstanding establishment links in the same transaction. |
 | `npm run holder-condition -- 'PROB–H–…' reactivate` | Restores `active` when an active credential remains, otherwise `pending` with no usable link. Invalidated sessions and links are never restored. |
@@ -33,7 +34,7 @@ All commands load the same configuration as the service. Review every migration 
 
 `002_holder_authority.sql` invalidates live ordinary and recovery sessions for non-active holders and installs the same invalidation for future suspension transitions; it does not delete credentials or recovery codes. `003_suspension_expires_grants.sql` extends that trigger so suspension also expires outstanding enrollment grants.
 
-An establishment link is bearer authority for one pending holder's first key. Deliver it once, in reply to the request, and keep no other copy. See `../docs/access-deployment-checklist.md` (*Request mail*, *Establishing access*).
+An establishment link is bearer authority for one pending holder's first key. Deliver it once, as a new message to the requester, and keep no other copy. See `../docs/access-deployment-checklist.md` (*Request mail*, *Establishing access*).
 
 ## Access requests
 
@@ -41,7 +42,7 @@ An establishment link is bearer authority for one pending holder's first key. De
 
 ## PostgreSQL tests
 
-Set `ACCESS_TEST_DATABASE_URL` to a disposable PostgreSQL database and run `npm run test:postgres`. The suites create random schemas, apply every numbered migration, use independent connection pools for race schedules, drive every ceremony through the production-profile handler, and drop only their generated schemas afterward. Never point this variable at a production database.
+Set `ACCESS_TEST_DATABASE_URL` to a disposable PostgreSQL database and run `npm run test:postgres`. The operator suite runs the scripts as child processes with no application secrets and, if no `access_runtime` role exists, creates a temporary `NOLOGIN` one to prove the refusal, dropping it afterwards. The suites create random schemas, apply every numbered migration, use independent connection pools for race schedules, drive every ceremony through the production-profile handler, and drop only their generated schemas afterward. Never point this variable at a production database.
 
 ## Database connection string
 

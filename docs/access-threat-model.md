@@ -10,7 +10,8 @@ Scope: `PROBNAYA → ACCESS → authenticated`, access requests and establishmen
 - Authenticated and pre-authentication session identifiers.
 - Registration/authentication challenges and ceremony state.
 - Recent-auth / VERIFY PRESENCE state.
-- Enrollment grants (as carried in establishment links) and recovery-code material.
+- Enrollment grants (as carried in establishment links; stored only as an unkeyed SHA-256 digest) and recovery-code material.
+- The `access_operator` database credential: the authority to create pending holders and establishment links.
 - Addresses submitted with access requests, while in transit to the PROBNAYA mailbox (Access does not store them).
 - The request-sender SMTP credential.
 - Credential enrollment and revocation authority.
@@ -42,7 +43,8 @@ PostgreSQL persistence
 
 Separate operational boundaries:
   Access runtime → Workspace SMTP (mail@probnaya.work account) → mail@probnaya.work   (access request; notification only)
-  operator → PostgreSQL (operator role) → create-enrollment → establishment link
+  operator (clean checkout + access_operator DATABASE_URL only) → PostgreSQL → create-enrollment → establishment link
+  Access runtime (SESSION_HASH_KEY, access_runtime DATABASE_URL) → PostgreSQL   (never creates holders or grants)
   operator mailbox (mail@probnaya.work) → email → person   (establishment link delivery)
   deployment platform → environment secrets and logs
 ```
@@ -97,7 +99,8 @@ v1 performs no identity-proofing beyond control of the address when the link is 
 | Mail credential compromise | The credential lives only in the public-site and Access Production environments; nodemailer verifies the certificate of the fixed host; the credential authorizes nothing in Access. | **Accepted for v1:** Access and intake share the `mail@probnaya.work` Workspace app password, which can read that mailbox unless IMAP/POP are disabled. A leaked credential or compromised Function in either project could read requests and unconsumed establishment links and use a link to establish an empty relation first. Bounded by single use, seven-day expiry, reissue, and suspension. Dedicated send-only credentials are a documented future hardening. |
 | Establishment-link leakage | Grant in the URL fragment (never sent to servers or in `Referer`); removed with `history.replaceState` before any request; held only in memory; no analytics or third-party script on Access; consumption only on a verified first registration; seven-day expiry; single use; `--reissue` and suspension expire it. | Global/synced browser history, the email itself, mail-rewriting services, and anyone reading the mailbox before use retain a usable link until consumption or expiry. The worst outcome is an empty relation under that identifier, which the operator suspends. |
 | Link prefetch / scanners | Preview bots fetch without the fragment; the page makes no grant-bearing request on load; options never consume; enrollment limits are keyed by network and grant, so a scanner network cannot block the person. | A JavaScript-executing scanner that presses CREATE PASSKEY consumes rate-limit budget on its own network only. |
-| Operator error on issuance | `--new` refuses an existing identifier and `--reissue` refuses a missing or non-pending one, enforced inside the holder-row transaction; concurrent `--new` for one identifier yields one holder; the note accepts only a request reference. | Pasting a link into the wrong reply remains a human error; single use and reissue bound it. |
+| Enrollment-authority minting | Only `access_operator` (and the owner) may insert holders and grants; Access Production connects as `access_runtime`, which cannot; operator commands refuse `access_runtime` and require `access_operator` in production. Grants are stored as an unkeyed digest of a 256-bit token, so a database reader cannot recover a link, and `SESSION_HASH_KEY` never leaves the runtime. | A compromised operator machine or leaked operator credential can mint links for new pending holders (empty relations) until the Neon password is rotated; it cannot forge sessions (no session `INSERT`) or reach active or suspended holders. During the transition, legacy HMAC grants remain verifiable through the runtime. |
+| Operator error on issuance | `--new` refuses an existing identifier and a request reference that already produced a grant (advisory-lock serialized), and `--reissue` refuses a missing or non-pending one, enforced inside the holder-row transaction; concurrent `--new` for one identifier yields one holder; the note accepts only a request reference; `npm run holders` gives a read-only view before allocation. | Pasting a link into the wrong reply remains a human error; single use and reissue bound it. |
 | Open redirects | No client-supplied post-login URL. Successful authentication goes only to the fixed authenticated boundary. | Future return-to behavior must introduce an allowlist, not arbitrary URLs. |
 
 ## What WebAuthn protects
@@ -124,6 +127,7 @@ v1 performs no identity-proofing beyond control of the address when the link is 
 - The shared `mail@probnaya.work` SMTP credential is scoped to the Production environments of the public site and Access only, and its exposure is treated as exposure of outstanding establishment links (operator response: reissue or suspend the affected pending holders).
 - Email providers, rewriting services, and browsers preserve the URL fragment of the establishment link (verify with the supported mail clients before first production use).
 - The operator issues links only in reply to requests, one per person, and never issues content to a pending holder.
+- Access Production's `DATABASE_URL` connects as `access_runtime` (replaced and redeployed 2026-09-15), and the `access_runtime` / `access_operator` grants remain as set: runtime without holder or grant `INSERT`, operator without session `INSERT`.
 - Recovery codes can be shown once and the person will store them outside the authenticated device.
 - Future private material performs authorization from the server-side holder identity rather than trusting client identifiers.
 

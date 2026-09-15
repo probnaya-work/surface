@@ -95,7 +95,9 @@ No authorization state lives in the cookie. No token is stored in `localStorage`
 - holder foreign key, one-way token representation, created/expiry/consumed timestamps
 - operator note: the request reference (`R–XXXXXX`) only, never an address or other personal detail
 
-The grant is the internal authority that lets one pending holder issue its first passkey. It is never a user-facing concept: a person receives it inside an establishment link and never sees, copies, or types it. Tokens are 32 random bytes, stored only as `HMAC-SHA-256(SESSION_HASH_KEY, "enrollment:" + token)`, single-use, consumed only when a verified first registration commits, and expire after seven days (`ENROLLMENT_GRANT_MS`). Suspending the holder expires every outstanding grant (migration 003); reactivation never revives one.
+The grant is the internal authority that lets one pending holder issue its first passkey. It is never a user-facing concept: a person receives it inside an establishment link and never sees, copies, or types it. Tokens are 32 random bytes, stored only as `sha256:` + base64url(SHA-256(`"probnaya-access/enrollment-grant/v1:" + token`)) (`enrollmentGrantHash`, `lib/crypto.js`). The digest is unkeyed on purpose: a 256-bit random token cannot be guessed or recovered from its digest, so grants need no application secret. The authority to create one is the `access_operator` database role, the only role granted `INSERT` on holders and grants. Tokens are single-use, consumed only when a verified first registration commits, and expire after seven days (`ENROLLMENT_GRANT_MS`). Suspending the holder expires every outstanding grant (migration 003); reactivation never revives one.
+
+*Transitional compatibility.* Grants issued before this digest were stored as `HMAC(SESSION_HASH_KEY, "enrollment:" + token)`. `enrollment-options` looks up the digest first and, only if nothing matches, the legacy HMAC (`AccessService.legacyEnrollmentGrantHash`). No new grant is stored in the legacy form. The legacy lookup may be removed once `ENROLLMENT_GRANT_MS` (seven days) has elapsed after the runtime carrying the digest is deployed.
 
 ### `access_recovery_sets` and `access_recovery_codes`
 
@@ -135,9 +137,9 @@ Access is established on request. The distinctions are deliberate:
 6. Without request mail configuration, or past the ceiling, or on delivery failure, the action returns `503` with `REQUESTS CANNOT BE SENT FROM HERE AT THE MOMENT. WRITE TO MAIL@PROBNAYA.WORK.`. Key authentication does not depend on mail.
 
 **Authorization (operator).**
-1. The operator reads the request, chooses the next `PROB–H` identifier, and runs `create-enrollment --new 'PROB–H–…' 'R–…'`. This creates a pending holder and a grant, and prints `https://access.probnaya.work/#establish=<grant>` once to standard output.
-2. The operator replies to the request from the PROBNAYA mailbox with that link.
-3. `--reissue` replaces the link of a still-pending holder and expires earlier ones. `--new` never touches an existing identifier, and `--reissue` never creates one.
+1. From a clean checkout, with only `ACCESS_ENV=production` and the `access_operator` `DATABASE_URL` (`sslmode=verify-full`), the operator reads the request, runs `npm run holders` (read-only), chooses the next `PROB–H` identifier, and runs `create-enrollment --new 'PROB–H–…' 'R–…'`. This creates a pending holder and a grant, and prints `https://access.probnaya.work/#establish=<grant>` once to standard output. No runtime application secret is involved.
+2. The operator sends that link to the requester from the PROBNAYA mailbox as a new message.
+3. `--reissue` replaces the link of a still-pending holder and expires earlier ones. `--new` never touches an existing identifier, never reuses a request reference that already produced a grant, and `--reissue` never creates one.
 
 **Establishment link.**
 1. The grant travels in the URL fragment. Browsers never send fragments in HTTP requests, so it cannot reach Vercel request logs, the Function, or `Referer`. The Access page also sends `Referrer-Policy: no-referrer` and loads no analytics or third-party script.
@@ -303,10 +305,11 @@ It contains no correspondence, objects, account taxonomy, or interior.
 
 ## Operator procedures
 
-`access/scripts/` provides the only operator paths:
+`access/scripts/` provides the only operator paths. Except `migrate` (owner role, `DATABASE_URL` only), they load `lib/operator-config.js`: `ACCESS_ENV` (`production` | `development`) and `DATABASE_URL`, certificate-verified in production, and no runtime secrets (`SESSION_HASH_KEY`, `RECOVERY_HASH_KEY`, `NETWORK_HASH_KEY` are neither read nor required). On connect they refuse `access_runtime` and, in production, any role other than `access_operator` (`lib/operator.js`).
 
 - `migrate`;
-- `create-enrollment` with explicit intent. `--new` creates a pending holder under an unused identifier; `--reissue` replaces the link of a still-pending holder. Neither can do the other's job, and active and suspended holders are refused. The establishment link prints once to standard output and is sensitive material;
+- `holders` (`list-holders.mjs`): read-only transaction listing identifiers, condition, creation date, whether a link is open, and the latest request reference. It allocates nothing;
+- `create-enrollment` with explicit intent. `--new` creates a pending holder under an unused identifier and refuses a request reference that already produced a grant (serialized with a transaction advisory lock); `--reissue` replaces the link of a still-pending holder. Neither can do the other's job, and active and suspended holders are refused. The grant is stored only as its digest; the establishment link prints once to standard output and is sensitive material;
 - `set-holder-condition`: suspend/reactivate under the holder row lock with an audit event. Suspension also expires outstanding grants, and reactivation without an active credential returns the holder to `pending` with no usable link;
 - `prune-expired`: bounded retention that never touches audit events, holders, credentials, grants, or codes.
 

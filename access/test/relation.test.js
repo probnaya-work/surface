@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import test from 'node:test';
 import { loadConfig } from '../lib/config.js';
+import { enrollmentGrantHash } from '../lib/crypto.js';
 import { MemoryStore } from '../lib/memory-store.js';
 import { AccessService } from '../lib/service.js';
 import { createWebAuthn } from '../lib/webauthn.js';
@@ -17,7 +18,7 @@ async function enrolled() {
   const runtime = productionRuntime({ store, clock: () => now });
   const holder = { id: randomUUID(), publicId: 'PROB–H–0142', webauthnUserId: Buffer.alloc(32, 7).toString('base64url'), condition: 'pending', createdAt: now - 86_400_000, updatedAt: now };
   const grant = 'relation-test-enrollment-grant-0000000000001';
-  await store.seedHolder(holder, { id: randomUUID(), holderId: holder.id, tokenHash: runtime.service.tokenHash('enrollment', grant), createdAt: now, expiresAt: now + 86_400_000, consumedAt: null });
+  await store.seedHolder(holder, { id: randomUUID(), holderId: holder.id, tokenHash: enrollmentGrantHash(grant), createdAt: now, expiresAt: now + 86_400_000, consumedAt: null });
   const logger = captureLogger();
   const browser = new Browser(runtime, { logger });
   const key = new VirtualAuthenticator();

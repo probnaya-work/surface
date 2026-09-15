@@ -25,7 +25,7 @@ function requireSecret(env, name, production) {
 
 // postgres.js validates the server certificate and hostname only for
 // `sslmode=verify-full`; `require`, `prefer`, and `allow` disable validation.
-function requireVerifiedDatabaseTransport(databaseURL) {
+export function requireVerifiedDatabaseTransport(databaseURL) {
   let url;
   try {
     url = new URL(databaseURL);

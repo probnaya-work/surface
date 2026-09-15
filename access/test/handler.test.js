@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import test from 'node:test';
 import { createHandler } from '../api/access.js';
+import { enrollmentGrantHash } from '../lib/crypto.js';
 import { clientNetwork } from '../lib/http.js';
 import { MemoryStore } from '../lib/memory-store.js';
 import { Browser, captureLogger, productionRuntime } from './browser-harness.js';
@@ -13,7 +14,7 @@ async function productionFixture() {
   const runtime = productionRuntime({ store, clock: () => now });
   const holder = { id: randomUUID(), publicId: 'PROB–H–HTTP', webauthnUserId: Buffer.alloc(32, 5).toString('base64url'), condition: 'pending', createdAt: now, updatedAt: now };
   const grant = 'handler-test-enrollment-grant-000000000001';
-  await store.seedHolder(holder, { id: randomUUID(), holderId: holder.id, tokenHash: runtime.service.tokenHash('enrollment', grant), createdAt: now, expiresAt: now + 86_400_000, consumedAt: null });
+  await store.seedHolder(holder, { id: randomUUID(), holderId: holder.id, tokenHash: enrollmentGrantHash(grant), createdAt: now, expiresAt: now + 86_400_000, consumedAt: null });
   return { runtime, store, holder, grant, advance: (ms) => { now += ms; } };
 }
 

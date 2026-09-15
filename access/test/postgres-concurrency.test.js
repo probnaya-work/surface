@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import postgres from 'postgres';
+import { enrollmentGrantHash } from '../lib/crypto.js';
 import { PostgresStore } from '../lib/postgres-store.js';
 import { AccessService } from '../lib/service.js';
 import { createWebAuthn } from '../lib/webauthn.js';
@@ -86,7 +87,7 @@ if (!databaseURL) {
     await f.store.seedHolder(f.holder, {
       id: randomUUID(),
       holderId: f.holder.id,
-      tokenHash: f.service.tokenHash('enrollment', f.grant),
+      tokenHash: enrollmentGrantHash(f.grant),
       createdAt: f.now,
       expiresAt: f.now + 86_400_000,
       consumedAt: null,

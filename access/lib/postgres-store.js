@@ -127,6 +127,36 @@ export class PostgresStore {
 
   async close() { await this.sql.end(); }
 
+  async currentRole() {
+    const [row] = await this.sql`SELECT current_user AS role`;
+    return row.role;
+  }
+
+  // Read-only operator view for choosing the next PROB–H identifier. No token hashes,
+  // credentials, or personal data; the latest request reference is non-personal.
+  async listHolders({ now }) {
+    return this.sql.begin('read only', async (sql) => {
+      const [{ readOnly }] = await sql`SELECT current_setting('transaction_read_only') AS "readOnly"`;
+      const rows = await sql`
+        SELECT h.public_id, h.condition, h.created_at,
+          EXISTS (
+            SELECT 1 FROM access_enrollment_grants g
+            WHERE g.holder_id = h.id AND g.consumed_at IS NULL AND g.expires_at > ${date(now)}
+          ) AS open_link,
+          (
+            SELECT g.operator_note FROM access_enrollment_grants g
+            WHERE g.holder_id = h.id AND g.operator_note IS NOT NULL
+            ORDER BY g.created_at DESC LIMIT 1
+          ) AS reference
+        FROM access_holders h
+        ORDER BY h.created_at, h.public_id`;
+      return {
+        readOnly: readOnly === 'on',
+        holders: rows.map((row) => ({ publicId: row.public_id, condition: row.condition, createdAt: ms(row.created_at), openLink: row.open_link, reference: row.reference })),
+      };
+    });
+  }
+
   async seedHolder(item, grant) {
     await this.sql.begin(async (sql) => {
       await sql`INSERT INTO access_holders (id, public_id, webauthn_user_id, condition, created_at, updated_at) VALUES (${item.id}, ${item.publicId}, ${item.webauthnUserId}, ${item.condition}, ${date(item.createdAt)}, ${date(item.updatedAt)})`;
@@ -136,9 +166,10 @@ export class PostgresStore {
 
   // Operator path for establishment. Intent is explicit so one person's link can
   // never be replaced by mistake: `new` only creates a pending holder under an
-  // unused public identifier; `reissue` only replaces the grant of an existing
-  // pending holder, expiring every earlier unconsumed grant. Active and suspended
-  // holders are refused: a grant is never a way into an established record.
+  // unused public identifier, and never for a request reference that already
+  // produced a grant; `reissue` only replaces the grant of an existing pending
+  // holder, expiring every earlier unconsumed grant. Active and suspended holders
+  // are refused: a grant is never a way into an established record.
   async issueEnrollmentGrant({ mode, holder: item, grant, now }) {
     if (mode !== 'new' && mode !== 'reissue') throw new Error('issueEnrollmentGrant requires mode new or reissue');
     return this.sql.begin(async (sql) => {
@@ -147,6 +178,14 @@ export class PostgresStore {
       let created = false;
       if (mode === 'new') {
         if (existing) return { issued: false, reason: 'exists', condition: existing.condition };
+        if (grant.operatorNote) {
+          // Serializes concurrent `new` for one reference; released at commit.
+          await sql`SELECT pg_advisory_xact_lock(hashtext(${`access-request-reference:${grant.operatorNote}`}))`;
+          const [used] = await sql`
+            SELECT h.public_id FROM access_enrollment_grants g JOIN access_holders h ON h.id = g.holder_id
+            WHERE g.operator_note = ${grant.operatorNote} ORDER BY g.created_at LIMIT 1`;
+          if (used) return { issued: false, reason: 'reference-used', publicId: used.public_id };
+        }
         try {
           await sql.savepoint((inner) => inner`INSERT INTO access_holders (id, public_id, webauthn_user_id, condition, created_at, updated_at) VALUES (${item.id}, ${item.publicId}, ${item.webauthnUserId}, 'pending', ${date(now)}, ${date(now)})`);
         } catch (error) {

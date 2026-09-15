@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import test from 'node:test';
+import { enrollmentGrantHash } from '../lib/crypto.js';
 import { AccessService } from '../lib/service.js';
 import { MemoryStore } from '../lib/memory-store.js';
 import { createWebAuthn } from '../lib/webauthn.js';
@@ -20,7 +21,7 @@ function fixture() {
   const service = new AccessService({ config, store, webauthn: createWebAuthn(config), clock: () => now });
   const holder = { id: randomUUID(), publicId: 'PROB–H–TEST', webauthnUserId: Buffer.alloc(32, 9).toString('base64url'), condition: 'pending', createdAt: now, updatedAt: now };
   const grant = 'test-enrollment-grant-0000000000000001';
-  const seed = () => store.seedHolder(holder, { id: randomUUID(), holderId: holder.id, tokenHash: service.tokenHash('enrollment', grant), createdAt: now, expiresAt: now + 86_400_000, consumedAt: null });
+  const seed = () => store.seedHolder(holder, { id: randomUUID(), holderId: holder.id, tokenHash: enrollmentGrantHash(grant), createdAt: now, expiresAt: now + 86_400_000, consumedAt: null });
   return { service, store, holder, grant, now: () => now, advance: (ms) => { now += ms; }, seed };
 }
 
