@@ -5,6 +5,7 @@ import {
   PRODUCTION_PUBLIC_ORIGIN,
   PRODUCTION_RP_ID,
   RECOVERY_COOKIE_DEVELOPMENT,
+  REQUEST_RECIPIENT,
   RECOVERY_COOKIE_PRODUCTION,
   SESSION_COOKIE_DEVELOPMENT,
   SESSION_COOKIE_PRODUCTION,
@@ -43,6 +44,36 @@ function requireVerifiedDatabaseTransport(databaseURL) {
   for (const name of ['channel_binding', 'sslrootcert', 'sslcert', 'sslkey', 'sslpassword', 'sslcrl']) {
     if (url.searchParams.has(name)) throw new Error(`Production DATABASE_URL must not include libpq-only parameter ${name}`);
   }
+}
+
+const ADDRESS = /^[^\s@\u0000-\u001F\u007F]{1,64}@[A-Za-z0-9.-]{1,189}\.[A-Za-z]{2,63}$/;
+
+// Access requests are sent by a dedicated sender account. Its credential lives in
+// the Access runtime, so it must not be the PROBNAYA mailbox that receives
+// requests and sends establishment links: a Google app password can read the
+// account it belongs to, not only send from it. Absent settings disable only the
+// request action; partial or unsafe settings refuse to start.
+function requestMailConfig(env, production) {
+  const names = ['ACCESS_REQUEST_SMTP_USER', 'ACCESS_REQUEST_SMTP_PASS', 'ACCESS_REQUEST_SMTP_FROM'];
+  const present = names.filter((name) => env[name] !== undefined && env[name] !== '');
+  const outbox = env.ACCESS_DEV_REQUEST_OUTBOX;
+  if (outbox !== undefined && outbox !== '') {
+    if (production) throw new Error('Development request outbox is forbidden in production');
+    if (outbox !== 'console') throw new Error('ACCESS_DEV_REQUEST_OUTBOX may only be console');
+    if (present.length) throw new Error('Use either SMTP request settings or the development request outbox, not both');
+    return Object.freeze({ transport: 'console' });
+  }
+  if (!present.length) return null;
+  if (present.length !== names.length) throw new Error(`Request mail requires all of ${names.join(', ')}`);
+  const user = env.ACCESS_REQUEST_SMTP_USER;
+  const from = env.ACCESS_REQUEST_SMTP_FROM;
+  const pass = env.ACCESS_REQUEST_SMTP_PASS;
+  if (!ADDRESS.test(user) || !ADDRESS.test(from)) throw new Error('ACCESS_REQUEST_SMTP_USER and ACCESS_REQUEST_SMTP_FROM must be plain addresses');
+  if ([user, from].some((address) => address.toLowerCase() === REQUEST_RECIPIENT)) {
+    throw new Error(`The request sender must be a dedicated account, not ${REQUEST_RECIPIENT}`);
+  }
+  if (pass.length < 16 || /[\u0000-\u001F\u007F]/.test(pass)) throw new Error('ACCESS_REQUEST_SMTP_PASS must be an app password');
+  return Object.freeze({ transport: 'smtp', user, pass, from });
 }
 
 export function loadConfig(env = process.env) {
@@ -103,6 +134,7 @@ export function loadConfig(env = process.env) {
     throw new Error('DATABASE_URL is required unless the local test memory store is enabled');
   }
   if (production) requireVerifiedDatabaseTransport(env.DATABASE_URL);
+  const requestMail = requestMailConfig(env, production);
 
   return Object.freeze({
     profile,
@@ -115,6 +147,7 @@ export function loadConfig(env = process.env) {
     networkHashKey,
     databaseURL: env.DATABASE_URL,
     memory,
+    requestMail,
     cookies: Object.freeze({
       session: production ? SESSION_COOKIE_PRODUCTION : SESSION_COOKIE_DEVELOPMENT,
       preauth: production ? PREAUTH_COOKIE_PRODUCTION : PREAUTH_COOKIE_DEVELOPMENT,

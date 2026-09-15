@@ -38,6 +38,7 @@ The server has two fail-closed profiles. Production uses compiled constants for 
 - `@simplewebauthn/server` `14.0.2`: server option generation and response verification. No WebAuthn CBOR, COSE, signature, attestation, or client-data cryptography is implemented locally.
 - `@simplewebauthn/browser` `14.0.0`: browser serialization and standards-compliant calls to `navigator.credentials.create/get`, including browser-owned cross-device behavior.
 - `postgres` `3.4.9`: small PostgreSQL driver with parameterized queries and transaction support; no ORM or vendor-specific SDK.
+- `nodemailer` `10.0.1`: sends an access request to the PROBNAYA mailbox over TLS-verified SMTP. Loaded only when a request is sent; the same pinned version as the public intake handler.
 
 The implementation pins exact versions and commits `package-lock.json`. Node is pinned to `24.x`, which is supported by the selected SimpleWebAuthn release and current Vercel runtime.
 
@@ -92,9 +93,9 @@ No authorization state lives in the cookie. No token is stored in `localStorage`
 ### `access_enrollment_grants`
 
 - holder foreign key, one-way token representation, created/expiry/consumed timestamps
-- created-by operator reference or note suitable for audit
+- operator note: the request reference (`R–XXXXXX`) only, never an address or other personal detail
 
-This bootstraps the first passkey for a pre-authorized holder. Tokens are 32 random bytes, single-use, expire after 24 hours, and are delivered out of band by an operator. The code deliberately does not choose that delivery channel. Enabling production enrollment requires a human-approved delivery/identity-proofing procedure.
+The grant is the internal authority that lets one pending holder issue its first passkey. It is never a user-facing concept: a person receives it inside an establishment link and never sees, copies, or types it. Tokens are 32 random bytes, stored only as `HMAC-SHA-256(SESSION_HASH_KEY, "enrollment:" + token)`, single-use, consumed only when a verified first registration commits, and expire after seven days (`ENROLLMENT_GRANT_MS`). Suspending the holder expires every outstanding grant (migration 003); reactivation never revives one.
 
 ### `access_recovery_sets` and `access_recovery_codes`
 
@@ -115,15 +116,49 @@ This bootstraps the first passkey for a pre-authorized holder. Tokens are 32 ran
 
 ## Ceremony lifecycle
 
-### First passkey / ESTABLISH ACCESS
+### Request and establishment / ESTABLISH ACCESS
 
-1. Operator creates a pending holder and one-time enrollment grant outside the public UI.
-2. Person presents the grant through the Access enrollment surface; the server binds the ceremony to a short-lived pre-authentication cookie without creating an authenticated session.
-3. Registration options use a random stable WebAuthn user ID, `residentKey: required`, `userVerification: required`, attestation `none`, no authenticator attachment restriction, and existing IDs in `excludeCredentials`.
-4. The challenge is stored server-side for five minutes and tied to holder, browser binding, and `first-registration`.
-5. Verification requires exact challenge, origin, RP ID, user presence, and user verification.
-6. The challenge is atomically consumed before cryptographic verification, so every verification attempt is one-shot. After successful verification, grant consumption, credential insertion, holder activation, first session and recovery-set creation, and audit events occur in one transaction.
-7. A recovery set is created and returned once after the first credential is established. The UI requires an explicit “stored” acknowledgement before continuing, but this is a user assertion rather than cryptographic proof that the plaintext was retained.
+Access is established on request. The distinctions are deliberate:
+
+- a request is not authorization;
+- an email address is not identity;
+- a grant is not a user-facing concept;
+- opening a link does not consume a grant;
+- a successful, user-verified first registration is establishment.
+
+**Request (`request-access`).**
+1. ESTABLISH ACCESS without a link shows one field, `EMAIL`, and `REQUEST ACCESS`.
+2. The action takes exactly `{ email }` under the ordinary exact-Origin POST guard. The address must be a plain ASCII `local@host.tld` of at most 254 characters, with no display name, quoting, whitespace, separator, or control character, so it can never add a recipient or break a header.
+3. Limits: 3 per network per 10 minutes with a 30-minute block, and a global ceiling of 100 per day (`REQUEST_NETWORK_LIMIT`, `REQUEST_DAILY_LIMIT`).
+4. One plain-text message goes to `mail@probnaya.work` only, with `Reply-To` set to the address and a constant subject `ACCESS / REQUEST R–XXXXXX`. Nothing is ever sent to the requester by the runtime.
+5. Access stores nothing: no holder, grant, ceremony, session, audit event, or address. The only durable write is the keyed-hash rate-limit buckets. The response is `{ ok, received }` and echoes nothing.
+6. Without request mail configuration, or past the ceiling, or on delivery failure, the action returns `503` with `REQUESTS CANNOT BE SENT FROM HERE AT THE MOMENT. WRITE TO MAIL@PROBNAYA.WORK.`. Key authentication does not depend on mail.
+
+**Authorization (operator).**
+1. The operator reads the request, chooses the next `PROB–H` identifier, and runs `create-enrollment --new 'PROB–H–…' 'R–…'`. This creates a pending holder and a grant, and prints `https://access.probnaya.work/#establish=<grant>` once to standard output.
+2. The operator replies to the request from the PROBNAYA mailbox with that link.
+3. `--reissue` replaces the link of a still-pending holder and expires earlier ones. `--new` never touches an existing identifier, and `--reissue` never creates one.
+
+**Establishment link.**
+1. The grant travels in the URL fragment. Browsers never send fragments in HTTP requests, so it cannot reach Vercel request logs, the Function, or `Referer`. The Access page also sends `Referrer-Policy: no-referrer` and loads no analytics or third-party script.
+2. On load, or on a `hashchange` in an already-open tab, `app.js`:
+   - copies the grant into closure memory only;
+   - calls `history.replaceState` to remove the fragment before any request;
+   - shows *Issue the first key.* with `KEY LABEL` and `CREATE PASSKEY`.
+3. It does not contact the server with the grant, start WebAuthn, or write the grant to the DOM or storage. A reload after that shows the request view; re-opening the link restores it.
+4. Only `CREATE PASSKEY` sends `enrollment-options { grant, label }`. Preview bots receive the plain page. A JavaScript-executing scanner cannot complete a user-verified registration, and options never consume a grant.
+5. A grant refused before any ceremony (expired, used, replaced, suspended, malformed) produces one message: `THIS LINK IS NO LONGER OPEN. IF A KEY WAS ALREADY CREATED WITH IT, PRESENT KEY. OTHERWISE REQUEST ACCESS AGAIN.`
+6. A browser that already holds a session is told `THIS BROWSER HOLDS PROB–H–…. THIS LINK ESTABLISHES A SEPARATE RELATION.`
+
+**First registration (unchanged).**
+1. `enrollment-options` requires an unconsumed, unexpired grant whose holder is `pending`, and binds a `first-registration` ceremony to a short-lived pre-authentication cookie without creating an authenticated session.
+2. Registration options use a random stable WebAuthn user ID, `residentKey: required`, `userVerification: required`, attestation `none`, no authenticator attachment restriction, and existing IDs in `excludeCredentials`.
+3. The challenge is stored server-side for five minutes and tied to holder, browser binding, and `first-registration`.
+4. Verification requires exact challenge, origin, RP ID, user presence, and user verification.
+5. The challenge is atomically consumed before cryptographic verification, so every verification attempt is one-shot. After successful verification, one transaction under the holder lock does all of the following: grant consumption, credential insertion, holder activation, first session and recovery-set creation, and audit events.
+6. A recovery set is created and returned once after the first credential is established. The UI requires an explicit "stored" acknowledgement before continuing to the Interior, but this is a user assertion rather than cryptographic proof that the plaintext was retained.
+
+A holder established this way is identical to any other: the same rows, audit events (`enrollment-grant-issued`, `first-credential-enrolled`, `recovery-set-issued`), relation read, and Interior. The request leaves no trace in Access or the Interior, and the establishment email is operational mail, not Correspondence.
 
 Attestation remains `none`: PROBNAYA learns no unnecessary manufacturer identity and does not claim hardware provenance.
 
@@ -203,23 +238,26 @@ Normal order remains:
 
 No email link, SMS, question, `PROB–H` identifier, or operator-known fact authenticates a person.
 
+Neither a request nor an establishment link is a recovery path. A grant can only reach a `pending` holder, so a person who loses every key and recovery code cannot regain an established relation by requesting access again; the operator can only establish a new relation under a new identifier.
+
 A recovery code is rate-limited and atomically consumed only while its holder is active. Success does not open the authenticated boundary. It creates a ten-minute, one-purpose, HttpOnly recovery session that may complete exactly one `recovery-registration` ceremony. The browser can recover its CSRF token for an open recovery session through `recovery-resume` (exact Origin, HttpOnly recovery cookie, rate-limited), so a cancelled authenticator prompt, a reload, or a lost options response never spends another code. Completing that ceremony under the holder lock adds a passkey, replaces its exact source code set, consumes competing recovery sessions, invalidates all ordinary sessions, records audit events, and then requires normal passkey authentication. Replacing a recovery set while authenticated follows the same holder lock protocol and requires recent VERIFY PRESENCE.
 
 ## Migrations
 
-`001_access.sql` creates the base schema. `002_holder_authority.sql` is an idempotent forward migration that installs the suspension invalidation trigger and invalidates any live ordinary/recovery sessions already associated with non-active holders. It does not delete credentials or recovery codes. Its invalidations are intentionally not reversible. The migration runner skips `001` when the base schema already exists and safely reapplies the idempotent remediation migration.
+`001_access.sql` creates the base schema. `002_holder_authority.sql` is an idempotent forward migration that installs the suspension invalidation trigger and invalidates any live ordinary/recovery sessions already associated with non-active holders. It does not delete credentials or recovery codes. Its invalidations are intentionally not reversible. `003_suspension_expires_grants.sql` extends the same trigger function: a holder becoming `suspended` also expires every unconsumed enrollment grant (to its creation time, so no application/database clock skew can leave it usable). It brings grants of already-suspended holders into the same invariant. Reactivation returns a credential-less holder to `pending` without a usable grant; a new link must be issued deliberately. The migration runner skips `001` when the base schema already exists and safely reapplies the idempotent forward migrations in order.
 
 ## Rate limits
 
 Durable database limits are required even if Vercel WAF is configured:
 
 - authentication options/verification: per network and per pre-auth binding;
+- access requests: per network (3 per 10 minutes, 30-minute block) and one global daily ceiling (100);
 - enrollment: per network and grant;
 - recovery: per network, with a longer fixed block after the threshold;
 - VERIFY PRESENCE, add-key options, and recovery-code replacement: per holder and network;
 - recovery-registration options and recovery-resume: per recovery session and network.
 
-Defaults live next to each call in `access/lib/service.js` and are exercised in `access/test/handler.test.js`. The production network identity is the first `X-Forwarded-For` address, which Vercel overwrites; `X-Vercel-Forwarded-For` is not trusted. Production WAF thresholds, database connection capacity, and alert thresholds remain operational review items. Public responses are generic `429` with `Retry-After`; audit data does not expose raw IP.
+Defaults live next to each call in `access/lib/service.js` (request limits in `access/lib/constants.js`) and are exercised in `access/test/handler.test.js` and `access/test/request.test.js`. The production network identity is the first `X-Forwarded-For` address, which Vercel overwrites; `X-Vercel-Forwarded-For` is not trusted. Production WAF thresholds, database connection capacity, and alert thresholds remain operational review items. Public responses are generic `429` with `Retry-After`; audit data does not expose raw IP.
 
 ## Security headers for `/access` and `/api/access`
 
@@ -235,7 +273,7 @@ Also: `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, restric
 
 ## Authenticated boundary and fixed destinations
 
-After PRESENT KEY, and after the first-enrollment recovery codes are acknowledged, the Access page replaces itself with the fixed Interior URL `https://probnaya.work/interior/`. After logout it replaces itself with `https://probnaya.work/`. Both come from the `probnaya-public-origin` meta element written into `public/index.html` (the local dev server substitutes `ACCESS_PUBLIC_ORIGIN`); the client accepts only `https://probnaya.work` or an explicit localhost origin. No request, query, or fragment can choose a destination.
+After PRESENT KEY, and after the first-establishment recovery codes are acknowledged, the Access page replaces itself with the fixed Interior URL `https://probnaya.work/interior/`. After logout it replaces itself with `https://probnaya.work/`. Both come from the `probnaya-public-origin` meta element written into `public/index.html` (the local dev server substitutes `ACCESS_PUBLIC_ORIGIN`); the client accepts only `https://probnaya.work` or an explicit localhost origin. No request, query, or fragment can choose a destination.
 
 The Access page itself still contains only:
 
@@ -244,7 +282,9 @@ The Access page itself still contains only:
 - `#end` — a deliberate END SESSION confirmation (linked from Interior / RELATION / END SESSION); the logout POST is unchanged;
 - `#expired` — the ordinary entry, with `SESSION ENDED. PRESENT KEY TO CONTINUE.`
 
-Fragments only select a view. Without a live session every fragment shows the entry.
+- `#establish=<grant>` — the establishment link; captured and cleared as described in *Request and establishment*.
+
+Fragments only select a view. Without a live session every other fragment shows the entry.
 
 It contains no correspondence, objects, account taxonomy, or interior.
 
@@ -263,16 +303,21 @@ It contains no correspondence, objects, account taxonomy, or interior.
 
 ## Operator procedures
 
-`access/scripts/` provides the only operator paths: `migrate`, `create-enrollment` (new pending holder, or replacement grant for a still-pending holder; refuses active/suspended holders), `set-holder-condition` (suspend/reactivate under the holder row lock with an audit event; reactivation without an active credential returns the holder to `pending`), and `prune-expired` (bounded retention that never touches audit events, holders, credentials, grants, or codes).
+`access/scripts/` provides the only operator paths:
+
+- `migrate`;
+- `create-enrollment` with explicit intent. `--new` creates a pending holder under an unused identifier; `--reissue` replaces the link of a still-pending holder. Neither can do the other's job, and active and suspended holders are refused. The establishment link prints once to standard output and is sensitive material;
+- `set-holder-condition`: suspend/reactivate under the holder row lock with an audit event. Suspension also expires outstanding grants, and reactivation without an active credential returns the holder to `pending` with no usable link;
+- `prune-expired`: bounded retention that never touches audit events, holders, credentials, grants, or codes.
 
 ## Operational logging
 
-The handler writes one JSON line per rejected or failed request: event, method, known action name, outcome, status, and a bounded code (application code, SQLSTATE, or Node/driver code). It never logs bodies, cookies, CSRF values, challenges, credentials, recovery codes, grants, database URLs, or driver messages. Anonymous status reads (the signed-out page load) are not logged.
+The handler writes one JSON line per rejected or failed request: event, method, known action name, outcome, status, and a bounded code (application code, SQLSTATE, or Node/driver code). It never logs bodies, cookies, CSRF values, challenges, credentials, recovery codes, grants, request addresses or references, database URLs, or driver or mail-provider messages. Request failures log only `request_unavailable`, `request_ceiling`, `request_delivery_failed`, `invalid_email`, or `rate_limited`. Anonymous status reads (the signed-out page load) are not logged.
 
 ## Deployment and operational decisions still requiring human review
 
 - Select/provision PostgreSQL provider, region, backup retention, point-in-time recovery, and connection limits.
-- Approve the operator identity-proofing and out-of-band delivery procedure for first-enrollment grants.
+- Provision the dedicated request-sender account and confirm it cannot read the mailbox that receives requests and sends establishment links (see the deployment checklist). v1 performs no identity-proofing beyond control of the address when the link is used; that is the intended product model, not an omission.
 - Configure the separate Vercel project root, exact production hostname, DNS, TLS/HSTS, and deployment protection only after explicit approval. Do not issue credentials until the canonical hostname is verified end to end.
 - Reconcile this feature branch with `main` security-hardening history before merge.
 - Configure and review Vercel WAF limits/alerts; repository code cannot prove dashboard state.

@@ -15,10 +15,22 @@ export const PRODUCTION_ENV = Object.freeze({
 
 // Production constants from the real configuration loader, with the store and
 // clock supplied by the test instead of the environment.
-export function productionRuntime({ store, clock }) {
+export function productionRuntime({ store, clock, notifier = null }) {
   const config = loadConfig(PRODUCTION_ENV);
-  const service = new AccessService({ config, store, webauthn: createWebAuthn(config), clock });
+  const service = new AccessService({ config, store, webauthn: createWebAuthn(config), notifier, clock });
   return { config, store, service };
+}
+
+// Records request messages instead of sending them. `fail` makes delivery throw.
+export function recordingNotifier({ fail = false } = {}) {
+  const sent = [];
+  return {
+    sent,
+    async send(request) {
+      if (fail) throw new Error('535 5.7.8 Username and Password not accepted for operator@example.test');
+      sent.push(structuredClone(request));
+    },
+  };
 }
 
 export function captureLogger() {

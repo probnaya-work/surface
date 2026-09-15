@@ -8,11 +8,17 @@ Public PROBNAYA shows one quiet path in the existing desktop and mobile header: 
 
 ### First entry
 
+Access is established on request (`design/access-request-establishment.md`, `docs/access-architecture.md`).
+
 1. Public PROBNAYA / ENTER.
-2. Access / ESTABLISH ACCESS / enrollment grant / CREATE PASSKEY.
-3. Browser-owned WebAuthn registration; the server atomically activates the holder, consumes the grant, stores the credential, opens the session, and issues recovery codes.
-4. Recovery codes are acknowledged once.
-5. Access replaces itself with `https://probnaya.work/interior/` → CURRENT.
+2. Access / ESTABLISH ACCESS / *Leave an address.* / EMAIL / REQUEST ACCESS → *Received.* A message goes to `mail@probnaya.work`; Access stores nothing.
+3. PROBNAYA replies with a one-time establishment link, `https://access.probnaya.work/#establish=…`, issued by the operator for a new pending holder.
+4. The link opens Access / ESTABLISH ACCESS / *Issue the first key.* / KEY LABEL / CREATE PASSKEY. Opening it does nothing else.
+5. Browser-owned WebAuthn registration; the server atomically activates the holder, consumes the link's authority, stores the credential, opens the session, and issues recovery codes.
+6. Recovery codes are acknowledged once.
+7. Access replaces itself with `https://probnaya.work/interior/` → CURRENT.
+
+The request leaves no trace in the Interior; `Relation established` is the first shared fact.
 
 ### Returning entry
 
@@ -80,7 +86,7 @@ Access proves identity, keys, recovery, establishment, and session. Nothing in p
 
 ## Local run
 
-Serve the public site on `http://localhost:4173` (`.claude/dev-server.js`) and Access on `http://localhost:4174` with `ACCESS_ENV=development`, `ACCESS_LOCAL_ORIGIN=http://localhost:4174`, `ACCESS_PUBLIC_ORIGIN=http://localhost:4173`, `ACCESS_USE_MEMORY_STORE=true`, three 32-byte keys, and `ACCESS_DEV_ENROLLMENT_TOKEN` / `ACCESS_DEV_PUBLIC_ID` naming the holder to enroll (`PROB–H–0087`, `PROB–H–0119`, or any other ID for the unpopulated state).
+Serve the public site on `http://localhost:4173` (`.claude/dev-server.js`) and Access on `http://localhost:4174` with `ACCESS_ENV=development`, `ACCESS_LOCAL_ORIGIN=http://localhost:4174`, `ACCESS_PUBLIC_ORIGIN=http://localhost:4173`, `ACCESS_USE_MEMORY_STORE=true`, three 32-byte keys, and `ACCESS_DEV_ENROLLMENT_TOKEN` / `ACCESS_DEV_PUBLIC_ID` naming the holder to establish (`PROB–H–0087`, `PROB–H–0119`, or any other ID for the unpopulated state); open `http://localhost:4174/#establish=<token>`. Add `ACCESS_DEV_REQUEST_OUTBOX=console` to see REQUEST ACCESS messages in the dev server output.
 
 ## Rendered verification (2026-09-15)
 

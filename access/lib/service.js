@@ -1,17 +1,29 @@
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import {
   CEREMONY_TTL_MS,
   GENERIC_AUTH_ERROR,
   GENERIC_RECOVERY_ERROR,
   RECENT_AUTH_MS,
   RECOVERY_SESSION_MS,
+  REQUEST_DAILY_LIMIT,
+  REQUEST_NETWORK_LIMIT,
+  REQUEST_UNAVAILABLE,
   SESSION_ABSOLUTE_MS,
   SESSION_IDLE_MS,
   SESSION_ROTATE_MS,
 } from './constants.js';
 import { generateRecoveryCodes, keyedHash, normalizeRecoveryCode, randomToken, safeEqual } from './crypto.js';
 import { AccessError, badRequest, forbidden, rateLimited, unauthorized } from './errors.js';
-import { base64url, credentialLabel, exactObject, webauthnResponse } from './validation.js';
+import { base64url, credentialLabel, exactObject, requestEmail, webauthnResponse } from './validation.js';
+
+const REFERENCE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+// A non-personal reference that joins the request message to the operator's note.
+export function requestReference() {
+  let value = '';
+  for (let index = 0; index < 6; index += 1) value += REFERENCE_ALPHABET[randomInt(REFERENCE_ALPHABET.length)];
+  return `R–${value}`;
+}
 
 function verifiedRegistration(result) {
   return result?.verified === true && result.registrationInfo?.userVerified === true && result.registrationInfo?.credential;
@@ -22,10 +34,11 @@ function verifiedAuthentication(result) {
 }
 
 export class AccessService {
-  constructor({ config, store, webauthn, clock = () => Date.now() }) {
+  constructor({ config, store, webauthn, notifier = null, clock = () => Date.now() }) {
     this.config = config;
     this.store = store;
     this.webauthn = webauthn;
+    this.notifier = notifier;
     this.clock = clock;
   }
 
@@ -163,6 +176,25 @@ export class AccessService {
       throw new AccessError(400, 'authentication_failed', GENERIC_AUTH_ERROR);
     }
     return { token: session.token, csrf: session.csrf, holder: this.publicHolder(holder), anomaly };
+  }
+
+  // A request is not authorization. It creates no holder, grant, ceremony, session,
+  // or audit event, and stores no address: the only durable write is the hashed
+  // rate-limit bucket. The address leaves Access once, in a message to PROBNAYA.
+  async requestAccess({ payload, network }) {
+    if (!this.notifier) throw new AccessError(503, 'request_unavailable', REQUEST_UNAVAILABLE);
+    exactObject(payload, ['email']);
+    await this.limit('request-access', '', network, REQUEST_NETWORK_LIMIT);
+    const email = requestEmail(payload.email);
+    const now = this.clock();
+    const daily = await this.store.checkRateLimit({ key: 'request-access-daily', ...REQUEST_DAILY_LIMIT, now });
+    if (!daily.allowed) throw new AccessError(503, 'request_ceiling', REQUEST_UNAVAILABLE, { retryAfter: daily.retryAfter });
+    try {
+      await this.notifier.send({ email, reference: requestReference(), receivedAt: now });
+    } catch {
+      throw new AccessError(503, 'request_delivery_failed', REQUEST_UNAVAILABLE);
+    }
+    return { received: true };
   }
 
   async enrollmentOptions({ preauthToken, payload, network }) {

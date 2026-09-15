@@ -30,6 +30,21 @@ export function credentialLabel(value) {
   return normalized;
 }
 
+// An address PROBNAYA can reply to, and nothing more. Deliberately narrower than
+// RFC 5321: plain ASCII atext local parts and dotted hostname domains, so the value
+// can never carry a second recipient, a display name, or a header break.
+const REQUEST_EMAIL = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
+
+export function requestEmail(value) {
+  if (typeof value !== 'string') throw badRequest('invalid_email', 'THIS ADDRESS COULD NOT BE USED. CHECK IT AND TRY AGAIN.');
+  const address = value.trim();
+  const [local = ''] = address.split('@', 1);
+  if (address.length > 254 || local.length > 64 || !REQUEST_EMAIL.test(address)) {
+    throw badRequest('invalid_email', 'THIS ADDRESS COULD NOT BE USED. CHECK IT AND TRY AGAIN.');
+  }
+  return address;
+}
+
 export function base64url(value, max = 4096) {
   return boundedString(value, { max, pattern: BASE64URL });
 }

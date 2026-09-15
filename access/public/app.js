@@ -21,6 +21,13 @@
   // session (#end). Anything else opens the ordinary entry or boundary.
   const requested = ['record', 'end'].includes(location.hash.slice(1)) ? location.hash.slice(1) : null;
   const expired = location.hash === '#expired';
+  // An establishment link carries its grant in the fragment, which browsers never
+  // send to a server. It is held only in this closure, removed from the address
+  // bar before any request, and sent once, when the person chooses CREATE PASSKEY.
+  // Opening the link does nothing else, so previews and scanners cannot use it.
+  const ESTABLISH_LINK = /^#establish=([A-Za-z0-9_-]{32,256})$/;
+  const establishing = location.hash.startsWith('#establish=');
+  let grant = ESTABLISH_LINK.exec(location.hash)?.[1] || null;
   if (location.hash) history.replaceState(null, '', location.pathname);
 
   const MESSAGES = Object.freeze({
@@ -33,7 +40,10 @@
     sessionEnded: 'SESSION ENDED. PRESENT KEY TO CONTINUE.',
     sessionChanged: 'THIS SESSION CHANGED IN ANOTHER WINDOW. TRY AGAIN.',
     presentFailed: 'ACCESS COULD NOT BE VERIFIED. TRY ANOTHER KEY, OR RECOVER ACCESS.',
-    enrollmentUnconfirmed: 'ENROLLMENT WAS NOT CONFIRMED. IF A KEY WAS CREATED, PRESENT KEY, THEN REPLACE RECOVERY CODES IN THE ACCESS RECORD.',
+    enrollmentUnconfirmed: 'ACCESS WAS NOT CONFIRMED. IF A KEY WAS CREATED, PRESENT KEY, THEN REPLACE RECOVERY CODES IN THE ACCESS RECORD.',
+    linkClosed: 'THIS LINK IS NO LONGER OPEN. IF A KEY WAS ALREADY CREATED WITH IT, PRESENT KEY. OTHERWISE REQUEST ACCESS AGAIN.',
+    addressInvalid: 'THIS ADDRESS COULD NOT BE USED. CHECK IT AND TRY AGAIN.',
+    labelRequired: 'NAME THE KEY. UP TO 48 CHARACTERS.',
     recoveryHeld: 'THE AUTHENTICATOR DID NOT COMPLETE. YOUR RECOVERY IS STILL OPEN — SUBMIT AGAIN WITHOUT A NEW CODE.',
     recoveryOpen: 'A RECOVERY IS ALREADY OPEN IN THIS BROWSER. REGISTER THE REPLACEMENT KEY WITHOUT A NEW CODE.',
     recoveryClosed: 'RECOVERY IS NO LONGER OPEN. IF A NEW KEY WAS CREATED, PRESENT IT; OTHERWISE USE ANOTHER UNUSED CODE.',
@@ -193,30 +203,75 @@
   }
 
   // Disabled controls are excluded from FormData: read every form before busy().
+  async function requestAccess(form) {
+    const email = String(new FormData(form).get('email') || '').trim();
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return status('request', MESSAGES.addressInvalid, true);
+    busy(form, true);
+    status('request', 'SENDING REQUEST');
+    try {
+      await api('request-access', { email }, null);
+      form.reset();
+      status('request');
+      document.querySelector('[data-received-address]').textContent = email;
+      show('received');
+    } catch (error) {
+      status('request', message(error), true);
+    } finally {
+      busy(form, false);
+    }
+  }
+
+  function closeLink() {
+    grant = null;
+    document.querySelector('[data-form="establish"]').hidden = true;
+    document.querySelector('[data-establish-supporting]').hidden = true;
+    document.querySelector('[data-establish-note]').hidden = true;
+    status('establish', MESSAGES.linkClosed, true);
+  }
+
   async function establish(form) {
-    const fields = new FormData(form);
+    const label = String(new FormData(form).get('label') || '').trim();
+    if (!grant) return closeLink();
+    if (!label || label.length > 48 || /[\u0000-\u001F\u007F]/.test(label)) return status('establish', MESSAGES.labelRequired, true);
     busy(form, true);
     status('establish', 'WAITING FOR AUTHENTICATOR');
+    let started = false;
     let created = false;
     try {
       requireWebAuthn();
-      const label = fields.get('label');
-      const start = await api('enrollment-options', { grant: fields.get('grant'), label });
+      const start = await api('enrollment-options', { grant, label }, null);
+      started = true;
       const credential = await webauthn.startRegistration({ optionsJSON: start.options });
       created = true;
-      const result = await api('enrollment-verify', { ceremonyId: start.ceremonyId, label, credential });
+      const result = await api('enrollment-verify', { ceremonyId: start.ceremonyId, label, credential }, null);
+      grant = null;
       form.reset();
       state.csrf = result.csrf;
       state.returnAfterCodes = 'boundary';
       status('establish');
       showCodes(result.recoveryCodes);
     } catch (error) {
-      // The grant is consumed only when enrollment commits. If the key was
-      // created but the confirmation was lost, the key itself is the way back.
+      // Before any ceremony, a refused request means the link itself is no longer
+      // usable: expired, used, replaced, or its holder suspended. One message
+      // covers every cause. The grant is consumed only when establishment commits;
+      // if the key was created but the confirmation was lost, the key is the way back.
+      if (!started && error instanceof RequestError && error.status === 400) return closeLink();
       status('establish', created && !(error instanceof RequestError && error.status === 429) ? MESSAGES.enrollmentUnconfirmed : message(error), true);
     } finally {
       busy(form, false);
     }
+  }
+
+  function showEstablishment() {
+    document.querySelector('[data-form="establish"]').hidden = false;
+    document.querySelector('[data-establish-supporting]').hidden = false;
+    status('establish');
+    show('establish');
+    if (!grant) return closeLink();
+    // A browser that already holds a relation is told that this link makes another.
+    const note = document.querySelector('[data-establish-note]');
+    note.hidden = !state.session;
+    note.textContent = state.session ? `THIS BROWSER HOLDS ${state.session.holder.publicId}. THIS LINK ESTABLISHES A SEPARATE RELATION.` : '';
   }
 
   async function openRecovery() {
@@ -388,9 +443,12 @@
     const action = button.dataset.action;
     if (button.classList.contains('revoke')) return revokeKey(button);
     if (action === 'present') return presentKey(button);
-    if (action === 'show-establish') return show('establish');
+    if (action === 'show-establish') return show(grant ? 'establish' : 'request');
     if (action === 'show-recovery') return openRecovery();
-    if (action === 'home') return show('entry');
+    if (action === 'home') {
+      document.querySelector('[data-received-address]').textContent = '';
+      return show('entry');
+    }
     if (action === 'boundary') return show('boundary');
     if (action === 'record') return show('record');
     if (action === 'show-end') return show('end');
@@ -400,9 +458,25 @@
     if (action === 'logout') return logout(button);
   });
 
+  document.querySelector('[data-form="request"]').addEventListener('submit', (event) => { event.preventDefault(); requestAccess(event.currentTarget); });
   document.querySelector('[data-form="establish"]').addEventListener('submit', (event) => { event.preventDefault(); establish(event.currentTarget); });
   document.querySelector('[data-form="recovery"]').addEventListener('submit', (event) => { event.preventDefault(); recover(event.currentTarget); });
   document.querySelector('[data-form="add-key"]').addEventListener('submit', (event) => { event.preventDefault(); addKey(event.currentTarget); });
+
+  // A link opened in an Access tab that is already loaded changes only the
+  // fragment; it is taken and cleared the same way, still without any request.
+  window.addEventListener('hashchange', () => {
+    if (!location.hash.startsWith('#establish=')) return;
+    grant = ESTABLISH_LINK.exec(location.hash)?.[1] || null;
+    history.replaceState(null, '', location.pathname);
+    showEstablishment();
+  });
+
+  if (establishing) {
+    showEstablishment();
+    loadSession({ reveal: false }).then((present) => { if (present && grant) showEstablishment(); }, () => {});
+    return;
+  }
 
   loadSession().then((present) => {
     if (present) return;

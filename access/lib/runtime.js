@@ -3,6 +3,7 @@ import { loadConfig } from './config.js';
 import { ENROLLMENT_GRANT_MS } from './constants.js';
 import { randomToken } from './crypto.js';
 import { MemoryStore } from './memory-store.js';
+import { createRequestNotifier } from './notify.js';
 import { PostgresStore } from './postgres-store.js';
 import { AccessService } from './service.js';
 import { createWebAuthn } from './webauthn.js';
@@ -12,7 +13,7 @@ let runtimePromise;
 async function buildRuntime() {
   const config = loadConfig();
   const store = config.memory ? new MemoryStore() : new PostgresStore(config.databaseURL);
-  const service = new AccessService({ config, store, webauthn: createWebAuthn(config) });
+  const service = new AccessService({ config, store, webauthn: createWebAuthn(config), notifier: createRequestNotifier(config.requestMail) });
 
   if (config.memory && process.env.ACCESS_DEV_ENROLLMENT_TOKEN) {
     const token = process.env.ACCESS_DEV_ENROLLMENT_TOKEN;

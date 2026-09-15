@@ -4,9 +4,10 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
 import postgres from 'postgres';
+import { REQUEST_NETWORK_LIMIT } from '../lib/constants.js';
 import { applyMigrations, MIGRATION_ROOT } from '../lib/migrations.js';
 import { PostgresStore } from '../lib/postgres-store.js';
-import { Browser, captureLogger, productionRuntime } from './browser-harness.js';
+import { Browser, captureLogger, productionRuntime, recordingNotifier } from './browser-harness.js';
 import { VirtualAuthenticator } from './virtual-authenticator.js';
 
 const databaseURL = process.env.ACCESS_TEST_DATABASE_URL;
@@ -41,17 +42,19 @@ if (!databaseURL) {
     await admin.end();
   });
 
+  const FORWARD = ['002_holder_authority.sql', '003_suspension_expires_grants.sql'];
+
   test('fresh database: migrations apply in order once, then only idempotent forward migrations re-run', { timeout: 30_000 }, async () => {
     const { sql } = await createSchema();
-    assert.deepEqual(await applyMigrations(sql), ['001_access.sql', '002_holder_authority.sql']);
-    assert.deepEqual(await applyMigrations(sql), ['002_holder_authority.sql']);
+    assert.deepEqual(await applyMigrations(sql), ['001_access.sql', ...FORWARD]);
+    assert.deepEqual(await applyMigrations(sql), FORWARD);
     const tables = await sql`SELECT table_name FROM information_schema.tables WHERE table_schema = current_schema() ORDER BY table_name`;
     assert.equal(tables.length, 10);
     const [{ count }] = await sql`SELECT count(*)::int AS count FROM pg_trigger WHERE tgrelid = 'access_holders'::regclass AND NOT tgisinternal`;
     assert.equal(count, 1);
   });
 
-  test('populated upgrade: 002 invalidates authority of non-active holders only, and re-running changes nothing', { timeout: 30_000 }, async () => {
+  test('populated upgrade: 002 and 003 invalidate authority of suspended and non-active holders only, and re-running changes nothing', { timeout: 30_000 }, async () => {
     const { url, sql } = await createSchema();
     const connection = await sql.reserve();
     try {
@@ -65,6 +68,7 @@ if (!databaseURL) {
     async function enrolledHolder(publicId) {
       const grant = randomBytes(32).toString('base64url');
       const issued = await store.issueEnrollmentGrant({
+        mode: 'new',
         holder: { id: randomUUID(), publicId, webauthnUserId: randomBytes(32).toString('base64url') },
         grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', grant), expiresAt: Date.now() + 86_400_000 },
         now: Date.now(),
@@ -83,8 +87,17 @@ if (!databaseURL) {
     await sql`UPDATE access_holders SET condition = 'suspended' WHERE id = ${suspended.holderId}`;
     const [{ live }] = await sql`SELECT count(*)::int AS live FROM access_sessions WHERE holder_id = ${suspended.holderId} AND revoked_at IS NULL`;
     assert.equal(live, 1);
+    // Two pending holders with outstanding links; one is suspended before 003 exists.
+    const pendingLink = async (publicId) => {
+      const grant = randomBytes(32).toString('base64url');
+      const issued = await store.issueEnrollmentGrant({ mode: 'new', holder: { id: randomUUID(), publicId, webauthnUserId: randomBytes(32).toString('base64url') }, grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', grant), expiresAt: Date.now() + 86_400_000 }, now: Date.now() });
+      return { grant, holderId: issued.holderId };
+    };
+    const openLink = await pendingLink('PROB–H–UPGRADEP');
+    const frozenLink = await pendingLink('PROB–H–UPGRADEF');
+    await sql`UPDATE access_holders SET condition = 'suspended' WHERE id = ${frozenLink.holderId}`;
 
-    assert.deepEqual(await applyMigrations(sql), ['002_holder_authority.sql']);
+    assert.deepEqual(await applyMigrations(sql), FORWARD);
     const authority = async (holderId) => (await sql`
       SELECT
         (SELECT count(*)::int FROM access_sessions WHERE holder_id = ${holderId} AND revoked_at IS NULL) AS sessions,
@@ -94,8 +107,13 @@ if (!databaseURL) {
     assert.deepEqual(await authority(suspended.holderId), { sessions: 0, recovery: 0 });
     const snapshot = await sql`SELECT id, revoked_at FROM access_sessions ORDER BY id`;
 
-    assert.deepEqual(await applyMigrations(sql), ['002_holder_authority.sql']);
+    const grants = await sql`SELECT id, expires_at FROM access_enrollment_grants ORDER BY id`;
+    assert.deepEqual(await applyMigrations(sql), FORWARD);
     assert.deepEqual(await sql`SELECT id, revoked_at FROM access_sessions ORDER BY id`, snapshot);
+    assert.deepEqual(await sql`SELECT id, expires_at FROM access_enrollment_grants ORDER BY id`, grants, 're-running 003 changes no grant');
+    await sql`UPDATE access_holders SET condition = 'pending' WHERE id = ${frozenLink.holderId}`;
+    assert.equal((await new Browser(runtime).post('enrollment-options', { grant: frozenLink.grant, label: 'FROZEN' })).status, 400, '003 expires links of holders suspended before it');
+    assert.equal((await new Browser(runtime).enroll(new VirtualAuthenticator(), openLink.grant)).status, 200, 'links of pending holders are untouched');
     assert.equal((await active.browser.status()).status, 200, 'active holder session survives the upgrade');
     assert.equal((await active.recovery.post('recovery-resume', {}, { csrf: null })).status, 200, 'active holder recovery survives the upgrade');
 
@@ -111,9 +129,10 @@ if (!databaseURL) {
     let offset = 0;
     const runtime = productionRuntime({ store, clock: () => Date.now() + offset });
     const publicId = 'PROB–H–LIFECYCLE';
-    const issue = async () => {
+    const issue = async (mode = 'reissue') => {
       const grant = randomBytes(32).toString('base64url');
       const result = await store.issueEnrollmentGrant({
+        mode,
         holder: { id: randomUUID(), publicId, webauthnUserId: randomBytes(32).toString('base64url') },
         grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', grant), expiresAt: Date.now() + 86_400_000 },
         now: Date.now(),
@@ -128,17 +147,22 @@ if (!databaseURL) {
     let userHandle;
     let codes;
 
-    await t.test('operator grants: creation, replacement, and refusal once established', async () => {
-      const first = await issue();
+    await t.test('operator grants: explicit creation, explicit replacement, and refusal once established', async () => {
+      assert.deepEqual((await issue('reissue')).result, { issued: false, reason: 'unknown' }, 'reissue never creates a holder');
+      const first = await issue('new');
       assert.equal(first.result.created, true);
-      const replaced = await issue();
+      const again = await issue('new');
+      assert.deepEqual(again.result, { issued: false, reason: 'exists', condition: 'pending' }, 'new never replaces an outstanding link');
+      assert.equal((await browser.post('enrollment-options', { grant: again.grant, label: 'REFUSED NEW' })).status, 400);
+      const replaced = await issue('reissue');
       assert.deepEqual([replaced.result.issued, replaced.result.created], [true, false]);
       assert.equal((await browser.post('enrollment-options', { grant: first.grant, label: 'OLD GRANT' })).status, 400, 'replaced grant no longer works');
       const enrolled = await browser.enroll(primary, replaced.grant);
       assert.equal(enrolled.status, 200, enrolled.body.error);
       codes = enrolled.body.recoveryCodes;
       assert.equal(codes.length, 10);
-      assert.equal((await issue()).result.issued, false, 'no grant for an active holder');
+      assert.deepEqual((await issue('reissue')).result, { issued: false, reason: 'not-pending', condition: 'active' }, 'no grant for an active holder');
+      assert.deepEqual((await issue('new')).result, { issued: false, reason: 'exists', condition: 'active' });
       [{ webauthn_user_id: userHandle }] = await sql`SELECT webauthn_user_id FROM access_holders WHERE public_id = ${publicId}`;
       const [grantRow] = await sql`SELECT count(*)::int AS consumed FROM access_enrollment_grants WHERE consumed_at IS NOT NULL`;
       assert.equal(grantRow.consumed, 1);
@@ -147,7 +171,7 @@ if (!databaseURL) {
     await t.test('first-enrollment response loss: the identical retry fails and the created key authenticates', async () => {
       const grant = randomBytes(32).toString('base64url');
       const lostHolder = { id: randomUUID(), publicId: 'PROB–H–LOSTRESPONSE', webauthnUserId: randomBytes(32).toString('base64url') };
-      await store.issueEnrollmentGrant({ holder: lostHolder, grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', grant), expiresAt: Date.now() + 86_400_000 }, now: Date.now() });
+      await store.issueEnrollmentGrant({ mode: 'new', holder: lostHolder, grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', grant), expiresAt: Date.now() + 86_400_000 }, now: Date.now() });
       const lost = new Browser(runtime);
       const key = new VirtualAuthenticator();
       const start = await lost.expectOk('enrollment-options', { grant, label: 'LOST' });
@@ -255,7 +279,7 @@ if (!databaseURL) {
       assert.equal((await browser.status()).status, 401);
       assert.equal((await open.post('recovery-resume', {}, { csrf: null })).status, 401);
       assert.equal((await new Browser(runtime).present(primary, userHandle)).status, 400);
-      assert.equal((await issue()).result.issued, false, 'no grant while suspended');
+      assert.equal((await issue('reissue')).result.issued, false, 'no grant while suspended');
       assert.deepEqual(await store.setHolderCondition({ publicId, action: 'reactivate', now: Date.now(), auditId: randomUUID() }), { changed: true, condition: 'active' });
       assert.equal((await open.post('recovery-resume', {}, { csrf: null })).status, 401);
       assert.equal((await browser.present(primary, userHandle)).status, 200);
@@ -279,19 +303,106 @@ if (!databaseURL) {
     });
   });
 
-  test('reactivating a holder without an active credential returns it to pending, never to active', { timeout: 30_000 }, async () => {
+  test('suspending a pending holder ends its outstanding link; reactivation returns it to pending without reviving the link', { timeout: 30_000 }, async () => {
     const { url, sql } = await createSchema();
     await applyMigrations(sql);
     const store = storeFor(url);
     const runtime = productionRuntime({ store, clock: () => Date.now() });
-    const grant = randomBytes(32).toString('base64url');
     const publicId = 'PROB–H–NOKEYS';
-    await store.issueEnrollmentGrant({ holder: { id: randomUUID(), publicId, webauthnUserId: randomBytes(32).toString('base64url') }, grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', grant), expiresAt: Date.now() + 86_400_000 }, now: Date.now() });
+    const issue = async (mode) => {
+      const grant = randomBytes(32).toString('base64url');
+      const result = await store.issueEnrollmentGrant({ mode, holder: { id: randomUUID(), publicId, webauthnUserId: randomBytes(32).toString('base64url') }, grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', grant), expiresAt: Date.now() + 7 * 86_400_000 }, now: Date.now() });
+      return { grant, result };
+    };
+    const old = await issue('new');
+    assert.equal(old.result.issued, true);
+
     assert.deepEqual(await store.setHolderCondition({ publicId, action: 'suspend', now: Date.now(), auditId: randomUUID() }), { changed: true, condition: 'suspended' });
-    assert.equal((await new Browser(runtime).post('enrollment-options', { grant, label: 'WHILE SUSPENDED' })).status, 400);
+    assert.equal((await new Browser(runtime).post('enrollment-options', { grant: old.grant, label: 'WHILE SUSPENDED' })).status, 400, 'pending holder + grant → suspend → grant unusable');
+    assert.equal((await issue('reissue')).result.issued, false, 'no new link while suspended');
+    const [{ usable }] = await sql`SELECT count(*)::int AS usable FROM access_enrollment_grants WHERE holder_id = ${old.result.holderId} AND consumed_at IS NULL AND expires_at > now()`;
+    assert.equal(usable, 0, 'suspension expires the grant itself, not only the holder condition');
+
     assert.deepEqual(await store.setHolderCondition({ publicId, action: 'reactivate', now: Date.now(), auditId: randomUUID() }), { changed: true, condition: 'pending' });
-    assert.equal((await new Browser(runtime).enroll(new VirtualAuthenticator(), grant)).status, 200, 'the outstanding grant can still establish the first key');
+    assert.equal((await new Browser(runtime).post('enrollment-options', { grant: old.grant, label: 'AFTER REACTIVATION' })).status, 400, 'pending holder + grant → suspend → reactivate → old grant remains unusable');
+    const fresh = await issue('reissue');
+    assert.equal(fresh.result.issued, true, 'reissue after reactivation issues a genuinely new grant');
+    assert.notEqual(fresh.grant, old.grant);
+    assert.equal((await new Browser(runtime).post('enrollment-options', { grant: old.grant, label: 'OLD AFTER REISSUE' })).status, 400);
+    assert.equal((await new Browser(runtime).enroll(new VirtualAuthenticator(), fresh.grant)).status, 200);
+    const [{ condition }] = await sql`SELECT condition FROM access_holders WHERE public_id = ${publicId}`;
+    assert.equal(condition, 'active');
     assert.deepEqual(await store.setHolderCondition({ publicId: 'PROB–H–UNKNOWN', action: 'suspend', now: Date.now(), auditId: randomUUID() }), { changed: false, reason: 'unknown-holder' });
+  });
+
+  test('an access request writes no holder, grant, ceremony, session, audit event, or address to PostgreSQL', { timeout: 30_000 }, async () => {
+    const { url, sql } = await createSchema();
+    await applyMigrations(sql);
+    const store = storeFor(url);
+    const notifier = recordingNotifier();
+    const runtime = productionRuntime({ store, clock: () => Date.now(), notifier });
+    const address = 'request.person+access@example.org';
+    const counts = async () => (await sql`
+      SELECT
+        (SELECT count(*)::int FROM access_holders) AS holders,
+        (SELECT count(*)::int FROM access_enrollment_grants) AS grants,
+        (SELECT count(*)::int FROM access_ceremonies) AS ceremonies,
+        (SELECT count(*)::int FROM access_sessions) AS sessions,
+        (SELECT count(*)::int FROM access_audit_events) AS audits
+    `)[0];
+    const before = await counts();
+    const response = await new Browser(runtime).post('request-access', { email: address });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await counts(), before);
+    assert.equal(notifier.sent.length, 1);
+    // No column of any Access table holds the address, in any form.
+    const tables = await sql`SELECT table_name FROM information_schema.tables WHERE table_schema = current_schema()`;
+    for (const { table_name: table } of tables) {
+      const [{ found }] = await sql.unsafe(`SELECT count(*)::int AS found FROM ${table} t WHERE t::text ILIKE $1`, [`%${address.split('@')[0]}%`]);
+      assert.equal(found, 0, `${table} must not contain the address`);
+    }
+    const [{ buckets }] = await sql`SELECT count(*)::int AS buckets FROM access_rate_limits`;
+    assert.equal(buckets, 2, 'only the network and daily rate-limit buckets are written');
+  });
+
+  test('on PostgreSQL a blocked requesting network stays blocked past its window', { timeout: 30_000 }, async () => {
+    const { url, sql } = await createSchema();
+    await applyMigrations(sql);
+    let offset = 0;
+    const store = storeFor(url);
+    const runtime = productionRuntime({ store, clock: () => Date.now() + offset, notifier: recordingNotifier() });
+    const browser = new Browser(runtime, { network: '203.0.113.60' });
+    for (let attempt = 0; attempt < REQUEST_NETWORK_LIMIT.limit; attempt += 1) assert.equal((await browser.post('request-access', { email: `p${attempt}@example.org` })).status, 200);
+    assert.equal((await browser.post('request-access', { email: 'over@example.org' })).status, 429);
+    offset = REQUEST_NETWORK_LIMIT.windowMs + 1000;
+    assert.equal((await browser.post('request-access', { email: 'over@example.org' })).status, 429, 'the block outlasts the window');
+    offset = REQUEST_NETWORK_LIMIT.blockMs + 1000;
+    assert.equal((await browser.post('request-access', { email: 'over@example.org' })).status, 200);
+  });
+
+  test('concurrent --new for one identifier creates exactly one pending holder and one link', { timeout: 30_000 }, async () => {
+    const { url, sql } = await createSchema();
+    await applyMigrations(sql);
+    const stores = [storeFor(url), storeFor(url)];
+    const runtime = productionRuntime({ store: stores[0], clock: () => Date.now() });
+    const results = await Promise.all(stores.map((store) => store.issueEnrollmentGrant({
+      mode: 'new',
+      holder: { id: randomUUID(), publicId: 'PROB–H–RACE', webauthnUserId: randomBytes(32).toString('base64url') },
+      grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: runtime.service.tokenHash('enrollment', randomBytes(32).toString('base64url')), expiresAt: Date.now() + 86_400_000 },
+      now: Date.now(),
+    })));
+    assert.deepEqual(results.map((result) => result.issued).sort(), [false, true]);
+    const [{ holders, grants }] = await sql`SELECT (SELECT count(*)::int FROM access_holders) AS holders, (SELECT count(*)::int FROM access_enrollment_grants) AS grants`;
+    assert.deepEqual([holders, grants], [1, 1]);
+  });
+
+  test('issueEnrollmentGrant refuses to run without explicit operator intent', async () => {
+    const { url, sql } = await createSchema();
+    await applyMigrations(sql);
+    const store = storeFor(url);
+    await assert.rejects(() => store.issueEnrollmentGrant({ holder: { id: randomUUID(), publicId: 'PROB–H–NOINTENT', webauthnUserId: 'x' }, grant: {}, now: Date.now() }), /mode new or reissue/);
+    const [{ holders }] = await sql`SELECT count(*)::int AS holders FROM access_holders`;
+    assert.equal(holders, 0);
   });
 
   test('database unavailable: generic unavailable response and a bounded log line', { timeout: 30_000 }, async () => {

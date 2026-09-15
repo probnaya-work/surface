@@ -15,6 +15,7 @@ import { getRuntime } from '../lib/runtime.js';
 import { exactObject } from '../lib/validation.js';
 
 const ACTIONS = new Set([
+  'request-access',
   'authentication-options',
   'authentication-verify',
   'enrollment-options',
@@ -92,6 +93,10 @@ export function createHandler({ runtime = getRuntime, logger = console } = {}) {
             expireCookie(config.cookies.preauth, config.production),
           ]);
           return sendJSON(res, 200, { ok: true, authenticated: true, holder: result.holder, csrf: result.csrf });
+        }
+        case 'request-access': {
+          await service.requestAccess({ payload: body.data, network });
+          return sendJSON(res, 200, { ok: true, received: true });
         }
         case 'enrollment-options': {
           result = await service.enrollmentOptions({ preauthToken: cookies[config.cookies.preauth], payload: body.data, network });

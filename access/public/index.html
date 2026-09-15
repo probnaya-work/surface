@@ -30,14 +30,37 @@
       </nav>
     </section>
 
+    <section class="view panel" data-view="request" hidden>
+      <button class="back" type="button" data-action="home">← ACCESS</button>
+      <div class="panel-body">
+        <p class="eyebrow">ESTABLISH ACCESS</p>
+        <h1>Leave an address.</h1>
+        <p class="supporting">At present PROBNAYA establishes access on request. It will write to this address with a link that issues your first key. The address is used for that message and never opens Access.</p>
+        <form data-form="request" novalidate>
+          <label>EMAIL<input name="email" type="email" required maxlength="254" autocomplete="email" autocapitalize="none" spellcheck="false" inputmode="email"></label>
+          <button class="button" type="submit">REQUEST ACCESS</button>
+        </form>
+        <p class="status" data-status="request" role="status"></p>
+      </div>
+    </section>
+
+    <section class="view panel" data-view="received" hidden>
+      <button class="back" type="button" data-action="home">← ACCESS</button>
+      <div class="panel-body">
+        <p class="eyebrow">ESTABLISH ACCESS</p>
+        <h1>Received.</h1>
+        <p class="supporting">PROBNAYA will write to <span class="address" data-received-address></span>. Open that message on the device that should hold your key.</p>
+      </div>
+    </section>
+
     <section class="view panel" data-view="establish" hidden>
       <button class="back" type="button" data-action="home">← ACCESS</button>
       <div class="panel-body">
         <p class="eyebrow">ESTABLISH ACCESS</p>
         <h1>Issue the first key.</h1>
-        <p class="supporting">An operator-issued enrollment grant is required. Your authenticator will keep the private key.</p>
+        <p class="supporting" data-establish-supporting>Access has been established for you. Your authenticator will create the key and keep its private part. This link works once.</p>
+        <p class="status" data-establish-note role="note" hidden></p>
         <form data-form="establish" novalidate>
-          <label>ENROLLMENT GRANT<input name="grant" type="text" required autocomplete="off" autocapitalize="none" spellcheck="false"></label>
           <label>KEY LABEL<input name="label" type="text" value="PRIMARY PASSKEY" maxlength="48" required autocomplete="off"></label>
           <button class="button" type="submit">CREATE PASSKEY</button>
         </form>

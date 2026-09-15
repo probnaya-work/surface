@@ -1,7 +1,7 @@
 # PROBNAYA access — threat model
 
-Status: implementation baseline, updated after security review, 2026-09-14
-Scope: `PROBNAYA → ACCESS → authenticated`, credential management, sessions, recovery, and the read-only relation read used by the public-origin Interior. Interior content has no production source yet; future private material is treated as protected data.
+Status: implementation baseline, updated after security review, 2026-09-14; request-based establishment, 2026-09-15
+Scope: `PROBNAYA → ACCESS → authenticated`, access requests and establishment links, credential management, sessions, recovery, and the read-only relation read used by the public-origin Interior. Interior content has no production source yet; future private material is treated as protected data.
 
 ## Assets
 
@@ -10,7 +10,9 @@ Scope: `PROBNAYA → ACCESS → authenticated`, credential management, sessions,
 - Authenticated and pre-authentication session identifiers.
 - Registration/authentication challenges and ceremony state.
 - Recent-auth / VERIFY PRESENCE state.
-- First-enrollment grants and recovery-code material.
+- Enrollment grants (as carried in establishment links) and recovery-code material.
+- Addresses submitted with access requests, while in transit to the PROBNAYA mailbox (Access does not store them).
+- The request-sender SMTP credential.
 - Credential enrollment and revocation authority.
 - Server secrets, database credentials, recovery pepper, and IP-hashing key.
 - Audit/security events.
@@ -38,13 +40,21 @@ PROBNAYA access handler
   ▼
 PostgreSQL persistence
 
-Separate future/operational boundaries:
-  laboratory operator → first-enrollment grant delivery
-  SMTP/email → notification only, never authentication
+Separate operational boundaries:
+  Access runtime → dedicated sender account → SMTP → mail@probnaya.work   (access request; notification only)
+  operator → PostgreSQL (operator role) → create-enrollment → establishment link
+  operator mailbox (mail@probnaya.work) → email → person   (establishment link delivery)
   deployment platform → environment secrets and logs
 ```
 
-The browser and OS UI are not reproduced by the site. Vercel and the selected database provider are trusted infrastructure and part of the compromise surface. Email is explicitly outside the authentication trust root.
+The browser and OS UI are not reproduced by the site. Vercel and the selected database provider are trusted infrastructure and part of the compromise surface.
+
+Email has exactly two roles and is never a login, identifier, or recovery path:
+
+1. **Request notification.** The runtime sends a request to the PROBNAYA mailbox. It authorizes nothing and creates no Access state.
+2. **Establishment-link delivery.** Whoever reads the operator's reply before the person does can establish that relation. This is accepted only because a link can reach nothing but an empty `pending` holder, is single-use, expires in seven days, and is invalidated by reissue or suspension. **Nothing may be issued to a pending holder.** If that ever changes, this delivery channel must be re-reviewed.
+
+v1 performs no identity-proofing beyond control of the address when the link is used. A relation is with whoever controls that address and creates the key.
 
 ## Security objectives
 
@@ -54,12 +64,15 @@ The browser and OS UI are not reproduced by the site. Vercel and the selected da
 - Authentication rotates into a fresh server-side session; no bearer token is exposed to JavaScript or local storage.
 - Credential changes require a fresh WebAuthn ceremony and cannot silently remove the final viable access path.
 - Failures do not reveal whether a holder or credential exists.
+- An access request never creates authority or state: no holder, grant, ceremony, session, or stored address.
+- Opening an establishment link never consumes, exchanges, or sends its grant; only an explicit CREATE PASSKEY does, and only a verified user-verified registration consumes it.
+- Suspension ends every outstanding establishment authority, and reactivation never revives it.
 
 ## Threats and mitigations
 
 | Threat | Intended mitigation | Residual risk |
 |---|---|---|
-| Phishing | RP ID `access.probnaya.work`, exact expected origin `https://access.probnaya.work`, browser-owned WebAuthn UI, no passwords or emailed login links. | A person can still be socially engineered into recovery or into using a compromised legitimate device. |
+| Phishing | RP ID `access.probnaya.work`, exact expected origin `https://access.probnaya.work`, browser-owned WebAuthn UI, no passwords or emailed login links. The only emailed link establishes a first key for a pending holder and cannot open an established relation; a look-alike domain cannot create or use a credential for the RP ID. | A person can still be socially engineered into recovery or into using a compromised legitimate device. |
 | Credential theft | Private keys never reach the server; UV is required; database holds only public credential data. | Synced passkeys inherit the security of the person’s platform account; a compromised unlocked device may authenticate. |
 | Session theft | 256-bit opaque token in `Secure`, `HttpOnly`, `SameSite=Strict`, host-only cookie; only an HMAC/hash is stored; short idle/absolute expiry; rotation and server revocation. | XSS can act through an active session even when it cannot read the cookie. Endpoint authorization and CSP remain essential. |
 | Session fixation | Ignore incoming unknown IDs; create a fresh ordinary session only after verified authentication; rotate it after credential/recovery changes and invalidate predecessors atomically. Recovery uses a separate short-lived, one-purpose cookie and requires a later normal passkey login. | Concurrent requests during rotation require careful transaction handling. |
@@ -77,9 +90,14 @@ The browser and OS UI are not reproduced by the site. Vercel and the selected da
 | Malicious or compromised device | UV, short recent-auth window, access-event visibility, multiple keys, logout/revocation. | WebAuthn does not make a compromised browser trustworthy and does not attest that the OS is clean. |
 | Database compromise | No private passkey keys; session tokens stored one-way; recovery values require separate pepper; least-privilege DB role; encrypted provider transport/backups; minimize retained IP data. | Credential metadata, holder associations, audit history, and public keys are exposed; combined DB+runtime-secret compromise is more severe. |
 | Secrets leakage | `.env*` ignored, Vercel encrypted environment variables, no secrets in client bundles/tests/logs, deployment allowlist, rotation procedure. | Platform administrator compromise remains in the trust model. |
-| Sensitive logging | Central error mapping; one bounded JSON line per rejected/failed request (action, status, code) and opaque audit IDs only; never log assertions, challenges, cookies, enrollment tokens, recovery codes, raw credential IDs, or DB URLs. | Platform/request logs may still retain path, timing, and network metadata. |
+| Sensitive logging | Central error mapping; one bounded JSON line per rejected/failed request (action, status, code) and opaque audit IDs only; never log assertions, challenges, cookies, enrollment tokens, request addresses or references, recovery codes, raw credential IDs, DB URLs, or mail-provider messages. | Platform/request logs may still retain path, timing, and network metadata. |
 | Race conditions | Transactions, unique constraints, a stable holder-first lock protocol, commit-time authority checks, exact-source recovery-set replacement, competing recovery-session consumption, atomic challenge/code use, and compare-and-update signature counters. | The remediated schedules pass on local PostgreSQL 17.6; isolation, timeouts, pooler behavior, and deadlock handling must still be verified with the selected provider. |
 | Endpoint denial of service | Small body limit, schema bounds, timeouts, durable rate limiting, database indexes, generic early rejection, Vercel Firewall recommendation, and deployment-scheduled bounded retention cleanup. | WebAuthn verification and database connections still consume resources; capacity, cleanup, and WAF settings are operational controls that repository tests cannot prove. |
+| Access-request abuse | Exact Origin and JSON schema; strict single-address validation (no display names, separators, whitespace, or control characters); durable per-network limit and a global daily ceiling; one fixed recipient; nothing ever sent to the entered address; no storage; bounded generic errors. | A distributed sender can still fill the daily ceiling and pause requests (availability only); junk requests reach the mailbox for manual discard. |
+| Mail credential compromise | Dedicated sender account whose credential lives only in the Access Production environment; configuration refuses `mail@probnaya.work` as the sender user or From address; nodemailer with certificate verification to the fixed host; the credential authorizes nothing in Access. | A Google app password can read its own account's mail, so the sender account holds past request notifications. Whether the operator mailbox (and the public intake credential) can be read by any deployed credential cannot be established from the repository and is a deployment check. |
+| Establishment-link leakage | Grant in the URL fragment (never sent to servers or in `Referer`); removed with `history.replaceState` before any request; held only in memory; no analytics or third-party script on Access; consumption only on a verified first registration; seven-day expiry; single use; `--reissue` and suspension expire it. | Global/synced browser history, the email itself, mail-rewriting services, and anyone reading the mailbox before use retain a usable link until consumption or expiry. The worst outcome is an empty relation under that identifier, which the operator suspends. |
+| Link prefetch / scanners | Preview bots fetch without the fragment; the page makes no grant-bearing request on load; options never consume; enrollment limits are keyed by network and grant, so a scanner network cannot block the person. | A JavaScript-executing scanner that presses CREATE PASSKEY consumes rate-limit budget on its own network only. |
+| Operator error on issuance | `--new` refuses an existing identifier and `--reissue` refuses a missing or non-pending one, enforced inside the holder-row transaction; concurrent `--new` for one identifier yields one holder; the note accepts only a request reference. | Pasting a link into the wrong reply remains a human error; single use and reissue bound it. |
 | Open redirects | No client-supplied post-login URL. Successful authentication goes only to the fixed authenticated boundary. | Future return-to behavior must introduce an allowlist, not arbitrary URLs. |
 
 ## What WebAuthn protects
@@ -103,13 +121,15 @@ The browser and OS UI are not reproduced by the site. Vercel and the selected da
 
 - DNS and Vercel routing will preserve the approved permanent origin `https://access.probnaya.work`; previews do not share production credentials.
 - The database provider supports transactions, row locks, unique constraints, TLS, backups, and a region compatible with the Vercel Function region.
-- The operator has a safe out-of-band way to deliver a first-enrollment grant to the intended person.
+- The request-sender account is dedicated, and no credential deployed to any Vercel project can read the mailbox from which establishment links are sent or retained.
+- Email providers, rewriting services, and browsers preserve the URL fragment of the establishment link (verify with the supported mail clients before first production use).
+- The operator issues links only in reply to requests, one per person, and never issues content to a pending holder.
 - Recovery codes can be shown once and the person will store them outside the authenticated device.
 - Future private material performs authorization from the server-side holder identity rather than trusting client identifiers.
 
 ## Review triggers
 
-Re-run this threat model before adding account content, administrator functions, email recovery, multiple production origins, native apps, cross-origin embedding, delegation, transferable objects, privileged roles, or any RP ID/hostname transition. Existing WebAuthn credentials are not casually migratable to another RP ID.
+Re-run this threat model before adding account content, administrator functions, email recovery, automated sending of establishment links, anything issued to pending holders, self-service establishment, multiple production origins, native apps, cross-origin embedding, delegation, transferable objects, privileged roles, or any RP ID/hostname transition. Existing WebAuthn credentials are not casually migratable to another RP ID.
 
 ## References
 

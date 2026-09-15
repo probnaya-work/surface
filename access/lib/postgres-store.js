@@ -134,20 +134,31 @@ export class PostgresStore {
     });
   }
 
-  // Operator path for first enrollment. A new public identifier creates a pending
-  // holder; an existing pending holder receives a fresh grant and every earlier
-  // unconsumed grant expires. Holders that already hold credentials, or are
-  // suspended, are refused: a grant is never a way into an established record.
-  async issueEnrollmentGrant({ holder: item, grant, now }) {
+  // Operator path for establishment. Intent is explicit so one person's link can
+  // never be replaced by mistake: `new` only creates a pending holder under an
+  // unused public identifier; `reissue` only replaces the grant of an existing
+  // pending holder, expiring every earlier unconsumed grant. Active and suspended
+  // holders are refused: a grant is never a way into an established record.
+  async issueEnrollmentGrant({ mode, holder: item, grant, now }) {
+    if (mode !== 'new' && mode !== 'reissue') throw new Error('issueEnrollmentGrant requires mode new or reissue');
     return this.sql.begin(async (sql) => {
       const [existing] = await sql`SELECT * FROM access_holders WHERE public_id = ${item.publicId} FOR UPDATE`;
       let holderId = item.id;
       let created = false;
-      if (!existing) {
-        await sql`INSERT INTO access_holders (id, public_id, webauthn_user_id, condition, created_at, updated_at) VALUES (${item.id}, ${item.publicId}, ${item.webauthnUserId}, 'pending', ${date(now)}, ${date(now)})`;
+      if (mode === 'new') {
+        if (existing) return { issued: false, reason: 'exists', condition: existing.condition };
+        try {
+          await sql.savepoint((inner) => inner`INSERT INTO access_holders (id, public_id, webauthn_user_id, condition, created_at, updated_at) VALUES (${item.id}, ${item.publicId}, ${item.webauthnUserId}, 'pending', ${date(now)}, ${date(now)})`);
+        } catch (error) {
+          // A concurrent `new` for the same identifier committed first.
+          if (error?.code === '23505') return { issued: false, reason: 'exists' };
+          throw error;
+        }
         created = true;
+      } else if (!existing) {
+        return { issued: false, reason: 'unknown' };
       } else if (existing.condition !== 'pending') {
-        return { issued: false, condition: existing.condition };
+        return { issued: false, reason: 'not-pending', condition: existing.condition };
       } else {
         holderId = existing.id;
         await sql`UPDATE access_enrollment_grants SET expires_at = LEAST(expires_at, ${date(now)}) WHERE holder_id = ${holderId} AND consumed_at IS NULL`;
