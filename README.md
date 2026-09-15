@@ -28,6 +28,7 @@ Open `http://localhost:4173`.
 - `js/records.js` contains investigation records.
 - `js/site.js` contains shared page behavior.
 - `api/intake.js` accepts investigation enquiries.
+- `api/observations.js` receives Observations and delivers each one to the PROBNAYA mailbox; `js/observation-attachment.js` prepares one attachment in the browser. See `docs/observations.md`.
 - `api/machine-portrait.js` creates and directly verifies hosted Stripe Checkout Sessions for Machine Portrait issuance.
 
 ## Machine Portrait payment configuration
@@ -47,5 +48,5 @@ store: a paid return without its retained local draft requires manual support.
 Run all serverless function tests with:
 
 ```sh
-node --test test/intake.test.js test/machine-portrait.test.js
+node --test test/intake.test.js test/machine-portrait.test.js test/observations.test.js
 ```

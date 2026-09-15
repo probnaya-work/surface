@@ -32,19 +32,23 @@ The canvas figures on every page are live simulations, not decorative animations
 - Preserve the original cadence and alpha/speed constants when refactoring — the feel is meant to be restrained and mechanical (a plotter, not a screensaver). If a change makes a figure look smoother or more "animated," that's a regression, not an improvement.
 - There is one shared `requestAnimationFrame` loop with a watchdog (`js/apparatus.js`, `ensureLoop`) — don't start a second `rAF` loop per plate.
 
-## The intake handler (`api/intake.js`)
+## The mail handlers (`api/intake.js`, `api/observations.js`)
 
-A Vercel serverless function, separate from the static site. `package.json` exists for it alone; `nodemailer` is its only dependency, and nothing in the site pages uses it.
+Vercel serverless functions, separate from the static site. `package.json` exists for them alone; `nodemailer` is the only dependency, and nothing in the site pages uses it.
 
-Mail delivery uses Google Workspace SMTP with credentials supplied by the environment. Never hardcode or commit credentials. The sender address must remain the authenticated account or a verified alias on it.
+Mail delivery uses Google Workspace SMTP with credentials supplied by the environment (`SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`). Never hardcode or commit credentials. The sender address must remain the authenticated account or a verified alias on it. Both handlers send only to `mail@probnaya.work`, never to the person who submitted, and log codes only, never submitted content or addresses.
+
+`api/observations.js` receives Observations. It stores nothing: the mailbox message is the editorial queue, and publication is a manual edit to `observations.html`. Its limits keep every request under the Vercel Function body limit (4.5 MB), and `js/observation-attachment.js` prepares oversized images in the browser to match. Never add storage, a database, or automatic mail to senders without an explicit decision. Working procedure, limits, the pending mail-credential change, and the publication and media-sanitisation checklist are in `docs/observations.md`. The repository is public: never commit unpublished material or sender addresses.
 
 ## Testing / verification
 
-The intake handler has an executable test suite:
+The serverless functions have executable test suites; none of them contacts SMTP or Stripe:
 
 ```
-node --test test/intake.test.js
+node --test test/intake.test.js test/machine-portrait.test.js test/observations.test.js
 ```
+
+To exercise the Observations form locally without sending mail, set `OBSERVATIONS_DEV_OUTBOX=1` for the dev server; the endpoint then prints the message to the terminal. It refuses to do so on Vercel.
 
 Name the file, not the directory. Tests live outside `api/` so Vercel never
 turns test harnesses into public Functions.
