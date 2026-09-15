@@ -1,0 +1,7 @@
+# Access project (Root Directory access/). Vercel reads this file instead of
+# the repository-root .vercelignore, which excludes /access/ from the public
+# surface project. Keep the same repository-only exclusions Access had before.
+.env.example
+README.md
+scripts/
+test/
