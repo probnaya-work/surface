@@ -502,21 +502,25 @@ p { text-wrap: pretty; }
 .bench-note .label { color: var(--mid); }
 .bench-note .value { color: var(--faint); }
 
-/* Apparatus has its own register after the instrument entries. */
-.apparatus-section {
-  margin-top: 112px; padding: 30px 34px 34px; background: var(--ink); color: var(--paper);
-}
-.apparatus-section-head { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 56px; align-items: end; }
-.apparatus-section-kicker { grid-column: 1 / -1; font: 10px var(--mono); letter-spacing: 0.18em; color: var(--faint); }
-.apparatus-section-head h2 { margin: 0; font-size: clamp(36px, 4vw, 52px); font-weight: 500; line-height: 1; letter-spacing: -0.03em; }
-.apparatus-section-head p { max-width: 34ch; margin: 0; color: var(--faint-line); font-size: 15px; font-weight: 300; line-height: 1.5; }
-.apparatus-entry { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 56px; align-items: end; margin-top: 34px; padding-top: 24px; border-top: 1px solid var(--mid); }
-.apparatus-entry-identity { display: flex; flex-direction: column; gap: 9px; }
-.apparatus-entry-identity strong { font-size: 28px; font-weight: 500; line-height: 1; }
-.apparatus-entry-identity span { color: var(--faint-line); font: 10px/1.5 var(--mono); letter-spacing: 0.14em; }
-.apparatus-entry > p { max-width: 42ch; margin: 0; color: var(--paper); font-size: 15px; font-weight: 300; line-height: 1.5; }
-.apparatus-entry .action-link { grid-column: 2; justify-self: start; margin-top: 8px; color: var(--paper); border-bottom-color: var(--paper); }
-.apparatus-entry .action-link:hover { color: var(--faint-line); border-bottom-color: var(--faint-line); }
+/* The full-width field groups tools made for use inside the laboratory. */
+.instruments-page { padding-bottom: 100px; }
+.inhouse-section { background: var(--ink); color: var(--paper); }
+.inhouse-inner { max-width: 1120px; margin: 0 auto; padding: 40px 40px 72px; }
+.inhouse-head { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 56px; align-items: end; }
+.inhouse-kicker { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; color: var(--faint-line); font: 10px var(--mono); letter-spacing: 0.18em; }
+.inhouse-kicker::before { content: ""; width: 7px; height: 7px; background: var(--blue); }
+.inhouse-head h2 { margin: 0; font-size: clamp(36px, 4vw, 52px); font-weight: 500; line-height: 1; letter-spacing: -0.03em; }
+.inhouse-head p { max-width: 36ch; margin: 0; color: var(--faint-line); font-size: 16px; font-weight: 300; line-height: 1.5; }
+.inhouse-list { margin-top: 46px; border-top: 1px solid var(--mid); }
+.inhouse-entry { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; padding: 26px 0 32px; border-bottom: 1px solid var(--mid); }
+.inhouse-entry-identity, .inhouse-entry-body { display: flex; flex-direction: column; align-items: flex-start; }
+.inhouse-entry-identity { gap: 12px; }
+.inhouse-entry-type, .inhouse-entry-name { color: var(--faint-line); font: 10px/1.5 var(--mono); letter-spacing: 0.15em; }
+.inhouse-entry-identity h3 { margin: 0; font-size: 32px; font-weight: 500; line-height: 1; }
+.inhouse-entry-body { gap: 24px; }
+.inhouse-entry-body p { max-width: 42ch; margin: 0; font-size: 16px; font-weight: 300; line-height: 1.5; }
+.inhouse-entry .action-link { color: var(--paper); border-bottom-color: var(--paper); }
+.inhouse-entry .action-link:hover { color: var(--faint-line); border-bottom-color: var(--faint-line); }
 
 /* ---------- investigations ---------- */
 
@@ -908,11 +912,12 @@ p { text-wrap: pretty; }
 
   .instrument-block, .split, .lab-grid, .intake-grid, .record-open { grid-template-columns: 1fr; gap: 18px; }
   .instrument-block + .instrument-block { padding-top: 30px; }
-  .apparatus-section { margin-top: 84px; padding: 24px 20px 28px; }
-  .apparatus-section-head, .apparatus-entry { grid-template-columns: 1fr; gap: 18px; }
-  .apparatus-section-head p { max-width: 38ch; }
-  .apparatus-entry { margin-top: 28px; padding-top: 22px; }
-  .apparatus-entry .action-link { grid-column: 1; margin-top: 2px; }
+  .instruments-page { padding-bottom: 68px; }
+  .inhouse-inner { padding: 28px 18px 52px; }
+  .inhouse-head, .inhouse-entry { grid-template-columns: 1fr; gap: 18px; }
+  .inhouse-head p { max-width: 38ch; }
+  .inhouse-list { margin-top: 34px; }
+  .inhouse-entry { padding: 22px 0 28px; }
   .split-title .num { font-size: 48px; }
 
   .specs { grid-template-columns: 90px 1fr; }
