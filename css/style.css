@@ -93,12 +93,13 @@ p { text-wrap: pretty; }
 .recognized-return .return-holder { color: var(--ink); }
 .recognized-return:hover .return-holder { color: var(--blue); }
 .access-entry {
-  gap: 10px; padding: 7px 10px 7px 11px;
-  background: var(--blue); color: var(--paper);
+  height: 16px; gap: 8px; padding-right: 16px;
+  border-right: 1px solid var(--blue); color: var(--blue);
 }
 .access-entry::after { content: "↗"; font-size: 11px; line-height: 1; letter-spacing: 0; }
-.access-entry:hover { background: var(--ink); }
-.access-entry:focus-visible { outline: 1px solid var(--blue); outline-offset: 2px; }
+.access-entry:hover { color: var(--ink); }
+.access-entry:hover::after { transform: translate(1px, -1px); }
+.access-entry:focus-visible { outline: 1px solid var(--blue); outline-offset: 4px; }
 
 /* The holder's issued representation, as carried on public pages: the portrait's
    raster on its own paper inside a hairline edge, or the unissued field. */
@@ -917,7 +918,7 @@ p { text-wrap: pretty; }
   .mobile-header .relation-slot { margin-left: auto; margin-right: 14px; }
   .mobile-header .recognized-return { gap: 8px; font-size: 9px; letter-spacing: 0.08em; }
   .mobile-header .recognized-return .return-label { display: none; }
-  .mobile-header .access-entry { font-size: 9px; }
+  .mobile-header .access-entry { padding-right: 10px; font-size: 9px; }
   .bottom-nav.has-tabs { display: grid; }
 
   .main { padding-top: var(--header-h-mobile); padding-bottom: var(--bottom-nav-h); }
