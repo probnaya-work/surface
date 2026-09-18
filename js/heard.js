@@ -93,16 +93,22 @@
       if (index === 0 && visible[1]?.id === 'h-02' && record.id === 'h-01') fragment.append(tremorNode());
     });
     host.replaceChildren(fragment);
-    status.textContent = `${running ? 'SIMULATION RUNNING' : 'SIMULATION PAUSED'} · ${count} OF ${pool.length} SYNTHETIC RECORDS`;
+    const rotating = pool.length > 3;
+    const step = `STEP ${String(offset + 1).padStart(2, '0')} / ${String(pool.length).padStart(2, '0')}`;
+    status.textContent = rotating
+      ? `${running ? 'SIMULATION RUNNING' : 'SIMULATION PAUSED'} · ${count} OF ${pool.length} SYNTHETIC RECORDS · ${step}`
+      : `FILTERED VIEW · ${pool.length} MATCHING SYNTHETIC ${pool.length === 1 ? 'RECORD' : 'RECORDS'}`;
     toggle.textContent = running ? 'PAUSE' : 'RESUME';
     toggle.setAttribute('aria-pressed', String(!running));
-    next.disabled = pool.length <= 1;
+    toggle.hidden = !rotating;
+    next.hidden = !rotating;
     filters.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.heardFilter === filter)));
   }
 
   function advance() {
     const poolLength = filter === 'ALL' ? records.length : records.filter(record => record.themes.includes(filter)).length;
-    if (poolLength > 1) offset = (offset + 1) % poolLength;
+    if (poolLength <= 3) return;
+    offset = (offset + 1) % poolLength;
     render();
   }
 
