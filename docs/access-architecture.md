@@ -137,7 +137,7 @@ Access is established on request. The distinctions are deliberate:
 6. Without request mail configuration, or past the ceiling, or on delivery failure, the action returns `503` with `REQUESTS CANNOT BE SENT FROM HERE AT THE MOMENT. WRITE TO MAIL@PROBNAYA.WORK.`. Key authentication does not depend on mail.
 
 **Authorization (operator).**
-1. From a clean checkout, with only `ACCESS_ENV=production` and the `access_operator` `DATABASE_URL` (`sslmode=verify-full`), the operator reads the request, runs `npm run holders` (read-only), chooses the next `PROB–H` identifier, and runs `create-enrollment --new 'PROB–H–…' 'R–…'`. This creates a pending holder and a grant, and prints `https://access.probnaya.work/#establish=<grant>` once to standard output. No runtime application secret is involved.
+1. From a trusted, prepared Access checkout, the operator reads the mailbox notification and runs `npm run approve-request -- 'R–…'`. The command asks for the password-manager-held `access_operator` database URL at a masked terminal prompt, verifies the production role and transport, then asks for explicit approval. A single transaction allocates the next four-digit `PROB–H` identifier, creates its pending holder and grant, and prints `https://access.probnaya.work/#establish=<grant>` once to standard output. No runtime application secret is involved.
 2. The operator sends that link to the requester from the PROBNAYA mailbox as a new message.
 3. `--reissue` replaces the link of a still-pending holder and expires earlier ones. `--new` never touches an existing identifier, never reuses a request reference that already produced a grant, and `--reissue` never creates one.
 
@@ -309,6 +309,7 @@ It contains no correspondence, objects, account taxonomy, or interior.
 
 - `migrate`;
 - `holders` (`list-holders.mjs`): read-only transaction listing identifiers, condition, creation date, whether a link is open, and the latest request reference. It allocates nothing;
+- `approve-request`: normal reference-driven approval. Production always prompts for the `access_operator` URL even if a URL is exported in the shell; no production credential is persisted by the CLI. The transaction serializes automatic allocation and shares the existing per-reference lock with manual `--new`. A concurrent manual identifier collision is retried; an already-used reference creates no new authority. Four-digit identifiers are never reused, and exhaustion fails closed;
 - `create-enrollment` with explicit intent. `--new` creates a pending holder under an unused identifier and refuses a request reference that already produced a grant (serialized with a transaction advisory lock); `--reissue` replaces the link of a still-pending holder. Neither can do the other's job, and active and suspended holders are refused. The grant is stored only as its digest; the establishment link prints once to standard output and is sensitive material;
 - `set-holder-condition`: suspend/reactivate under the holder row lock with an audit event. Suspension also expires outstanding grants, and reactivation without an active credential returns the holder to `pending` with no usable link;
 - `prune-expired`: bounded retention that never touches audit events, holders, credentials, grants, or codes.

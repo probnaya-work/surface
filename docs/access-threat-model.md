@@ -43,7 +43,7 @@ PostgreSQL persistence
 
 Separate operational boundaries:
   Access runtime → Workspace SMTP (mail@probnaya.work account) → mail@probnaya.work   (access request; notification only)
-  operator (clean checkout + access_operator DATABASE_URL only) → PostgreSQL → create-enrollment → establishment link
+  operator (trusted checkout + prompted access_operator DATABASE_URL only) → PostgreSQL → approve-request → establishment link
   Access runtime (SESSION_HASH_KEY, access_runtime DATABASE_URL) → PostgreSQL   (never creates holders or grants)
   operator mailbox (mail@probnaya.work) → email → person   (establishment link delivery)
   deployment platform → environment secrets and logs
@@ -100,7 +100,7 @@ v1 performs no identity-proofing beyond control of the address when the link is 
 | Establishment-link leakage | Grant in the URL fragment (never sent to servers or in `Referer`); removed with `history.replaceState` before any request; held only in memory; no analytics or third-party script on Access; consumption only on a verified first registration; seven-day expiry; single use; `--reissue` and suspension expire it. | Global/synced browser history, the email itself, mail-rewriting services, and anyone reading the mailbox before use retain a usable link until consumption or expiry. The worst outcome is an empty relation under that identifier, which the operator suspends. |
 | Link prefetch / scanners | Preview bots fetch without the fragment; the page makes no grant-bearing request on load; options never consume; enrollment limits are keyed by network and grant, so a scanner network cannot block the person. | A JavaScript-executing scanner that presses CREATE PASSKEY consumes rate-limit budget on its own network only. |
 | Enrollment-authority minting | Only `access_operator` (and the owner) may insert holders and grants; Access Production connects as `access_runtime`, which cannot; operator commands refuse `access_runtime` and require `access_operator` in production. Grants are stored as an unkeyed digest of a 256-bit token, so a database reader cannot recover a link, and `SESSION_HASH_KEY` never leaves the runtime. | A compromised operator machine or leaked operator credential can mint links for new pending holders (empty relations) until the Neon password is rotated; it cannot forge sessions (no session `INSERT`) or reach active or suspended holders. During the transition, legacy HMAC grants remain verifiable through the runtime. |
-| Operator error on issuance | `--new` refuses an existing identifier and a request reference that already produced a grant (advisory-lock serialized), and `--reissue` refuses a missing or non-pending one, enforced inside the holder-row transaction; concurrent `--new` for one identifier yields one holder; the note accepts only a request reference; `npm run holders` gives a read-only view before allocation. | Pasting a link into the wrong reply remains a human error; single use and reissue bound it. |
+| Operator error on issuance | `approve-request` requires explicit confirmation, allocates a four-digit identifier and issues its grant in one transaction, and shares the per-reference advisory lock with manual `--new`; a used reference cannot produce a second grant. Automatic allocations serialize, while public-ID uniqueness and retry protect coexistence with manual `--new`. `--reissue` remains explicit and refuses a missing or non-pending holder. | The mailbox reference can be mistyped, and pasting a link into the wrong message remains a human error; the operator must compare the notification before confirming and sending. Single use, expiry, suspension, and reissue bound link exposure. |
 | Open redirects | No client-supplied post-login URL. Successful authentication goes only to the fixed authenticated boundary. | Future return-to behavior must introduce an allowlist, not arbitrary URLs. |
 
 ## What WebAuthn protects
@@ -150,4 +150,3 @@ Re-run this threat model before adding account content, administrator functions,
 - **Sibling or look-alike origins.** Refused by exact Origin; they receive no CORS headers, so a browser withholds the response.
 - **Concurrent rotation.** Two tabs can race the fifteen-minute rotation; the loser receives 401 once. The public client retries once when it previously held recognition.
 - **Stale recognition.** The public origin's `probnaya:recognized` localStorage value only decides whether to ask Access; it is cleared by any 401 and never displayed as recognition.
-

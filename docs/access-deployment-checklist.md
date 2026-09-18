@@ -124,7 +124,7 @@ Operational practice, not launch requirements:
 The only credential an operator needs is the Neon connection string for the `access_operator` role (branch `main`, database `neondb`, `sslmode=verify-full`, no `channel_binding`), kept in the password manager. Operators never need `SESSION_HASH_KEY` or any other Vercel application secret. Access Production's own `DATABASE_URL` is the `access_runtime` role (set 2026-09-15), which cannot create holders or grants and which operator commands refuse.
 
 - [ ] Clean trusted checkout of the deployed `main` commit, then `npm ci` in `access/`.
-- [ ] Enter the credential at a hidden prompt (zsh: `read -rs "DATABASE_URL?access_operator URL: " && export DATABASE_URL ACCESS_ENV=production`), and `unset DATABASE_URL` afterwards.
+- [ ] Save the `access_operator` URL in the password manager once. For normal approval, paste it into the CLI's masked prompt per operation. Do not export it in the shell, pass it as an argument, or store it in the checkout.
 - [ ] Every operator command prints `Connected as access_operator (production, https://access.probnaya.work)` before acting; anything else is refused.
 - [ ] Keep the database role grants (`access_runtime`, `access_operator`) under review; they are the boundary that makes grant creation an operator-only authority.
 
@@ -132,9 +132,8 @@ The only credential an operator needs is the Neon connection string for the `acc
 
 For each request in `mail@probnaya.work` (subject `ACCESS / REQUEST R–XXXXXX`), in the operator environment:
 
-- [ ] `npm run holders` (read-only) and choose the next unused `PROB–H` identifier.
-- [ ] `npm run create-enrollment -- --new 'PROB–H–NNNN' 'R–XXXXXX'`
-  The link on standard output is establishment authority. Do not paste it anywhere except the message to the requester, and do not keep terminal scrollback or notes containing it. If the reference already produced a grant, the command refuses and names the holder; use `--reissue` for that holder instead.
+- [ ] In the prepared, trusted Access checkout, run `npm run approve-request -- 'R–XXXXXX'`. Paste the saved `access_operator` URL into the silent terminal prompt. Verify the connected role and the request notification, then answer `y` to approve. The command atomically assigns the next four-digit `PROB–H` identifier and prints the link once. A used reference issues nothing and names its holder; reissue is a separate explicit operation.
+- [ ] The link on standard output is establishment authority. Do not paste it anywhere except the message to the requester, and do not keep terminal scrollback or notes containing it.
 - [ ] Send the link to the requester from `mail@probnaya.work` as a new plain operational message (not Correspondence, not a reply to the notification). State that Access will ask the device to create a passkey, that no password or account is created, when the link closes (seven days), and that nothing happens if it is ignored.
 - [ ] Never put the address in the operator note, audit data, tickets, analytics, or URL query parameters. The request reference is the only join between the mailbox and Access.
 - [ ] A lapsed or lost link: `npm run create-enrollment -- --reissue 'PROB–H–NNNN' 'R–XXXXXX'`, then send the new link. The earlier link stops working.

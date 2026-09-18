@@ -111,6 +111,21 @@ async function insertAudit(sql, event) {
   await sql`INSERT INTO access_audit_events (id, holder_id, event_type, outcome, credential_ref, network_hash, occurred_at) VALUES (${event.id}, ${event.holderId || null}, ${event.type}, ${event.outcome}, ${event.credentialRef || null}, ${event.networkHash || null}, ${date(event.occurredAt)})`;
 }
 
+async function lockRequestReference(sql, reference) {
+  // Shared by the prompted approval path and manual --new. A reference must
+  // never create a second holder, even when the two commands run concurrently.
+  await sql`SELECT pg_advisory_xact_lock(hashtext(${`access-request-reference:${reference}`}))`;
+  const [used] = await sql`
+    SELECT h.public_id FROM access_enrollment_grants g JOIN access_holders h ON h.id = g.holder_id
+    WHERE g.operator_note = ${reference} ORDER BY g.created_at LIMIT 1`;
+  return used?.public_id || null;
+}
+
+async function insertOperatorGrant(sql, { holderId, grant, now }) {
+  await sql`INSERT INTO access_enrollment_grants (id, holder_id, token_hash, created_at, expires_at, consumed_at, operator_note) VALUES (${grant.id}, ${holderId}, ${grant.tokenHash}, ${date(now)}, ${date(grant.expiresAt)}, null, ${grant.operatorNote || null})`;
+  await insertAudit(sql, { id: grant.auditId, holderId, type: 'enrollment-grant-issued', outcome: 'operator', occurredAt: now });
+}
+
 async function updateCredential(sql, credentialId, expectedCounter, item) {
   return sql`
     UPDATE access_credentials SET signature_counter = ${item.counter}, device_type = ${item.deviceType},
@@ -157,6 +172,13 @@ export class PostgresStore {
     });
   }
 
+  async holderForRequestReference(reference) {
+    const [row] = await this.sql`
+      SELECT h.public_id FROM access_enrollment_grants g JOIN access_holders h ON h.id = g.holder_id
+      WHERE g.operator_note = ${reference} ORDER BY g.created_at LIMIT 1`;
+    return row?.public_id || null;
+  }
+
   async seedHolder(item, grant) {
     await this.sql.begin(async (sql) => {
       await sql`INSERT INTO access_holders (id, public_id, webauthn_user_id, condition, created_at, updated_at) VALUES (${item.id}, ${item.publicId}, ${item.webauthnUserId}, ${item.condition}, ${date(item.createdAt)}, ${date(item.updatedAt)})`;
@@ -179,12 +201,8 @@ export class PostgresStore {
       if (mode === 'new') {
         if (existing) return { issued: false, reason: 'exists', condition: existing.condition };
         if (grant.operatorNote) {
-          // Serializes concurrent `new` for one reference; released at commit.
-          await sql`SELECT pg_advisory_xact_lock(hashtext(${`access-request-reference:${grant.operatorNote}`}))`;
-          const [used] = await sql`
-            SELECT h.public_id FROM access_enrollment_grants g JOIN access_holders h ON h.id = g.holder_id
-            WHERE g.operator_note = ${grant.operatorNote} ORDER BY g.created_at LIMIT 1`;
-          if (used) return { issued: false, reason: 'reference-used', publicId: used.public_id };
+          const usedPublicId = await lockRequestReference(sql, grant.operatorNote);
+          if (usedPublicId) return { issued: false, reason: 'reference-used', publicId: usedPublicId };
         }
         try {
           await sql.savepoint((inner) => inner`INSERT INTO access_holders (id, public_id, webauthn_user_id, condition, created_at, updated_at) VALUES (${item.id}, ${item.publicId}, ${item.webauthnUserId}, 'pending', ${date(now)}, ${date(now)})`);
@@ -202,9 +220,43 @@ export class PostgresStore {
         holderId = existing.id;
         await sql`UPDATE access_enrollment_grants SET expires_at = LEAST(expires_at, ${date(now)}) WHERE holder_id = ${holderId} AND consumed_at IS NULL`;
       }
-      await sql`INSERT INTO access_enrollment_grants (id, holder_id, token_hash, created_at, expires_at, consumed_at, operator_note) VALUES (${grant.id}, ${holderId}, ${grant.tokenHash}, ${date(now)}, ${date(grant.expiresAt)}, null, ${grant.operatorNote || null})`;
-      await insertAudit(sql, { id: grant.auditId, holderId, type: 'enrollment-grant-issued', outcome: 'operator', occurredAt: now });
+      await insertOperatorGrant(sql, { holderId, grant, now });
       return { issued: true, created, holderId };
+    });
+  }
+
+  // Normal request approval allocates a four-digit identifier and issues its
+  // first grant in one transaction. The allocation lock serializes approvals;
+  // manual --new does not take it, so a unique-key conflict is retried with a
+  // fresh READ COMMITTED snapshot. The reference lock is shared with --new.
+  async approveRequest({ holder: item, grant, now }) {
+    if (!/^R–[0-9A-HJKMNP-TV-Z]{6}$/.test(grant.operatorNote || '')) {
+      throw new Error('approveRequest requires a request reference');
+    }
+    return this.sql.begin(async (sql) => {
+      await sql`SELECT pg_advisory_xact_lock(hashtext('access-holder-allocation'))`;
+      const usedPublicId = await lockRequestReference(sql, grant.operatorNote);
+      if (usedPublicId) return { issued: false, reason: 'reference-used', publicId: usedPublicId };
+
+      for (;;) {
+        const [last] = await sql`
+          SELECT public_id FROM access_holders
+          WHERE public_id ~ '^PROB–H–[0-9]{4}$'
+          ORDER BY public_id DESC LIMIT 1`;
+        const number = last ? Number(last.public_id.slice(-4)) + 1 : 1;
+        if (number > 9999) return { issued: false, reason: 'identifiers-exhausted' };
+        const publicId = `PROB–H–${String(number).padStart(4, '0')}`;
+        try {
+          await sql.savepoint((inner) => inner`
+            INSERT INTO access_holders (id, public_id, webauthn_user_id, condition, created_at, updated_at)
+            VALUES (${item.id}, ${publicId}, ${item.webauthnUserId}, 'pending', ${date(now)}, ${date(now)})`);
+        } catch (error) {
+          if (error?.code === '23505' && error?.constraint_name === 'access_holders_public_id_key') continue;
+          throw error;
+        }
+        await insertOperatorGrant(sql, { holderId: item.id, grant, now });
+        return { issued: true, created: true, holderId: item.id, publicId };
+      }
     });
   }
 

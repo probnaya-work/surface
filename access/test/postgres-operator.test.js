@@ -39,9 +39,9 @@ if (!databaseURL) {
     return { url: url.toString(), sql, store };
   }
 
-  function operator(script, args, url) {
+  function operator(script, args, url, input) {
     const env = { PATH: process.env.PATH, HOME: process.env.HOME, ACCESS_ENV: 'development', ACCESS_LOCAL_ORIGIN: ORIGIN, DATABASE_URL: url };
-    const run = spawnSync(process.execPath, [`scripts/${script}`, ...args], { cwd: ACCESS_ROOT, env, encoding: 'utf8', timeout: 30_000 });
+    const run = spawnSync(process.execPath, [`scripts/${script}`, ...args], { cwd: ACCESS_ROOT, env, input, encoding: 'utf8', timeout: 30_000 });
     return { status: run.status, stdout: run.stdout, stderr: run.stderr };
   }
 
@@ -190,5 +190,118 @@ if (!databaseURL) {
     assert.equal(results.find((result) => !result.issued).reason, 'reference-used');
     const [{ holders, grants }] = await sql`SELECT (SELECT count(*)::int FROM access_holders) AS holders, (SELECT count(*)::int FROM access_enrollment_grants) AS grants`;
     assert.deepEqual([holders, grants], [1, 1]);
+  });
+
+  test('approve-request CLI declines without mutation, allocates after confirmation, and refuses reuse', { timeout: 30_000 }, async () => {
+    const { url, sql } = await createSchema();
+    const declined = operator('approve-request.mjs', ['R–N3X58E'], url, 'n\n');
+    assert.equal(declined.status, 0, declined.stderr);
+    assert.equal(declined.stdout, '');
+    assert.match(declined.stderr, /No holder or link created/);
+    assert.deepEqual((await sql`SELECT count(*)::int AS count FROM access_holders`)[0].count, 0);
+
+    const approved = operator('approve-request.mjs', ['R–N3X58E'], url, 'y\n');
+    assert.equal(approved.status, 0, approved.stderr);
+    assert.match(approved.stderr, /Allocated PROB–H–0001/);
+    const token = tokenFrom(approved.stdout);
+    assert.ok(token, 'only one bearer link is printed');
+    assert.equal(approved.stdout, `${ORIGIN}/#establish=${token}\n`);
+    const [row] = await sql`SELECT h.public_id, g.operator_note, g.token_hash FROM access_holders h JOIN access_enrollment_grants g ON g.holder_id = h.id`;
+    assert.deepEqual(row, { public_id: 'PROB–H–0001', operator_note: 'R–N3X58E', token_hash: enrollmentGrantHash(token) });
+
+    const duplicate = operator('approve-request.mjs', ['R–N3X58E'], url, 'y\n');
+    assert.equal(duplicate.status, 1);
+    assert.equal(duplicate.stdout, '');
+    assert.match(duplicate.stderr, /already produced a grant for PROB–H–0001\. No new authority issued/);
+    assert.deepEqual((await sql`SELECT count(*)::int AS count FROM access_enrollment_grants`)[0].count, 1);
+  });
+
+  test('production approval refuses non-TTY input even if DATABASE_URL is exported', { timeout: 30_000 }, async () => {
+    const { url, sql } = await createSchema();
+    const env = { PATH: process.env.PATH, ACCESS_ENV: 'production', DATABASE_URL: url };
+    const run = spawnSync(process.execPath, ['scripts/approve-request.mjs', 'R–N3X58F'], { cwd: ACCESS_ROOT, env, input: 'y\n', encoding: 'utf8' });
+    assert.equal(run.status, 1);
+    assert.match(run.stderr, /terminal is required/);
+    assert.equal(run.stdout, '');
+    assert.deepEqual((await sql`SELECT count(*)::int AS count FROM access_holders`)[0].count, 0);
+  });
+
+  test('concurrent approvals allocate distinct sequential identifiers', { timeout: 30_000 }, async () => {
+    const { url, sql } = await createSchema();
+    const stores = [new PostgresStore(url), new PostgresStore(url)];
+    closers.push(...stores.map((store) => () => store.close()));
+    const request = (index) => stores[index].approveRequest({
+      holder: { id: crypto.randomUUID(), webauthnUserId: randomBytes(32).toString('base64url') },
+      grant: { id: crypto.randomUUID(), auditId: crypto.randomUUID(), tokenHash: enrollmentGrantHash(randomBytes(32).toString('base64url')), expiresAt: Date.now() + 86_400_000, operatorNote: `R–N3X58${index + 1}` },
+      now: Date.now(),
+    });
+    const results = await Promise.all([request(0), request(1)]);
+    assert.deepEqual(results.map((result) => result.publicId).sort(), ['PROB–H–0001', 'PROB–H–0002']);
+    const rows = await sql`SELECT h.public_id, g.operator_note FROM access_holders h JOIN access_enrollment_grants g ON g.holder_id = h.id ORDER BY h.public_id`;
+    assert.deepEqual(rows.map((row) => row.public_id), ['PROB–H–0001', 'PROB–H–0002']);
+    assert.equal(new Set(rows.map((row) => row.operator_note)).size, 2);
+  });
+
+  test('concurrent approvals of one reference issue one grant, never an implicit reissue', { timeout: 30_000 }, async () => {
+    const { url, sql } = await createSchema();
+    const stores = [new PostgresStore(url), new PostgresStore(url)];
+    closers.push(...stores.map((store) => () => store.close()));
+    const now = Date.now();
+    const results = await Promise.all(stores.map((store) => store.approveRequest({
+      holder: { id: crypto.randomUUID(), webauthnUserId: randomBytes(32).toString('base64url') },
+      grant: { id: crypto.randomUUID(), auditId: crypto.randomUUID(), tokenHash: enrollmentGrantHash(randomBytes(32).toString('base64url')), expiresAt: now + 86_400_000, operatorNote: 'R–N3X58K' },
+      now,
+    })));
+    assert.deepEqual(results.map((result) => result.issued).sort(), [false, true]);
+    assert.equal(results.find((result) => !result.issued).reason, 'reference-used');
+    const [{ holders, grants }] = await sql`SELECT (SELECT count(*)::int FROM access_holders) AS holders, (SELECT count(*)::int FROM access_enrollment_grants) AS grants`;
+    assert.deepEqual([holders, grants], [1, 1]);
+  });
+
+  test('automatic allocation advances past prior numeric IDs and fails closed at four-digit exhaustion', { timeout: 30_000 }, async () => {
+    const { url, sql, store } = await createSchema();
+    const now = Date.now();
+    const grant = (reference) => ({ id: crypto.randomUUID(), auditId: crypto.randomUUID(), tokenHash: enrollmentGrantHash(randomBytes(32).toString('base64url')), expiresAt: now + 86_400_000, operatorNote: reference });
+    await store.issueEnrollmentGrant({ mode: 'new', holder: { id: crypto.randomUUID(), publicId: 'PROB–H–0007', webauthnUserId: randomBytes(32).toString('base64url') }, grant: grant('R–N3X58L'), now });
+    const next = await store.approveRequest({ holder: { id: crypto.randomUUID(), webauthnUserId: randomBytes(32).toString('base64url') }, grant: grant('R–N3X58M'), now });
+    assert.equal(next.publicId, 'PROB–H–0008', 'gaps are not recycled');
+    await store.issueEnrollmentGrant({ mode: 'new', holder: { id: crypto.randomUUID(), publicId: 'PROB–H–9999', webauthnUserId: randomBytes(32).toString('base64url') }, grant: grant('R–N3X58N'), now });
+    const before = (await sql`SELECT count(*)::int AS count FROM access_enrollment_grants`)[0].count;
+    const exhausted = await store.approveRequest({ holder: { id: crypto.randomUUID(), webauthnUserId: randomBytes(32).toString('base64url') }, grant: grant('R–N3X58P'), now });
+    assert.deepEqual(exhausted, { issued: false, reason: 'identifiers-exhausted' });
+    assert.equal((await sql`SELECT count(*)::int AS count FROM access_enrollment_grants`)[0].count, before);
+  });
+
+  test('approval and manual --new for the same reference create exactly one authority', { timeout: 30_000 }, async () => {
+    const { url, sql } = await createSchema();
+    const stores = [new PostgresStore(url), new PostgresStore(url)];
+    closers.push(...stores.map((store) => () => store.close()));
+    const now = Date.now();
+    const note = 'R–N3X58G';
+    const grant = () => ({ id: crypto.randomUUID(), auditId: crypto.randomUUID(), tokenHash: enrollmentGrantHash(randomBytes(32).toString('base64url')), expiresAt: now + 86_400_000, operatorNote: note });
+    const results = await Promise.all([
+      stores[0].approveRequest({ holder: { id: crypto.randomUUID(), webauthnUserId: randomBytes(32).toString('base64url') }, grant: grant(), now }),
+      stores[1].issueEnrollmentGrant({ mode: 'new', holder: { id: crypto.randomUUID(), publicId: 'PROB–H–0001', webauthnUserId: randomBytes(32).toString('base64url') }, grant: grant(), now }),
+    ]);
+    assert.deepEqual(results.map((result) => result.issued).sort(), [false, true]);
+    const [{ holders, grants }] = await sql`SELECT (SELECT count(*)::int FROM access_holders) AS holders, (SELECT count(*)::int FROM access_enrollment_grants) AS grants`;
+    assert.deepEqual([holders, grants], [1, 1]);
+  });
+
+  test('approval retries a public-ID collision with simultaneous manual --new for another reference', { timeout: 30_000 }, async () => {
+    const { url, sql } = await createSchema();
+    const stores = [new PostgresStore(url), new PostgresStore(url)];
+    closers.push(...stores.map((store) => () => store.close()));
+    const now = Date.now();
+    const grant = (reference) => ({ id: crypto.randomUUID(), auditId: crypto.randomUUID(), tokenHash: enrollmentGrantHash(randomBytes(32).toString('base64url')), expiresAt: now + 86_400_000, operatorNote: reference });
+    const results = await Promise.all([
+      stores[0].approveRequest({ holder: { id: crypto.randomUUID(), webauthnUserId: randomBytes(32).toString('base64url') }, grant: grant('R–N3X58H'), now }),
+      stores[1].issueEnrollmentGrant({ mode: 'new', holder: { id: crypto.randomUUID(), publicId: 'PROB–H–0001', webauthnUserId: randomBytes(32).toString('base64url') }, grant: grant('R–N3X58J'), now }),
+    ]);
+    assert.equal(results[0].issued, true);
+    const rows = await sql`SELECT public_id FROM access_holders ORDER BY public_id`;
+    assert.equal(new Set(rows.map((row) => row.public_id)).size, rows.length);
+    assert.equal(rows.length, results[1].issued ? 2 : 1);
+    if (results[1].issued) assert.deepEqual(rows.map((row) => row.public_id), ['PROB–H–0001', 'PROB–H–0002']);
   });
 }

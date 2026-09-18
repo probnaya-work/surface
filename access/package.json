@@ -11,6 +11,7 @@
     "dev": "node scripts/dev-server.mjs",
     "migrate": "node scripts/migrate.mjs",
     "create-enrollment": "node scripts/create-enrollment.mjs",
+    "approve-request": "node scripts/approve-request.mjs",
     "holder-condition": "node scripts/set-holder-condition.mjs",
     "holders": "node scripts/list-holders.mjs",
     "prune-expired": "node scripts/prune-expired.mjs",

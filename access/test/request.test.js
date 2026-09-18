@@ -36,7 +36,8 @@ test('a request sends one message to the PROBNAYA mailbox and returns nothing ab
   assert.deepEqual(message.replyTo, { name: '', address: 'noor.haddad@fastmail.com' });
   assert.equal(message.subject, `ACCESS / REQUEST ${sent.reference}`);
   assert.equal(message.subject.includes('noor'), false, 'the subject carries only the reference');
-  assert.match(message.text, new RegExp(`--new 'PROB–H–…' '${sent.reference}'`));
+  assert.match(message.text, new RegExp(`approve-request -- '${sent.reference}'`));
+  assert.doesNotMatch(message.text, /npm ci|npm run holders|create-enrollment -- --new/);
   assert.equal(Object.keys(message).includes('cc') || Object.keys(message).includes('bcc'), false);
 });
 
