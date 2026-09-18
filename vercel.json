@@ -5,10 +5,6 @@
     { "source": "/index.html", "destination": "/", "permanent": true },
     { "source": "/access(/.*)?", "destination": "https://access.probnaya.work/", "permanent": true }
   ],
-  "rewrites": [
-    { "source": "/heard", "destination": "/heard/index.html" },
-    { "source": "/heard/protocol", "destination": "/heard/protocol/index.html" }
-  ],
   "headers": [
     {
       "source": "/interior(/.*)?",

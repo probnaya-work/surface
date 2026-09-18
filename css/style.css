@@ -483,6 +483,14 @@ p { text-wrap: pretty; }
 .instrument-copy .head { display: flex; align-items: baseline; justify-content: space-between; }
 .instrument-copy .head .num { font-weight: 500; font-size: 52px; letter-spacing: -0.02em; line-height: 1; }
 .instrument-copy .head .status { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; }
+.instrument-block#heard { scroll-margin-top: 80px; }
+.heard-catalogue-status { align-self: flex-start; padding-top: 12px; border-top: 1px solid var(--border); color: var(--mid); font: 10px/1.6 var(--mono); letter-spacing: 0.14em; }
+.heard-catalogue-plate { min-height: 280px; display: flex; flex-direction: column; justify-content: space-between; gap: 26px; padding: 22px; border: 1px solid var(--ink); background: var(--sheet); }
+.heard-catalogue-plate > span { color: var(--mid); font: 10px var(--mono); letter-spacing: 0.15em; }
+.heard-catalogue-plate strong { max-width: 24ch; font-size: clamp(20px, 2.2vw, 30px); font-weight: 300; line-height: 1.2; }
+.heard-catalogue-line { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; padding-top: 8px; border-top: 1px solid var(--ink); }
+.heard-catalogue-line i { display: block; height: 3px; background: var(--faint-line); }
+.heard-catalogue-line i:first-child { height: 9px; background: var(--blue); }
 
 .object-figure img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
@@ -837,100 +845,6 @@ p { text-wrap: pretty; }
 }
 .observations-band:hover .read, .observations-band:hover .title { color: var(--blue); }
 
-/* ---------- HEARD / synthetic instrument ---------- */
-
-.heard-catalogue-plate {
-  min-height: 280px; border: 1px solid var(--ink); padding: 22px;
-  display: flex; flex-direction: column; justify-content: space-between; gap: 26px;
-  background: var(--sheet);
-}
-.heard-catalogue-plate > span { font: 10px var(--mono); letter-spacing: 0.15em; color: var(--mid); }
-.heard-catalogue-plate strong { font-weight: 300; font-size: clamp(20px, 2.2vw, 30px); line-height: 1.2; max-width: 24ch; }
-.heard-catalogue-line { display: flex; align-items: center; gap: 10px; height: 31px; border-bottom: 1px solid var(--border); }
-.heard-catalogue-line i { display: block; width: 1px; height: 5px; background: var(--faint); }
-.heard-catalogue-line i:nth-child(3), .heard-catalogue-line i:nth-child(6) { height: 19px; background: var(--blue); }
-.heard-catalogue-line i:nth-child(4) { height: 28px; background: var(--ink); }
-
-.heard-page { padding-top: 90px; }
-.heard-opening { margin-top: 30px; border-top: 1px solid var(--ink); padding: 14px 0 32px; border-bottom: 1px solid var(--ink); }
-.heard-kicker { display: flex; justify-content: space-between; gap: 16px; font: 10px var(--mono); letter-spacing: 0.17em; color: var(--mid); }
-.heard-opening h1 { margin: 30px 0 24px; font-size: clamp(68px, 10.6vw, 142px); line-height: 0.9; letter-spacing: -0.055em; font-weight: 500; }
-.heard-title-period { color: var(--blue); }
-.heard-intro { display: flex; justify-content: space-between; align-items: end; gap: 32px; }
-.heard-intro p { margin: 0; max-width: 18ch; font-size: clamp(23px, 3.1vw, 40px); line-height: 1.18; font-weight: 300; letter-spacing: -0.025em; }
-.heard-intro span { max-width: 29ch; color: var(--mid); font: 10px/1.65 var(--mono); letter-spacing: 0.14em; text-align: right; }
-.heard-page:not(.heard-protocol) .heard-opening { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.88fr); column-gap: 32px; align-items: end; }
-.heard-page:not(.heard-protocol) .heard-kicker { grid-column: 1 / -1; }
-.heard-page:not(.heard-protocol) .heard-opening h1 { margin: 28px 0 2px; }
-.heard-page:not(.heard-protocol) .heard-intro { align-items: start; flex-direction: column; gap: 17px; padding-bottom: 4px; }
-.heard-page:not(.heard-protocol) .heard-intro p { max-width: 28ch; font-size: clamp(22px, 2.5vw, 31px); }
-.heard-page:not(.heard-protocol) .heard-intro span { text-align: left; }
-.heard-disclosure { margin: 32px 0 70px; padding: 17px 22px; display: grid; grid-template-columns: 170px 1fr auto; gap: 24px; align-items: start; border: 1px solid var(--blue); background: var(--sheet); }
-.heard-disclosure-mark { font: 10px/1.5 var(--mono); letter-spacing: 0.13em; color: var(--blue); }
-.heard-disclosure p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--body-text); max-width: 70ch; }
-.heard-disclosure a, .heard-reading-body a, .heard-protocol-return { font: 10px/1.5 var(--mono); letter-spacing: 0.14em; color: var(--blue); white-space: nowrap; }
-.heard-disclosure a:hover, .heard-reading-body a:hover, .heard-protocol-return:hover { text-decoration: underline; }
-
-.heard-layout { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 54px; align-items: start; }
-.heard-section-head { display: flex; align-items: end; justify-content: space-between; gap: 22px; padding-bottom: 15px; border-bottom: 1px solid var(--ink); }
-.heard-section-index, .heard-section-note, .heard-small-label { font: 10px/1.5 var(--mono); letter-spacing: 0.15em; color: var(--mid); }
-.heard-section-head h2 { margin: 8px 0 0; font-size: clamp(24px, 2.6vw, 34px); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; }
-.heard-section-note { text-align: right; }
-.heard-stream-intro, .heard-field-note { color: var(--body-text); font-size: 15px; font-weight: 300; line-height: 1.6; }
-.heard-stream-intro { max-width: 56ch; margin: 19px 0 24px; }
-.heard-field-note { margin: 18px 0 28px; font-size: 13px; }
-.heard-controls { display: flex; flex-wrap: wrap; gap: 7px; }
-.heard-controls button, .heard-simulation-bar button { background: transparent; border: 1px solid var(--border); padding: 9px 11px; color: var(--mid); font: 10px var(--mono); letter-spacing: 0.12em; cursor: pointer; }
-.heard-controls button:hover, .heard-simulation-bar button:hover { color: var(--blue); border-color: var(--blue); }
-.heard-controls button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.heard-controls button:focus-visible, .heard-simulation-bar button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-.heard-simulation-bar { margin-top: 24px; padding: 13px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.heard-simulation-bar > span { color: var(--blue); font: 10px/1.5 var(--mono); letter-spacing: 0.12em; }
-.heard-simulation-bar > div { display: flex; gap: 7px; }
-.heard-simulation-bar button { border: none; padding: 5px 0 5px 12px; color: var(--ink); white-space: nowrap; }
-.heard-simulation-bar button:disabled { color: var(--faint); cursor: default; }
-.heard-record { padding: 30px 0 34px; border-bottom: 1px solid var(--border); }
-.heard-record-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; font: 10px/1.5 var(--mono); letter-spacing: 0.13em; color: var(--mid); }
-.heard-record-id { color: var(--blue); }
-.heard-record-text { margin: 24px 0; max-width: 37ch; font-size: clamp(21px, 2.3vw, 29px); font-weight: 300; line-height: 1.32; letter-spacing: -0.015em; }
-.heard-record-tags { display: flex; flex-wrap: wrap; gap: 7px; }
-.heard-record-tags span { padding: 6px 8px; border: 1px solid var(--faint-line); font: 9px var(--mono); letter-spacing: 0.13em; }
-.heard-record-context { margin-top: 17px; color: var(--mid); font: 10px/1.5 var(--mono); letter-spacing: 0.13em; white-space: pre-wrap; }
-.heard-tremor { padding: 19px 23px 21px; border-left: 2px solid var(--blue); background: var(--hover-bg); }
-.heard-tremor-label { color: var(--blue); font: 10px var(--mono); letter-spacing: 0.15em; }
-.heard-tremor p { margin: 11px 0 0; max-width: 50ch; font-size: 15px; line-height: 1.5; }
-.heard-empty { padding: 24px 0; color: var(--body-text); }
-.heard-movement { display: grid; grid-template-columns: 1fr auto; gap: 4px; padding: 15px 0; border-top: 1px solid var(--border); }
-.heard-movement span { font: 11px var(--mono); letter-spacing: 0.1em; }
-.heard-movement strong { grid-row: span 2; color: var(--blue); font: 26px var(--mono); }
-.heard-movement small { color: var(--mid); font: 9px var(--mono); letter-spacing: 0.13em; }
-.heard-field-foot { padding-top: 18px; border-top: 1px solid var(--ink); color: var(--mid); font: 10px/1.8 var(--mono); letter-spacing: 0.13em; }
-.heard-reading { margin-top: 90px; }
-.heard-reading-body { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 28px; padding-top: 32px; align-items: start; }
-.heard-reading-lede { margin: 0; font-size: clamp(23px, 2.7vw, 35px); font-weight: 300; line-height: 1.25; letter-spacing: -0.02em; }
-.heard-reading-body div p { margin: 11px 0 0; color: var(--body-text); font-size: 14px; line-height: 1.65; }
-.heard-reading-body > a { grid-column: 1 / -1; margin-top: 7px; }
-
-.heard-protocol .heard-opening h1 { font-size: clamp(44px, 6.2vw, 82px); line-height: 1.03; letter-spacing: -0.045em; }
-.heard-protocol .heard-intro p { max-width: 28ch; font-size: clamp(20px, 2.4vw, 30px); }
-.heard-protocol .heard-disclosure { grid-template-columns: 170px 1fr; }
-.heard-protocol-grid { display: grid; grid-template-columns: 188px minmax(0, 680px); gap: 56px; }
-.heard-protocol-nav { display: flex; flex-direction: column; gap: 14px; align-self: start; position: sticky; top: 88px; }
-.heard-protocol-nav span, .heard-protocol-nav a { font: 10px/1.4 var(--mono); letter-spacing: 0.12em; }
-.heard-protocol-nav span { margin-bottom: 8px; color: var(--faint); }
-.heard-protocol-nav a { color: var(--mid); }
-.heard-protocol-nav a:hover { color: var(--blue); }
-.heard-protocol-sections section { padding: 0 0 40px; margin-bottom: 40px; border-bottom: 1px solid var(--border); scroll-margin-top: 84px; }
-.heard-protocol-sections h2 { margin: 11px 0 19px; font-weight: 400; font-size: clamp(26px, 3vw, 36px); letter-spacing: -0.02em; }
-.heard-protocol-sections p, .heard-protocol-sections li { font-size: 16px; line-height: 1.7; font-weight: 300; color: var(--body-text); }
-.heard-protocol-sections p { margin: 0 0 16px; }
-.heard-protocol-sections a { color: var(--blue); text-decoration: underline; }
-.heard-protocol-sections ol { padding-left: 24px; margin: 0 0 20px; }
-.heard-protocol-sections li { padding-left: 5px; margin-bottom: 9px; }
-.heard-schema { display: flex; flex-wrap: wrap; gap: 7px; margin: 23px 0; }
-.heard-schema span { border: 1px solid var(--faint-line); padding: 8px 10px; font: 10px var(--mono); letter-spacing: 0.12em; }
-.heard-protocol-return { display: inline-block; margin: 0 0 10px; }
-
 /* ============================================================
    MOBILE — structural changes from the approved design: simplified
    top bar, fixed bottom tab bar, stacked single-column content.
@@ -1028,38 +942,6 @@ p { text-wrap: pretty; }
   .obs-opening-by { grid-column: 1; }
   .obs-opening + .obs-sequence { padding-top: 20px; }
   .obs-plate { height: 340px; margin-bottom: 28px; }
-
-  .heard-page { padding-top: 22px; }
-  .heard-opening { margin-top: 22px; padding-bottom: 23px; }
-  .heard-page:not(.heard-protocol) .heard-opening { display: block; }
-  .heard-kicker { flex-direction: column; gap: 6px; font-size: 9px; }
-  .heard-opening h1 { margin: 29px 0 27px; font-size: clamp(60px, 18vw, 92px); }
-  .heard-intro { flex-direction: column; align-items: start; gap: 19px; }
-  .heard-intro p { font-size: 26px; }
-  .heard-intro span { text-align: left; font-size: 9px; }
-  .heard-disclosure, .heard-protocol .heard-disclosure { margin: 24px 0 52px; padding: 17px; grid-template-columns: 1fr; gap: 13px; }
-  .heard-disclosure a { margin-top: 4px; }
-  .heard-layout { grid-template-columns: 1fr; gap: 58px; }
-  .heard-section-head { align-items: start; flex-direction: column; gap: 8px; }
-  .heard-section-note { text-align: left; font-size: 9px; }
-  .heard-controls { gap: 5px; }
-  .heard-controls button { font-size: 9px; padding: 8px; }
-  .heard-simulation-bar { align-items: start; flex-direction: column; gap: 6px; }
-  .heard-simulation-bar button:first-child { padding-left: 0; }
-  .heard-record { padding: 25px 0 29px; }
-  .heard-record-meta { font-size: 9px; }
-  .heard-record-text { font-size: 23px; }
-  .heard-field-note { margin-bottom: 18px; }
-  .heard-reading { margin-top: 68px; }
-  .heard-reading-body { grid-template-columns: 1fr; gap: 20px; }
-  .heard-reading-body > a { grid-column: 1; margin-top: 2px; white-space: normal; }
-  .heard-protocol .heard-opening h1 { font-size: clamp(43px, 12vw, 64px); }
-  .heard-protocol .heard-intro p { font-size: 23px; }
-  .heard-protocol-grid { grid-template-columns: 1fr; gap: 34px; }
-  .heard-protocol-nav { position: static; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .heard-protocol-nav span { grid-column: 1 / -1; margin: 0; }
-  .heard-protocol-sections section { scroll-margin-top: 70px; }
-  .heard-protocol-sections p, .heard-protocol-sections li { font-size: 15px; }
 }
 
 /* The descriptor steps aside while the header needs its width. With four links and
