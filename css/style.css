@@ -92,8 +92,13 @@ p { text-wrap: pretty; }
 .recognized-return .return-label { color: var(--body-text); }
 .recognized-return .return-holder { color: var(--ink); }
 .recognized-return:hover .return-holder { color: var(--blue); }
-.access-entry { color: var(--blue); }
-.access-entry::before { content: ""; width: 5px; height: 5px; background: currentColor; }
+.access-entry {
+  gap: 10px; padding: 7px 10px 7px 11px;
+  background: var(--blue); color: var(--paper);
+}
+.access-entry::after { content: "↗"; font-size: 11px; line-height: 1; letter-spacing: 0; }
+.access-entry:hover { background: var(--ink); }
+.access-entry:focus-visible { outline: 1px solid var(--blue); outline-offset: 2px; }
 
 /* The holder's issued representation, as carried on public pages: the portrait's
    raster on its own paper inside a hairline edge, or the unissued field. */
