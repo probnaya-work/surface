@@ -57,9 +57,30 @@ async function main() {
       process.exitCode = 1;
       return;
     }
-    process.stderr.write(`Allocated ${result.publicId}; the establishment link closes ${new Date(expiresAt).toISOString()}.\n`);
-    process.stderr.write('Send the next line once, in a new message to the address in the request notification. Keep no other copy.\n');
-    process.stdout.write(`${config.origin}/#${ESTABLISHMENT_FRAGMENT}=${token}\n`);
+    process.stderr.write(`The establishment link closes ${new Date(expiresAt).toISOString()}.\n`);
+    process.stdout.write([
+      `HOLDER      ${result.publicId}`,
+      'GRANT       CREATED',
+      '',
+      '── MESSAGE ─────────────────────────',
+      '',
+      'Subject: PROBNAYA — ACCESS',
+      '',
+      'Access may now be established.',
+      '',
+      'Open this link on the device that should hold your first key:',
+      `${config.origin}/#${ESTABLISHMENT_FRAGMENT}=${token}`,
+      '',
+      'The link works once. Do not share it.',
+      '',
+      'PROBNAYA',
+      '',
+      '────────────────────────────────────',
+      '',
+      'Send as a new message to the address in the original request notification.',
+      'Do not reply to the internal notification.',
+      '',
+    ].join('\n'));
   } finally {
     await store.close();
   }

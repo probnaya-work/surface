@@ -202,10 +202,33 @@ if (!databaseURL) {
 
     const approved = operator('approve-request.mjs', ['R–N3X58E'], url, 'y\n');
     assert.equal(approved.status, 0, approved.stderr);
-    assert.match(approved.stderr, /Allocated PROB–H–0001/);
-    const token = tokenFrom(approved.stdout);
-    assert.ok(token, 'only one bearer link is printed');
-    assert.equal(approved.stdout, `${ORIGIN}/#establish=${token}\n`);
+    const token = /#establish=([A-Za-z0-9_-]{43})\n/.exec(approved.stdout)?.[1];
+    assert.ok(token, 'the ready-to-send message includes a bearer link');
+    assert.equal(approved.stdout, [
+      'HOLDER      PROB–H–0001',
+      'GRANT       CREATED',
+      '',
+      '── MESSAGE ─────────────────────────',
+      '',
+      'Subject: PROBNAYA — ACCESS',
+      '',
+      'Access may now be established.',
+      '',
+      'Open this link on the device that should hold your first key:',
+      `${ORIGIN}/#establish=${token}`,
+      '',
+      'The link works once. Do not share it.',
+      '',
+      'PROBNAYA',
+      '',
+      '────────────────────────────────────',
+      '',
+      'Send as a new message to the address in the original request notification.',
+      'Do not reply to the internal notification.',
+      '',
+    ].join('\n'));
+    assert.equal(approved.stdout.match(/#establish=/g)?.length, 1, 'the bearer link appears only once');
+    assert.doesNotMatch(approved.stdout, /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/, 'the recipient remains outside the CLI');
     const [row] = await sql`SELECT h.public_id, g.operator_note, g.token_hash FROM access_holders h JOIN access_enrollment_grants g ON g.holder_id = h.id`;
     assert.deepEqual(row, { public_id: 'PROB–H–0001', operator_note: 'R–N3X58E', token_hash: enrollmentGrantHash(token) });
 

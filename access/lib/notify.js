@@ -20,8 +20,8 @@ export function requestMessage({ from, email, reference, receivedAt }) {
       `  npm run approve-request -- '${reference}'`,
       'Paste the saved access_operator URL at the masked prompt and confirm.',
       '',
-      'Send the printed link to this address as a new message, not a reply.',
-      'It is establishment authority: send it once and keep no other copy.',
+      'Send the printed MESSAGE block to this address as a new message.',
+      'Do not reply to this notification or keep another copy of the link.',
     ].join('\n'),
   };
 }
