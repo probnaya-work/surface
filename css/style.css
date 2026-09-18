@@ -176,6 +176,9 @@ p { text-wrap: pretty; }
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--faint);
 }
 .site-footer a:hover { color: var(--blue); }
+.site-footer span.stamp {
+  color: var(--body-text); font-weight: 500; white-space: nowrap;
+}
 
 /* The standing line — what the register reads right now, on every page. */
 .site-footer .standing { display: flex; align-items: center; gap: 9px; }
@@ -483,6 +486,14 @@ p { text-wrap: pretty; }
 .instrument-copy .head { display: flex; align-items: baseline; justify-content: space-between; }
 .instrument-copy .head .num { font-weight: 500; font-size: 52px; letter-spacing: -0.02em; line-height: 1; }
 .instrument-copy .head .status { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; }
+.instrument-block#heard { scroll-margin-top: 80px; }
+.heard-catalogue-status { align-self: flex-start; padding-top: 12px; border-top: 1px solid var(--border); color: var(--mid); font: 10px/1.6 var(--mono); letter-spacing: 0.14em; }
+.heard-catalogue-plate { min-height: 280px; display: flex; flex-direction: column; justify-content: space-between; gap: 26px; padding: 22px; border: 1px solid var(--ink); background: var(--sheet); }
+.heard-catalogue-plate > span { color: var(--mid); font: 10px var(--mono); letter-spacing: 0.15em; }
+.heard-catalogue-plate strong { max-width: 24ch; font-size: clamp(20px, 2.2vw, 30px); font-weight: 300; line-height: 1.2; }
+.heard-catalogue-line { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; padding-top: 8px; border-top: 1px solid var(--ink); }
+.heard-catalogue-line i { display: block; height: 3px; background: var(--faint-line); }
+.heard-catalogue-line i:first-child { height: 9px; background: var(--blue); }
 
 .object-figure img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
@@ -494,16 +505,24 @@ p { text-wrap: pretty; }
 .bench-note .label { color: var(--mid); }
 .bench-note .value { color: var(--faint); }
 
-/* The apparatus is named after the bench note, outside the instrument list it
-   is not part of. */
-.apparatus-line {
-  margin-top: 26px; display: flex; flex-wrap: wrap; gap: 14px;
-  justify-content: space-between; align-items: baseline;
-}
-.apparatus-line .label {
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--mid);
-}
-.apparatus-line .action-link { align-self: baseline; }
+/* Apparatus kept and entered at the laboratory, separate from the instruments. */
+.instruments-page { padding-bottom: 100px; }
+.laboratory-apparatus { background: var(--ink); color: var(--paper); }
+.laboratory-apparatus-inner { max-width: 1120px; margin: 0 auto; padding: 40px 40px 72px; }
+.laboratory-apparatus-head { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 56px; align-items: end; }
+.laboratory-apparatus-kicker { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; color: var(--faint-line); font: 10px var(--mono); letter-spacing: 0.18em; }
+.laboratory-apparatus-kicker::before { content: ""; width: 7px; height: 7px; background: var(--blue); }
+.laboratory-apparatus-head h2 { margin: 0; font-size: clamp(36px, 4vw, 52px); font-weight: 500; line-height: 1; letter-spacing: -0.03em; }
+.laboratory-apparatus-list { margin-top: 46px; border-top: 1px solid var(--mid); }
+.laboratory-apparatus-entry { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; padding: 26px 0 32px; border-bottom: 1px solid var(--mid); }
+.laboratory-apparatus-identity, .laboratory-apparatus-body { display: flex; flex-direction: column; align-items: flex-start; }
+.laboratory-apparatus-identity { gap: 12px; }
+.laboratory-apparatus-condition, .laboratory-apparatus-name { color: var(--faint-line); font: 10px/1.5 var(--mono); letter-spacing: 0.15em; }
+.laboratory-apparatus-identity h3 { margin: 0; font-size: 32px; font-weight: 500; line-height: 1; }
+.laboratory-apparatus-body { gap: 24px; }
+.laboratory-apparatus-body p { max-width: 42ch; margin: 0; font-size: 16px; font-weight: 300; line-height: 1.5; }
+.laboratory-apparatus-entry .action-link { color: var(--paper); border-bottom-color: var(--paper); }
+.laboratory-apparatus-entry .action-link:hover { color: var(--faint-line); border-bottom-color: var(--faint-line); }
 
 /* ---------- investigations ---------- */
 
@@ -895,6 +914,11 @@ p { text-wrap: pretty; }
 
   .instrument-block, .split, .lab-grid, .intake-grid, .record-open { grid-template-columns: 1fr; gap: 18px; }
   .instrument-block + .instrument-block { padding-top: 30px; }
+  .instruments-page { padding-bottom: 68px; }
+  .laboratory-apparatus-inner { padding: 28px 18px 52px; }
+  .laboratory-apparatus-head, .laboratory-apparatus-entry { grid-template-columns: 1fr; gap: 18px; }
+  .laboratory-apparatus-list { margin-top: 34px; }
+  .laboratory-apparatus-entry { padding: 22px 0 28px; }
   .split-title .num { font-size: 48px; }
 
   .specs { grid-template-columns: 90px 1fr; }
