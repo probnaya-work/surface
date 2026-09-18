@@ -502,16 +502,21 @@ p { text-wrap: pretty; }
 .bench-note .label { color: var(--mid); }
 .bench-note .value { color: var(--faint); }
 
-/* The apparatus is named after the bench note, outside the instrument list it
-   is not part of. */
-.apparatus-line {
-  margin-top: 26px; display: flex; flex-wrap: wrap; gap: 14px;
-  justify-content: space-between; align-items: baseline;
+/* Apparatus has its own register after the instrument entries. */
+.apparatus-section {
+  margin-top: 112px; padding: 30px 34px 34px; background: var(--ink); color: var(--paper);
 }
-.apparatus-line .label {
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--mid);
-}
-.apparatus-line .action-link { align-self: baseline; }
+.apparatus-section-head { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 56px; align-items: end; }
+.apparatus-section-kicker { grid-column: 1 / -1; font: 10px var(--mono); letter-spacing: 0.18em; color: var(--faint); }
+.apparatus-section-head h2 { margin: 0; font-size: clamp(36px, 4vw, 52px); font-weight: 500; line-height: 1; letter-spacing: -0.03em; }
+.apparatus-section-head p { max-width: 34ch; margin: 0; color: var(--faint-line); font-size: 15px; font-weight: 300; line-height: 1.5; }
+.apparatus-entry { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 56px; align-items: end; margin-top: 34px; padding-top: 24px; border-top: 1px solid var(--mid); }
+.apparatus-entry-identity { display: flex; flex-direction: column; gap: 9px; }
+.apparatus-entry-identity strong { font-size: 28px; font-weight: 500; line-height: 1; }
+.apparatus-entry-identity span { color: var(--faint-line); font: 10px/1.5 var(--mono); letter-spacing: 0.14em; }
+.apparatus-entry > p { max-width: 42ch; margin: 0; color: var(--paper); font-size: 15px; font-weight: 300; line-height: 1.5; }
+.apparatus-entry .action-link { grid-column: 2; justify-self: start; margin-top: 8px; color: var(--paper); border-bottom-color: var(--paper); }
+.apparatus-entry .action-link:hover { color: var(--faint-line); border-bottom-color: var(--faint-line); }
 
 /* ---------- investigations ---------- */
 
@@ -903,6 +908,11 @@ p { text-wrap: pretty; }
 
   .instrument-block, .split, .lab-grid, .intake-grid, .record-open { grid-template-columns: 1fr; gap: 18px; }
   .instrument-block + .instrument-block { padding-top: 30px; }
+  .apparatus-section { margin-top: 84px; padding: 24px 20px 28px; }
+  .apparatus-section-head, .apparatus-entry { grid-template-columns: 1fr; gap: 18px; }
+  .apparatus-section-head p { max-width: 38ch; }
+  .apparatus-entry { margin-top: 28px; padding-top: 22px; }
+  .apparatus-entry .action-link { grid-column: 1; margin-top: 2px; }
   .split-title .num { font-size: 48px; }
 
   .specs { grid-template-columns: 90px 1fr; }
