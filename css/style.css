@@ -176,6 +176,9 @@ p { text-wrap: pretty; }
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--faint);
 }
 .site-footer a:hover { color: var(--blue); }
+.site-footer span.stamp {
+  color: var(--body-text); font-weight: 500; white-space: nowrap;
+}
 
 /* The standing line — what the register reads right now, on every page. */
 .site-footer .standing { display: flex; align-items: center; gap: 9px; }
