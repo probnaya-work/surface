@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HEARD Protocol — PROBNAYA</title>
+<meta name="description" content="The proposed scope, exclusions, anonymisation, retention, and removal rules for HEARD. The current prototype uses synthetic material only.">
+<link rel="icon" type="image/svg+xml" href="/assets/probnaya-mark.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" href="/assets/favicon-180.png">
+<link rel="canonical" href="https://probnaya.work/heard/protocol">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://probnaya.work/heard/protocol">
+<meta property="og:site_name" content="PROBNAYA">
+<meta property="og:title" content="HEARD Protocol — PROBNAYA">
+<meta property="og:description" content="The proposed scope, exclusions, anonymisation, retention, and removal rules for HEARD. The current prototype uses synthetic material only.">
+<meta property="og:image" content="https://probnaya.work/assets/og-1200x630.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<script>try{if(localStorage.getItem('probnaya:recognized')==='1')document.documentElement.dataset.relation='pending'}catch(e){}</script>
+</head>
+<body>
+<header class="site-header">
+  <div class="brand-group">
+    <a class="brand-mark" href="/">
+      <svg viewBox="0 0 32 32" width="15" height="15" style="display:block; flex-shrink:0; overflow:visible;"><rect x="4" y="3" width="20" height="26" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="14" y="14" width="17" height="3" fill="currentColor"></rect></svg>
+      <span class="brand-name">PROBNAYA</span>
+    </a>
+    <a class="brand-tag" href="/lab">INDEPENDENT COMPUTATIONAL LABORATORY</a>
+  </div>
+  <div class="nav-right">
+    <span class="relation-slot"><a class="access-entry" href="https://access.probnaya.work/">ENTER</a></span>
+    <a class="nav-link" href="/instruments"><span class="nav-dot"></span><span class="label">INSTRUMENTS</span></a>
+    <a class="nav-link" href="/investigations"><span class="label">INVESTIGATIONS</span></a>
+    <a class="nav-link nav-divided" href="/observations"><span class="label">OBSERVATIONS</span></a>
+    <a class="nav-cta" href="/intake" aria-label="Submit a problem">SUBMIT<span class="nav-cta-rest"> A PROBLEM</span></a>
+  </div>
+</header>
+<header class="mobile-header">
+  <a class="brand-name" href="/">PROBNAYA</a>
+  <span class="relation-slot"><a class="access-entry" href="https://access.probnaya.work/">ENTER</a></span>
+  <span class="crumb">HEARD / PROTOCOL</span>
+</header>
+
+<main class="main">
+  <div class="page heard-page heard-protocol">
+    <a class="back-link" href="/heard">← HEARD</a>
+    <header class="heard-opening">
+      <div class="heard-kicker"><span>HEARD / PROTOCOL 0.1</span><span>PROPOSED FOR FUTURE LIVE OPERATION</span></div>
+      <h1>People are not<br>the dataset<span class="heard-title-period">.</span></h1>
+      <div class="heard-intro"><p>Individual expressions may become signals within a changing field. They must never become a catalogue of identifiable people.</p><span>PROTOTYPE STATUS<br>18 SEP 2026</span></div>
+    </header>
+    <aside class="heard-disclosure" aria-label="Current status">
+      <span class="heard-disclosure-mark">CURRENT IMPLEMENTATION / SYNTHETIC ONLY</span>
+      <p>HEARD currently runs entirely from invented examples in the browser. It collects no public posts, identifies no authors, sends no material to a model, and stores no observations. The rules below describe requirements for a future live system, not behavior already in operation.</p>
+    </aside>
+
+    <div class="heard-protocol-grid">
+      <nav class="heard-protocol-nav" aria-label="On this page">
+        <span>CONTENTS</span>
+        <a href="#scope">01 SCOPE</a>
+        <a href="#record">02 RECORD</a>
+        <a href="#processing">03 PROCESSING</a>
+        <a href="#exclusions">04 EXCLUSIONS</a>
+        <a href="#retention">05 RETENTION &amp; REMOVAL</a>
+        <a href="#readings">06 READINGS &amp; LIMITS</a>
+      </nav>
+      <div class="heard-protocol-sections">
+        <section id="scope">
+          <span class="heard-small-label">01 / SCOPE</span>
+          <h2>What HEARD would observe</h2>
+          <p>HEARD is intended to notice how people describe their relationships with increasingly capable machines in selected public spaces. A future source must be named, its rules and access terms checked, and its inclusion disclosed before collection starts. Private spaces, direct messages, and submitted personal accounts are outside this protocol.</p>
+          <p>Any field view describes only the chosen sources and time window. It cannot stand for what “people” or society as a whole think.</p>
+        </section>
+        <section id="record">
+          <span class="heard-small-label">02 / RECORD</span>
+          <h2>What a public record contains</h2>
+          <p>A retained expression would carry a short meaning-preserving paraphrase, theme labels, broad context, observed time, and the reading to which it contributes. It would carry no username, profile, direct URL, exact quotation, location, or identifying biographical detail.</p>
+          <div class="heard-schema" aria-label="Proposed record fields"><span>TEXT</span><span>THEMES</span><span>CONTEXT</span><span>OBSERVED AT</span><span>READING ID</span></div>
+          <p>Paraphrasing alone is not a guarantee of anonymity. Distinctive experiences may still be traceable, so a record must also pass a reidentification review before publication.</p>
+        </section>
+        <section id="processing">
+          <span class="heard-small-label">03 / PROCESSING</span>
+          <h2>From expression to signal</h2>
+          <ol>
+            <li>Check the source's permission and the expression's relevance.</li>
+            <li>Reject sensitive or identifying material before a public record is made.</li>
+            <li>Paraphrase the meaning without copying distinctive wording; assign themes and broad context.</li>
+            <li>Review for reidentification, duplication, distortion, and misleading context.</li>
+            <li>Publish only retained records and aggregate readings with the source set and time window disclosed.</li>
+          </ol>
+          <p>No automated classifier or editorial workflow has been connected yet. These are gates to design and test before any live collection.</p>
+        </section>
+        <section id="exclusions">
+          <span class="heard-small-label">04 / EXCLUSIONS</span>
+          <h2>What stays out</h2>
+          <p>Exclude material about health, mental health, sexuality, politics, religion, children, crises, or other sensitive personal circumstances; identifying or unusually specific stories; private or access-restricted content; harassment; and material whose meaning depends on unavailable context. Reject uncertain cases instead of forcing them into a theme.</p>
+        </section>
+        <section id="retention">
+          <span class="heard-small-label">05 / RETENTION &amp; REMOVAL</span>
+          <h2>Keep less; correct quickly</h2>
+          <p>A live version would retain raw text and source identifiers only for the shortest processing window needed for review, then delete them. A concrete duration, deletion mechanism, and audit procedure must be published before live collection begins. The present prototype retains none of these because it has no input pipeline.</p>
+          <p>Published paraphrases and readings must be removable. Requests about misrepresentation, identification, or removal can be sent to <a href="mailto:mail@probnaya.work?subject=HEARD%20removal%20request">mail@probnaya.work</a>. A future live system must define how it can locate and remove a record without keeping a public link to its source.</p>
+        </section>
+        <section id="readings">
+          <span class="heard-small-label">06 / READINGS &amp; LIMITS</span>
+          <h2>Interpretation remains visible</h2>
+          <p>A tremor marks an unusual connection or concentration in the observed sample; a drift marks a slower change. An issued reading separates the material observed from the interpretation offered by PROBNAYA, names the source set and interval, and records uncertainty and protocol version.</p>
+          <p>HEARD must not present its themes as diagnoses, counts as population statistics, or movement as a claim of causation. The demo reading is an example of editorial form, not evidence of a real trend.</p>
+        </section>
+      </div>
+    </div>
+    <a class="heard-protocol-return" href="/heard">← RETURN TO THE SYNTHETIC FIELD</a>
+  </div>
+</main>
+<footer class="site-footer">
+  <a href="/lab">PROBNAYA · WHAT THIS LABORATORY IS →</a>
+  <a href="mailto:mail@probnaya.work">mail@probnaya.work</a>
+  <span class="stamp" data-stamp></span>
+</footer>
+<nav class="bottom-nav has-tabs">
+  <a href="/instruments"><span class="nav-dot"></span><span>INSTRUMENTS</span></a>
+  <a href="/investigations"><span>INVESTIGATIONS</span></a>
+  <a class="nav-divided" href="/observations"><span>OBSERVATIONS</span></a>
+  <a href="/intake"><span>SUBMIT</span></a>
+</nav>
+<script src="/js/records.js"></script>
+<script src="/js/register.js"></script>
+<script src="/js/site.js"></script>
+</body>
+</html>
