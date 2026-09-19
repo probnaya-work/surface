@@ -355,15 +355,16 @@ const Apparatus = (() => {
   }
 
   // ---- FIG.0 — the laboratory: a harmonograph that decays to a point, then restarts ----
-  function buildHarmonograph(S) {
+  function buildHarmonograph(S, palette = {}) {
     let t = 0, px = null, py = null, decay = 0, stepAcc = 0;
+    const ground = palette.ground || PAPER, line = palette.line || INK, accent = palette.accent || BLUE;
     const p = [
       { a: 0.31, f: 2.01, ph: 0.0, d: 0.0022 },
       { a: 0.26, f: 3.02, ph: 1.1, d: 0.0028 },
       { a: 0.29, f: 2.99, ph: 0.5, d: 0.0019 },
       { a: 0.24, f: 4.01, ph: 2.2, d: 0.0031 }
     ];
-    const clear = () => { S.ctx.fillStyle = PAPER; S.ctx.fillRect(0, 0, S.w, S.h); t = 0; px = py = null; decay = 0; };
+    const clear = () => { S.ctx.fillStyle = ground; S.ctx.fillRect(0, 0, S.w, S.h); t = 0; px = py = null; decay = 0; };
     S.onFit = clear; clear();
 
     return {
@@ -378,13 +379,13 @@ const Apparatus = (() => {
           const x = cx + R * (p[0].a * Math.sin(t * p[0].f + p[0].ph) * e(0) + p[1].a * Math.sin(t * p[1].f + p[1].ph) * e(1));
           const y = cy + R * (p[2].a * Math.sin(t * p[2].f + p[2].ph) * e(2) + p[3].a * Math.sin(t * p[3].f + p[3].ph) * e(3));
           if (px !== null) {
-            ctx.strokeStyle = decay > 0.86 ? BLUE : INK;
+            ctx.strokeStyle = decay > 0.86 ? accent : line;
             ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(x, y); ctx.stroke();
           }
           px = x; py = y;
           decay = 1 - Math.exp(-0.0022 * t * 30);
         }
-        if (decay > 0.985) { ctx.fillStyle = BLUE; ctx.fillRect(cx - 2, cy - 2, 4, 4); if (Math.random() < 0.02 * norm) clear(); }
+        if (decay > 0.985) { ctx.fillStyle = accent; ctx.fillRect(cx - 2, cy - 2, 4, 4); if (Math.random() < 0.02 * norm) clear(); }
       }
     };
   }

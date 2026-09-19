@@ -92,8 +92,14 @@ p { text-wrap: pretty; }
 .recognized-return .return-label { color: var(--body-text); }
 .recognized-return .return-holder { color: var(--ink); }
 .recognized-return:hover .return-holder { color: var(--blue); }
-.access-entry { color: var(--blue); }
-.access-entry::before { content: ""; width: 5px; height: 5px; background: currentColor; }
+.access-entry {
+  height: 16px; gap: 8px; padding-right: 16px;
+  border-right: 1px solid var(--blue); color: var(--blue);
+}
+.access-entry::after { content: "↗"; font-size: 11px; line-height: 1; letter-spacing: 0; }
+.access-entry:hover { color: var(--ink); }
+.access-entry:hover::after { transform: translate(1px, -1px); }
+.access-entry:focus-visible { outline: 1px solid var(--blue); outline-offset: 4px; }
 
 /* The holder's issued representation, as carried on public pages: the portrait's
    raster on its own paper inside a hairline edge, or the unissued field. */
@@ -560,20 +566,84 @@ p { text-wrap: pretty; }
 
 /* ---------- lab ---------- */
 
-.lab-grid { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 56px; padding-top: 44px; align-items: start; }
-.lab-copy { display: flex; flex-direction: column; gap: 28px; }
-.lab-copy > p.intro { margin: 0; font-weight: 300; font-size: 15px; line-height: 1.65; color: var(--body-text); max-width: 52ch; text-wrap: pretty; }
-.lab-copy .thesis { margin: 0; font-weight: 300; font-size: 19px; line-height: 1.45; color: var(--ink); max-width: 36ch; text-wrap: pretty; }
+.lab-main { padding: calc(var(--header-h) + 28px) 28px 80px; }
+.lab-card { max-width: 1440px; margin: 0 auto; border: 1px solid var(--ink); }
+.lab-card-grid { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(360px, 0.88fr); }
 
-.working-with { border-top: 1px solid var(--border); padding-top: 22px; display: flex; flex-direction: column; gap: 12px; }
-.working-with .label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--mid); }
-.working-with .row {
-  display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; cursor: pointer;
+.lab-face {
+  position: relative; min-height: 760px; padding: 24px 28px 28px; overflow: hidden;
+  display: flex; flex-direction: column; background: var(--blue); color: var(--paper);
 }
-.working-with .row:not(:last-child) { border-bottom: 1px solid var(--border); }
-.working-with .row:hover { background: var(--hover-bg); }
-.working-with .row span.name { font-weight: 300; font-size: 17px; }
-.working-with .row span.chan { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--blue); }
+.lab-face ::selection { background: var(--paper); color: var(--blue); }
+.lab-face-top, .lab-face-caption, .lab-record-top, .lab-entry-top {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
+}
+.lab-face-top { position: relative; z-index: 1; display: flex; justify-content: space-between; gap: 18px; }
+.lab-face h1 {
+  position: relative; z-index: 1; margin: 42px 0 0; width: max-content;
+  font-weight: 600; font-size: clamp(66px, 7.8vw, 116px); line-height: 0.88; letter-spacing: -0.055em;
+}
+.lab-face canvas {
+  position: absolute; z-index: 0; top: 112px; right: -28%; width: 145%; height: 670px;
+  display: block; pointer-events: none; opacity: 0.72;
+}
+.lab-face-copy { position: relative; z-index: 1; margin-top: auto; display: flex; flex-direction: column; gap: 30px; }
+.lab-definition {
+  margin: 0; max-width: 12ch; font-weight: 500;
+  font-size: clamp(31px, 3.4vw, 48px); line-height: 1.08; letter-spacing: -0.025em;
+}
+.lab-thesis { margin: 0; max-width: 38ch; font-weight: 300; font-size: 17px; line-height: 1.45; }
+.lab-face-caption {
+  position: relative; z-index: 1; margin: 28px 0 0; padding-top: 12px;
+  border-top: 1px solid var(--paper); font-size: 9px; line-height: 1.5;
+}
+
+.lab-record {
+  min-width: 0; padding: 24px 28px 18px; border-left: 1px solid var(--ink);
+  display: flex; flex-direction: column; background: var(--paper);
+}
+.lab-record-top { display: flex; justify-content: space-between; gap: 18px; color: var(--mid); }
+.lab-facts { margin: 76px 0 0; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+.lab-fact {
+  display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 18px;
+  border-top: 1px solid var(--ink); padding: 16px 0;
+}
+.lab-fact dt, .lab-fact dd { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; line-height: 1.55; }
+.lab-fact dt { color: var(--mid); }
+.lab-fact dd { min-width: 0; margin: 0; }
+.lab-fact-operator dd { display: flex; flex-direction: column; gap: 5px; }
+.lab-operator-name { color: var(--blue); font-weight: 500; letter-spacing: 0.04em; }
+.lab-fact-operator p {
+  margin: 12px 0 0; max-width: 37ch; font-family: var(--sans); font-weight: 300;
+  font-size: 14px; letter-spacing: 0; line-height: 1.5; color: var(--body-text);
+}
+
+.lab-entry { padding: 20px 28px; background: var(--ink); color: var(--paper); }
+.lab-entry-top { margin: 0; padding-bottom: 12px; border-bottom: 1px solid var(--paper); font-weight: 400; }
+.lab-entry-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lab-entry-paths a {
+  min-width: 0; min-height: 124px; padding: 18px 22px 14px; color: var(--paper);
+  display: grid; grid-template-rows: auto 1fr auto; gap: 12px;
+}
+.lab-entry-work .lab-entry-paths a:first-child { border-right: 1px solid var(--mid); }
+.lab-entry-documents {
+  margin-top: 20px;
+}
+.lab-entry-documents .lab-entry-top { padding-bottom: 12px; }
+.lab-entry-documents .lab-entry-paths { grid-template-columns: 1fr; }
+.lab-entry-documents .lab-entry-paths a {
+  position: relative; min-height: 48px; padding: 12px 16px; border-bottom: 1px solid var(--mid);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: 1fr; align-items: center; gap: 0;
+}
+.lab-entry-documents .lab-entry-paths a:last-child { border-bottom: none; }
+.lab-entry-paths a:focus-visible { background: var(--blue); color: var(--paper); outline: 2px solid var(--paper); outline-offset: -2px; }
+@media (hover: hover) { .lab-entry-paths a:hover { background: var(--blue); color: var(--paper); } }
+.lab-entry-paths a span:first-child { font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; }
+.lab-entry-paths a span:nth-child(2) { max-width: 25ch; font-weight: 300; font-size: 19px; line-height: 1.2; }
+.lab-entry-paths a span:last-child { justify-self: end; font-size: 20px; line-height: 1; }
+.lab-entry-documents .lab-entry-paths a span:nth-child(2) { max-width: none; padding: 0 30px 0 22px; }
+.lab-entry-documents .lab-entry-paths a span:last-child { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
 
 /* ---------- intake ---------- */
 
@@ -867,7 +937,7 @@ p { text-wrap: pretty; }
   .mobile-header .relation-slot { margin-left: auto; margin-right: 14px; }
   .mobile-header .recognized-return { gap: 8px; font-size: 9px; letter-spacing: 0.08em; }
   .mobile-header .recognized-return .return-label { display: none; }
-  .mobile-header .access-entry { font-size: 9px; }
+  .mobile-header .access-entry { padding-right: 10px; font-size: 9px; }
   .bottom-nav.has-tabs { display: grid; }
 
   .main { padding-top: var(--header-h-mobile); padding-bottom: var(--bottom-nav-h); }
@@ -912,7 +982,37 @@ p { text-wrap: pretty; }
   .apparatus-band .enter { text-align: left; }
   .index-foot { padding: 20px 0 40px 0; }
 
-  .instrument-block, .split, .lab-grid, .intake-grid, .record-open { grid-template-columns: 1fr; gap: 18px; }
+  .instrument-block, .split, .intake-grid, .record-open { grid-template-columns: 1fr; gap: 18px; }
+  .lab-main { padding: var(--header-h-mobile) 0 var(--bottom-nav-h); }
+  .lab-card { border-left: none; border-right: none; }
+  .lab-card-grid { grid-template-columns: 1fr; }
+  .lab-face { min-height: 620px; padding: 18px 18px 20px; }
+  .lab-face-top { flex-direction: column; gap: 6px; font-size: 9px; }
+  .lab-face h1 { margin-top: 26px; font-size: clamp(44px, 14.8vw, 70px); }
+  .lab-face canvas { top: 116px; right: -30%; width: 150%; height: 420px; }
+  .lab-face-copy { gap: 22px; }
+  .lab-definition { font-size: 34px; }
+  .lab-thesis { font-size: 16px; }
+  .lab-face-caption { font-size: 8px; }
+  .lab-record { padding: 20px 18px 4px; border-left: none; border-top: 1px solid var(--ink); }
+  .lab-record-top { padding-bottom: 30px; font-size: 9px; }
+  .lab-facts { margin-top: 0; }
+  .lab-fact { grid-template-columns: 72px minmax(0, 1fr); gap: 14px; padding: 14px 0; }
+  .lab-fact dt, .lab-fact dd { font-size: 10px; }
+  .lab-fact-operator p { font-size: 14px; }
+  .lab-entry { padding: 18px; }
+  .lab-entry-top { font-size: 9px; }
+  .lab-entry-paths { grid-template-columns: 1fr; }
+  .lab-entry-work .lab-entry-paths a, .lab-entry-work .lab-entry-paths a:first-child, .lab-entry-work .lab-entry-paths a:not(:first-child) {
+    min-height: 0; padding: 18px 14px; border-right: none; border-bottom: 1px solid var(--mid);
+    display: grid; grid-template-columns: 74px minmax(0, 1fr) 18px; grid-template-rows: 1fr; gap: 12px;
+  }
+  .lab-entry-work .lab-entry-paths a:last-child { border-bottom: none; }
+  .lab-entry-documents { margin-top: 12px; }
+  .lab-entry-documents .lab-entry-paths a { min-height: 0; grid-template-columns: 74px minmax(0, 1fr) 18px; gap: 12px; }
+  .lab-entry-documents .lab-entry-paths a span:nth-child(2) { padding: 0; }
+  .lab-entry-documents .lab-entry-paths a span:last-child { position: static; transform: none; }
+  .lab-entry-paths a span:nth-child(2) { font-size: 17px; }
   .instrument-block + .instrument-block { padding-top: 30px; }
   .instruments-page { padding-bottom: 68px; }
   .laboratory-apparatus-inner { padding: 28px 18px 52px; }
@@ -971,6 +1071,8 @@ p { text-wrap: pretty; }
    header tightens its spacing and tracking, and the call to action takes the short
    form the mobile tab bar already uses (its accessible name is unchanged). */
 @media (min-width: 761px) and (max-width: 940px) {
+  .lab-face h1 { font-size: clamp(50px, 6.8vw, 64px); }
+  .lab-face-top { flex-direction: column; gap: 6px; }
   .site-header { padding: 0 20px; gap: 16px; }
   .site-header .nav-right { gap: 16px; }
   .site-header .nav-divided { padding-left: 16px; }

@@ -65,57 +65,69 @@
   <span class="crumb">LAB</span>
 </header>
 
-<main class="main">
-  <div class="page">
-    <div class="eyebrow-row">
-      <h1 class="eyebrow" style="margin:0;font-weight:400;">THE LABORATORY</h1>
-      <span class="eyebrow-meta">FIG. 0 — INSTRUMENT TURNED ON ITSELF</span>
-    </div>
-
-    <div class="lab-grid">
-      <div class="figure">
-        <div class="figure-plate" style="height:340px;">
-          <canvas id="cv-lab"></canvas>
+<main class="main lab-main">
+  <article class="lab-card" aria-labelledby="lab-title">
+    <div class="lab-card-grid">
+      <div class="lab-face">
+        <div class="lab-face-top">
+          <span>THE LABORATORY</span>
+          <span>FIG. 0 — INSTRUMENT TURNED ON ITSELF</span>
         </div>
-        <div class="figure-caption">
-          <span class="dim">HARMONOGRAPH · TWO PENDULUMS · THE TRACE SETTLES, THEN BEGINS AGAIN</span>
+        <h1 id="lab-title">PROBNAYA</h1>
+        <canvas id="cv-lab" aria-label="Live harmonograph trace; two pendulums settle, then begin again"></canvas>
+        <div class="lab-face-copy">
+          <p class="lab-definition">An independent<br>computational<br>laboratory.</p>
+          <p class="lab-thesis">Not every investigation needs a commercial purpose. Some only need to answer a question.</p>
         </div>
+        <p class="lab-face-caption">HARMONOGRAPH · TWO PENDULUMS · THE TRACE SETTLES, THEN BEGINS AGAIN</p>
       </div>
 
-      <div class="lab-copy">
-        <p class="intro">PROBNAYA is an independent computational laboratory.</p>
-        <dl class="specs">
-          <dt>PREMISE</dt><dd>CAPABILITY GROWS FASTER THAN THE INSTRUMENTS FOR WORKING WITH IT</dd>
-          <dt>METHOD</dt><dd>BUILD THE INSTRUMENT · RUN IT · KEEP WHAT SURVIVES</dd>
-          <dt>OPERATOR</dt><dd>ONE PRINCIPAL INVESTIGATOR · COLLABORATORS DRAWN IN PER INVESTIGATION</dd>
-          <dt>REGISTER</dt><dd>EVERY RECORD CARRIES THE PREFIX PROB–</dd>
-          <dt>FUNDING</dt><dd>OWN WORK · A SMALL NUMBER OF COMMISSIONS</dd>
-          <dt>OUTCOME</dt><dd>SOME BECOME PRODUCTS · SOME BECOME INFRASTRUCTURE · SOME STAY EXPERIMENTS</dd>
+      <div class="lab-record">
+        <div class="lab-record-top"><span>LABORATORY CARD</span><span>PROB–</span></div>
+        <dl class="lab-facts">
+          <div class="lab-fact">
+            <dt>PREMISE</dt><dd>CAPABILITY GROWS FASTER THAN THE INSTRUMENTS FOR WORKING WITH IT</dd>
+          </div>
+          <div class="lab-fact">
+            <dt>METHOD</dt><dd>BUILD THE INSTRUMENT · RUN IT · KEEP WHAT SURVIVES</dd>
+          </div>
+          <div class="lab-fact lab-fact-operator">
+            <dt>OPERATOR</dt>
+            <dd>
+              <span><strong class="lab-operator-name">ALEX MALININ</strong> · PRINCIPAL</span>
+              <span>COLLABORATORS DRAWN IN PER INVESTIGATION</span>
+              <p>I kept encountering questions the software I built could not answer. Some needed an experiment. Some needed a new instrument. PROBNAYA is where I follow them.</p>
+            </dd>
+          </div>
+          <div class="lab-fact">
+            <dt>REGISTER</dt><dd>EVERY RECORD CARRIES THE PREFIX PROB–</dd>
+          </div>
+          <div class="lab-fact">
+            <dt>FUNDING</dt><dd>OWN WORK · A SMALL NUMBER OF COMMISSIONS</dd>
+          </div>
+          <div class="lab-fact">
+            <dt>OUTCOME</dt><dd>SOME BECOME PRODUCTS · SOME BECOME INFRASTRUCTURE · SOME STAY EXPERIMENTS</dd>
+          </div>
         </dl>
-        <p class="thesis">Not every investigation needs a commercial purpose. Some only need to answer a question.</p>
-
-        <div class="working-with">
-          <span class="label">WORKING WITH THE LABORATORY</span>
-          <a class="row" href="/intake?ch=b">
-            <span class="name">Make or investigate something together</span>
-            <span class="chan">CHANNEL B →</span>
-          </a>
-          <a class="row" href="/intake?ch=a">
-            <span class="name">Bring us a problem to investigate</span>
-            <span class="chan">CHANNEL A →</span>
-          </a>
-        </div>
-
-        <div class="working-with">
-          <span class="label">DOCUMENTS</span>
-          <a class="row" href="/lab/001">
-            <span class="name">Laboratory Statement 001</span>
-            <span class="chan" style="color:var(--blue)">IN FORCE →</span>
-          </a>
-        </div>
       </div>
     </div>
-  </div>
+
+    <div class="lab-entry">
+      <section class="lab-entry-group lab-entry-work" aria-labelledby="lab-work-title">
+        <h2 class="lab-entry-top" id="lab-work-title">WORKING WITH THE LABORATORY</h2>
+        <div class="lab-entry-paths">
+          <a href="/intake?ch=b"><span>CHANNEL B</span><span>Make or investigate something together</span><span aria-hidden="true">↗</span></a>
+          <a href="/intake?ch=a"><span>CHANNEL A</span><span>Bring us a problem to investigate</span><span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+      <section class="lab-entry-group lab-entry-documents" aria-labelledby="lab-documents-title">
+        <h2 class="lab-entry-top" id="lab-documents-title">DOCUMENTS</h2>
+        <div class="lab-entry-paths">
+          <a href="/lab/001"><span>IN FORCE</span><span>Laboratory Statement 001</span><span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+    </div>
+  </article>
 </main>
 
 <footer class="site-footer">
@@ -138,7 +150,12 @@
 <script src="../js/register.js"></script>
 <script src="../js/site.js"></script>
 <script>
-  Apparatus.mount(document.getElementById('cv-lab'), (S) => Apparatus.buildHarmonograph(S));
+  const faceStyle = getComputedStyle(document.querySelector('.lab-face'));
+  Apparatus.mount(document.getElementById('cv-lab'), (S) => Apparatus.buildHarmonograph(S, {
+    ground: faceStyle.backgroundColor,
+    line: faceStyle.color,
+    accent: getComputedStyle(document.documentElement).getPropertyValue('--ink').trim()
+  }));
 </script>
 </body>
 </html>
