@@ -493,6 +493,7 @@ p { text-wrap: pretty; }
 .instrument-copy .head .num { font-weight: 500; font-size: 52px; letter-spacing: -0.02em; line-height: 1; }
 .instrument-copy .head .status { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; }
 .instrument-block#heard { scroll-margin-top: 80px; }
+.instrument-block#heard .action-link[hidden] { display: none; }
 .heard-catalogue-status { align-self: flex-start; padding-top: 12px; border-top: 1px solid var(--border); color: var(--mid); font: 10px/1.6 var(--mono); letter-spacing: 0.14em; }
 .heard-catalogue-plate { min-height: 280px; display: flex; flex-direction: column; justify-content: space-between; gap: 26px; padding: 22px; border: 1px solid var(--ink); background: var(--sheet); }
 .heard-catalogue-plate > span { color: var(--mid); font: 10px var(--mono); letter-spacing: 0.15em; }
