@@ -17,11 +17,9 @@
 </head>
 <body>
 
-<!-- Observations. Published observations are written into the list below by hand,
-     following docs/observations.md; there is no generator and no content store.
+<!-- Observations. Published observations are written into the list below.
      Sending posts to /api/observations, which delivers one message to the PROBNAYA
-     mailbox. Until the first observation is published, js/observations-field.js
-     draws a field in the reading area; it is not mounted once the list has an item. -->
+     mailbox. js/observations-field.js draws the field above the sequence. -->
 
 <header class="site-header">
   <div class="brand-group">
@@ -53,16 +51,28 @@
          section. Everything set in sentence case beside a signature belongs to
          the person who signed it. -->
     <header class="obs-opening">
-      <p class="obs-opening-from">FROM OUTSIDE<br>THE LABORATORY</p>
-      <h1>Observations</h1>
-      <p class="obs-opening-by">SENT BY OTHERS · PUBLISHED BY PROBNAYA</p>
+      <div class="obs-opening-margin">
+        <p class="obs-opening-from">FROM OUTSIDE<br>THE LABORATORY</p>
+        <a class="obs-send-link obs-send-link--margin" href="#send">SEND AN OBSERVATION <span aria-hidden="true">→</span></a>
+      </div>
+      <div class="obs-opening-main">
+        <h1>Observations</h1>
+        <div class="obs-opening-by">
+          <p>SENT BY OTHERS · PUBLISHED BY PROBNAYA</p>
+        </div>
+        <a class="obs-send-link obs-send-link--main" href="#send">SEND AN OBSERVATION <span aria-hidden="true">→</span></a>
+      </div>
     </header>
 
-    <ol class="obs-sequence" aria-label="Published observations">
-      <!-- Published observations are added here, earliest first, in the frozen
-           grammar: PUBLISHED / FROM margin, the material, the signature.
-           See docs/observations.md before adding anything. -->
-    </ol>
+    <div class="obs-reading">
+      <div class="obs-plate" aria-hidden="true">
+        <div class="obs-plate-figure"><canvas data-field></canvas></div>
+        <p class="obs-plate-caption">FIELD · TWO SOURCES OUTSIDE THE FIGURE · FIVE AND EIGHT HOURS</p>
+      </div>
+
+      <ol class="obs-sequence" aria-label="Published observations, earliest first">
+      </ol>
+    </div>
 
     <section class="obs-send" id="send" aria-labelledby="send-open">
       <button class="obs-send-open" id="send-open" type="button" aria-expanded="false" aria-controls="obs-send-panel">SEND AN OBSERVATION <span aria-hidden="true">→</span></button>
@@ -207,6 +217,15 @@
     else { panel.hidden = true; opener.setAttribute('aria-expanded', 'false'); }
   });
   if (location.hash === '#send') openSend();
+  // SEND AN OBSERVATION in the opening leads to the same section, opened.
+  for (const link of document.querySelectorAll('.obs-send-link')) {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (panel.hidden) openSend(); else if (!form.hidden) fields.material.focus({ preventScroll: true });
+      document.getElementById('send').scrollIntoView();
+      history.replaceState(null, '', '#send');
+    });
+  }
 
   // --- status ----------------------------------------------------------------
   function megabytes(bytes) { return bytes < 10_000 ? `${Math.max(1, Math.round(bytes / 1000))} KB` : `${(bytes / 1_000_000).toFixed(2)} MB`; }

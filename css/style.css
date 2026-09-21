@@ -707,123 +707,179 @@ p { text-wrap: pretty; }
    photograph, a screenshot, a file — sits on its own ground inside an edge, set
    in no PROBNAYA face. */
 
+/* Text that is read aloud but not shown: headings for untitled pieces, and the
+   words that finish a link whose visible label is a date or an arrow. */
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+.observations-page {
+  padding: calc(var(--header-h) + clamp(22px, 5.4vw, 60px)) clamp(18px, 3.6vw, 40px) clamp(40px, 10vw, 112px);
+}
+.observations-page a:focus-visible, .obs-send-open:focus-visible { outline: 1px solid var(--blue); outline-offset: 3px; }
+
 /* The opening: a distinct space for material from outside the laboratory. The
-   same label as the homepage threshold stands in PROBNAYA's margin column; the
-   name is set at the scale the Interior uses for its places. */
+   same label as the homepage threshold stands in PROBNAYA's margin column, with
+   the way to send beneath it; the name is set at the scale the Interior uses for
+   its places, and the extent of the sequence is stated before it is read. */
 .obs-opening {
-  display: grid; grid-template-columns: 184px minmax(0, 640px); column-gap: 56px; align-items: end;
-  padding: 38px 0 22px 0; border-bottom: 1px solid var(--ink);
+  display: flex; flex-wrap: wrap; column-gap: 56px; row-gap: 14px; align-items: flex-end;
+  padding: clamp(26px, 3.4vw, 38px) 0 clamp(18px, 2vw, 22px); border-bottom: 1px solid var(--ink);
+}
+.obs-opening-margin {
+  flex: 0 1 184px; min-width: 184px; padding-bottom: 10px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 24px;
 }
 .obs-opening-from {
-  margin: 0; padding-bottom: 10px;
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; line-height: 1.6; color: var(--body-text);
+  margin: 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; line-height: 1.6; color: var(--body-text);
 }
-.obs-opening h1 { margin: 0; font-weight: 500; font-size: clamp(42px, 4.8vw, 62px); line-height: 1; letter-spacing: -0.02em; }
-.obs-opening-by {
-  grid-column: 2; margin: 18px 0 0 0;
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--faint);
+.obs-opening-main { flex: 1 1 400px; min-width: 0; max-width: 640px; display: flex; flex-direction: column; gap: 18px; }
+.obs-opening h1 { margin: 0; font-weight: 500; font-size: clamp(40px, 5.6vw, 62px); line-height: 1; letter-spacing: -0.02em; }
+.obs-opening-by { display: flex; flex-direction: column; gap: 6px; }
+.obs-opening-by p { margin: 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; line-height: 1.5; color: var(--body-text); }
+.obs-send-link {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--blue);
+  border-bottom: 1px solid var(--blue); padding-bottom: 3px;
 }
-.obs-opening + .obs-sequence { padding-top: 56px; }
+.obs-send-link:hover { color: var(--ink); border-bottom-color: var(--ink); }
+.obs-send-link--main { display: none; align-self: flex-start; }
 
-.obs-sequence { list-style: none; margin: 0; padding: 36px 0 0 0; }
+.obs-reading { padding-top: clamp(12px, 5vw, 56px); }
 
-/* Before the first publication only: the field (js/observations-field.js) stands
-   in the reading area and is not mounted once the sequence holds an observation. */
-.obs-plate { position: relative; height: 400px; margin: 0 0 40px 0; }
+/* The field (js/observations-field.js) stands above the sequence, in the
+   reading column. */
+.obs-plate { display: flex; flex-direction: column; gap: 10px; margin: 0 0 clamp(20px, 3vw, 34px) 0; }
+.obs-plate-figure { position: relative; height: clamp(340px, 42vw, 400px); }
 .obs-plate canvas { display: block; width: 100%; height: 100%; }
+.obs-plate-caption {
+  align-self: flex-end; margin: 0;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--mid);
+}
 
+.obs-sequence { list-style: none; margin: 0; padding: 0; }
+
+/* One Observation: PROBNAYA's margin on the paper, the contributor's material on
+   its own sheet. The two columns wrap rather than squeeze: below about 700px the
+   margin stands above the sheet, still read first and still apart from it. */
 .observation {
-  display: grid; grid-template-columns: 184px minmax(0, 640px); column-gap: 56px;
-  padding: 64px 0 72px 0;
+  position: relative; display: flex; flex-wrap: wrap; column-gap: 56px; row-gap: 18px;
+  padding: clamp(20px, 3vw, 34px) 0; scroll-margin-top: calc(var(--header-h) + 8px);
 }
-/* The divider belongs to PROBNAYA's margin only. The sender's column is never
-   ruled into rows. */
-.observation { position: relative; scroll-margin-top: calc(var(--header-h) + 8px); }
 .obs-send { scroll-margin-top: calc(var(--header-h) + 8px); }
-.observation + .observation::before {
-  content: ""; position: absolute; top: 0; left: 0; width: 184px; height: 1px; background: var(--faint-line);
-}
 
 .obs-margin { display: flex; flex-direction: column; gap: 18px; padding-top: 7px; }
-
-/* The margin record: when PROBNAYA published it, and who it came from, stated in
-   PROBNAYA's voice. The sender still signs at the end in their own face. */
-.obs-published, .obs-provenance, .obs-from {
-  display: flex; flex-direction: column; gap: 5px;
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; line-height: 1.4;
-}
-.obs-published span:first-child, .obs-provenance span:first-child, .obs-from span:first-child { color: var(--faint); }
-.obs-published span:last-child, .obs-from span:last-child { color: var(--mid); }
-.obs-from span:last-child { text-transform: uppercase; }
-.obs-provenance span:last-child { color: var(--faint); }
-.obs-published:hover span { color: var(--blue); }
-
 .obs-body { min-width: 0; }
 
-/* One reading scale for every weight. A single sentence and 1,800 words are set
-   identically; only their extent differs. The size is chosen for the long piece
-   (about 68 characters a line in the 640px column) and still gives a sentence
-   room on its own. */
-.obs-text p {
-  margin: 0; font-weight: 300; font-size: 22px; line-height: 1.56; letter-spacing: -0.004em;
-  color: var(--ink); max-width: 34em;
+.observation > .obs-margin {
+  flex: 0 1 184px; min-width: 184px; flex-direction: row; flex-wrap: wrap; align-content: flex-start;
+  padding-top: clamp(26px, 2.2vw + 6px, 34px);
 }
-.obs-text p + p { margin-top: 0.9em; }
+.observation > .obs-body { flex: 1 1 400px; max-width: 700px; }
+
+/* The margin record, in PROBNAYA's voice: the date (on the index, the way to the
+   piece's own sheet) and who it is from. A role, when there is one, is a quiet
+   third line; it gives no one a different place or face. */
+.obs-date {
+  flex: 0 0 auto; align-self: flex-start; margin: 0;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; line-height: 1.4; color: var(--ink);
+}
+a.obs-date { border-bottom: 1px solid var(--faint-line); padding-bottom: 4px; }
+a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
+.obs-from {
+  flex: 1 1 140px; display: flex; flex-direction: column; gap: 5px; margin: 0;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; line-height: 1.4;
+}
+.obs-from > span:first-child { color: var(--body-text); }
+.obs-from-name { color: var(--ink); text-transform: uppercase; overflow-wrap: anywhere; }
+.obs-role { color: var(--mid); text-transform: uppercase; overflow-wrap: anywhere; }
+
+/* What arrived from elsewhere is laid on its own sheet, inside a hairline. */
+.obs-sheet {
+  background: var(--sheet); border: 1px solid var(--faint-line);
+  padding: clamp(20px, 2.2vw, 28px) clamp(18px, 2.4vw, 30px);
+}
 
 /* A title, when the sender gives one, is the first line of their material: same
-   face, same column, a little heavier. It is not a PROBNAYA heading. */
+   face, a little heavier. It is not a PROBNAYA heading. */
 .obs-title {
-  margin: 0 0 0.75em 0; font-weight: 400; font-size: 28px; line-height: 1.24; letter-spacing: -0.012em;
-  color: var(--ink); max-width: 24em; text-wrap: balance;
+  margin: 0 0 0.75em 0; font-weight: 400; font-size: clamp(22px, 1.6vw + 9.1px, 26px); line-height: 1.24;
+  letter-spacing: -0.012em; color: var(--ink); max-width: 24em; text-wrap: balance; overflow-wrap: break-word;
 }
 
-/* The signature: a short drawn stroke, then the name in the sender's own face.
-   It sits against the words it signs, never in the margin. */
+/* One reading scale for every length. Paragraphs keep the sender's own line
+   breaks and spacing. */
+.obs-text p, .obs-text .obs-h, .obs-list li {
+  font-size: clamp(17px, 1.05vw + 8.6px, 19px); letter-spacing: -0.004em; color: var(--ink);
+  white-space: pre-wrap; overflow-wrap: break-word;
+}
+.obs-text p { margin: 0 0 0.9em 0; font-weight: 300; line-height: 1.56; max-width: 34em; }
+.obs-text .obs-h { margin: 1.7em 0 0.55em 0; font-weight: 500; line-height: 1.34; letter-spacing: -0.008em; max-width: 34em; }
+.obs-text > .obs-h:first-child { margin-top: 0; }
+.obs-list { list-style: none; margin: 0 0 1.3em 0; padding: 0; display: flex; flex-direction: column; gap: 10px; max-width: 34em; }
+.obs-list li { display: flex; align-items: flex-start; gap: 14px; font-weight: 300; line-height: 1.5; }
+.obs-list li::before {
+  content: ""; flex: 0 0 auto; width: 7px; height: 7px; margin-top: 0.56em; border: 1px solid var(--faint-line);
+}
+.obs-rule { border: 0; height: 1px; background: var(--faint-line); margin: 1.9em 0 1.5em 0; max-width: 34em; }
+
+/* Images, as sent: never cropped, never enlarged past their own pixels, and a
+   tall one never taller than the window. One wide image takes the column; one
+   upright or square image stands at a photograph's width; several share rows. */
+.obs-things { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px; margin: 0 0 24px 0; }
+.obs-thing {
+  margin: 0; min-width: 0; flex: 0 1 var(--basis);
+  max-width: min(var(--maxw), var(--w), calc(88vh * var(--r)));
+}
+.obs-things--wide .obs-thing { --basis: 640px; --maxw: 100%; }
+.obs-things--upright .obs-thing { --basis: 400px; --maxw: 78%; }
+.obs-things--several .obs-thing { --basis: 190px; --maxw: 100%; }
+.obs-thing img {
+  display: block; width: 100%; height: auto; min-height: 24px;
+  border: 1px solid var(--faint-line); background: var(--sheet);
+}
+.obs-thing figcaption { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding-top: 8px; }
+.obs-caption {
+  font-size: clamp(14px, 0.45vw + 10.6px, 15px); font-weight: 300; line-height: 1.45; color: var(--body-text);
+  white-space: pre-wrap; overflow-wrap: break-word;
+}
+.obs-open { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--mid); }
+.obs-open:hover { color: var(--blue); }
+
+/* The signature: a short drawn stroke, then the name in the sender's own face,
+   against the words it signs. */
 .obs-sender {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px;
-  margin: 26px 0 0 0; font-size: 15px; line-height: 1.4;
+  margin: 26px 0 0 0; font-size: clamp(14px, 0.45vw + 10.6px, 15px); line-height: 1.4;
 }
-.obs-sender::before {
-  content: ""; align-self: center; width: 18px; height: 1px; background: var(--ink); flex-shrink: 0;
-}
+.obs-sender::before { content: ""; align-self: center; width: 18px; height: 1px; background: var(--ink); flex-shrink: 0; }
 .obs-name { font-weight: 400; color: var(--ink); }
-.obs-context { font-weight: 300; color: var(--mid); }
+.obs-context { font-weight: 300; color: var(--body-text); }
 .obs-sender.is-unsigned .obs-name { color: var(--mid); }
 .obs-sender.is-unsigned::before { background: var(--faint); }
 
-/* A later addition by the same sender: a second row of the same grid, dated in
-   the margin, set in the same voice. */
-.obs-margin--addition, .obs-body--addition { margin-top: 34px; }
-.obs-body--addition .obs-text p { color: var(--body-text); }
-
-/* Things that arrived from elsewhere. */
-.obs-thing { margin: 0 0 24px 0; }
-.obs-thing img {
-  display: block; width: 100%; height: auto;
-  border: 1px solid var(--faint-line); background: var(--sheet);
+/* One Observation on its own sheet: the way back, the piece, what PROBNAYA did
+   with it, its address, and the pieces published either side. */
+.obs-sheet-bar {
+  display: flex; flex-wrap: wrap; gap: 10px 24px; justify-content: space-between; align-items: baseline;
+  padding-bottom: clamp(18px, 2.4vw, 26px); border-bottom: 1px solid var(--ink);
 }
-.obs-thing-link { display: block; cursor: zoom-in; }
-.obs-thing-link:focus-visible { outline: 1px solid var(--blue); outline-offset: 3px; }
-.obs-thing-open { padding-top: 8px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; }
-.obs-thing-open a { color: var(--faint); }
-.obs-thing-open a:hover { color: var(--blue); }
-.obs-thing--photograph { max-width: 400px; }
-.obs-thing--screenshot { max-width: 640px; }
-.obs-thing--file {
-  border: 1px solid var(--faint-line); background: var(--sheet); max-width: 640px;
+.obs-back { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--mid); }
+.obs-back:hover { color: var(--blue); }
+.obs-sheet-bar p { margin: 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--body-text); }
+.obs-sheet-foot {
+  display: flex; flex-wrap: wrap; gap: 10px 24px; justify-content: space-between; align-items: baseline;
+  border-top: 1px solid var(--ink); padding: 14px 0 26px;
 }
-.obs-thing--file figcaption {
-  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; color: var(--mid);
-  padding: 9px 16px; border-bottom: 1px solid var(--border);
-}
-/* A text file keeps its own monospace and its line structure. Each line wraps
-   under its own text, never under the date, so nothing is hidden at any width. */
-.obs-file-lines {
-  padding: 14px 16px 16px;
-  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.75; color: var(--ink);
-}
-.obs-file-line { display: grid; grid-template-columns: 11ch 1fr; column-gap: 1.2ch; }
-.obs-file-line span:last-child { overflow-wrap: anywhere; }
+.obs-sheet-foot p { margin: 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; line-height: 1.5; color: var(--mid); }
+.obs-sheet-foot .obs-address { color: var(--faint); overflow-wrap: anywhere; }
+.obs-neighbours { display: flex; flex-wrap: wrap; column-gap: 24px; border-top: 1px solid var(--faint-line); }
+.obs-neighbour { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 9px; padding: 20px 0 22px; }
+.obs-neighbour:hover { background: var(--hover-bg); }
+.obs-neighbour-dir { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--body-text); }
+.obs-neighbour-name { font-size: 15px; font-weight: 400; }
+.obs-neighbour-date { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--mid); }
+.obs-neighbours-rule { flex: 0 0 1px; align-self: stretch; background: var(--faint-line); }
 
 /* Sending: one quiet entry after the published sequence, in PROBNAYA's frame.
    What the sender types is set in the face it would be read in. */
@@ -1028,22 +1084,16 @@ p { text-wrap: pretty; }
   .record-row { grid-template-columns: 1fr; gap: 10px; }
   .record-row .status { text-align: left; }
 
-  /* Observations: the margin folds above each piece, so PROBNAYA's date is still
-     read first and still apart from the words it dates. */
-  .obs-sequence { padding-top: 12px; }
-  .observation { grid-template-columns: 1fr; padding: 38px 0 44px 0; }
-  .observation + .observation::before { width: 48px; }
+  /* Observations: the page keeps the design's own frame. The margin and the
+     sheet already wrap by width; below 760px only the way to send moves, from
+     the margin to beneath the heading. */
+  .observations-page { padding: clamp(22px, 5.4vw, 60px) 18px 40px; }
+  .obs-send-link--margin { display: none; }
+  .obs-send-link--main { display: inline-block; }
   .observation, .obs-send { scroll-margin-top: calc(var(--header-h-mobile) + 8px); }
-  .obs-margin { flex-direction: row; flex-wrap: wrap; gap: 6px 18px; padding: 0 0 18px 0; }
-  .obs-published, .obs-provenance, .obs-from { flex-direction: row; gap: 8px; font-size: 9px; }
-  .obs-text p { font-size: 18px; line-height: 1.58; }
-  .obs-title { font-size: 23px; }
-  .obs-sender { margin-top: 20px; font-size: 14px; }
-  .obs-margin--addition { margin-top: 26px; padding-bottom: 12px; }
-  .obs-body--addition { margin-top: 0; }
-  .obs-thing--photograph { max-width: 78%; }
-  .obs-file-lines { font-size: 11.5px; line-height: 1.6; padding: 12px 12px 14px; }
-  .obs-file-line + .obs-file-line { margin-top: 4px; }
+  /* Stacked, the pieces either side are divided by a rule across, not down. */
+  .obs-neighbours-rule { display: none; }
+  .obs-neighbours-rule + .obs-neighbour { border-top: 1px solid var(--faint-line); }
   .obs-form input[type="text"], .obs-form input[type="email"] { font-size: 16px; }
   .obs-send-grid { grid-template-columns: 1fr; row-gap: 24px; padding-top: 24px; }
   .obs-form textarea { font-size: 18px; }
@@ -1053,12 +1103,6 @@ p { text-wrap: pretty; }
   .observations-band .title { grid-column: 1; grid-row: 1; font-size: 24px; }
   .observations-band .desc { grid-column: 1; grid-row: 2; font-size: 16px; }
   .observations-band .read { grid-column: 1; grid-row: 3; text-align: left; margin-top: 14px; }
-  .obs-opening { grid-template-columns: 1fr; padding: 26px 0 18px 0; }
-  .obs-opening-from { padding-bottom: 12px; }
-  .obs-opening h1 { font-size: 40px; }
-  .obs-opening-by { grid-column: 1; }
-  .obs-opening + .obs-sequence { padding-top: 20px; }
-  .obs-plate { height: 340px; margin-bottom: 28px; }
 }
 
 /* The descriptor steps aside while the header needs its width. With four links and

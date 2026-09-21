@@ -1,41 +1,32 @@
-// Observations before the first publication.
+// The field above the Observations sequence.
 //
-// While the sequence holds no published observation, a field of short strokes
-// stands in the reading column. Every stroke is aligned to a field set up by two
+// A field of short strokes stands in the reading column, above what has been
+// published. Every stroke is aligned to a field set up by two
 // sources that stay outside the figure and are never drawn. They go round it in
 // five and eight hours on the wall clock, and the figure is recomputed every few
 // seconds, so it looks still and is different when you come back. Where the field
 // is weakest the strokes are withheld, leaving an opening that drifts over the
 // day. The blue stroke is the first place in the column, where reading begins.
 //
-// The figure is mounted only when the sequence has no <li>, so publishing the
-// first observation removes it without any other edit.
+// It draws into the page's own <canvas data-field>; a page without one is left alone.
 (function () {
   'use strict';
 
-  const sequence = document.querySelector('.obs-sequence');
-  const opening = document.querySelector('.obs-opening');
-  if (!sequence || !opening || sequence.querySelector('li') || typeof Apparatus === 'undefined') return;
+  const canvas = document.querySelector('.obs-plate canvas[data-field]');
+  const main = document.querySelector('.obs-opening-main');
+  if (!canvas || !main || typeof Apparatus === 'undefined') return;
 
   const { BLUE, MID } = Apparatus;
   const PERIOD_A = 5 * 3600, PERIOD_B = 8 * 3600; // seconds per circuit
   const WITHHELD = 0.34;                          // share of strokes withheld where the field is weakest
   const REDRAW = 4;                               // seconds between recomputations
 
-  const figure = document.createElement('div');
-  figure.className = 'obs-plate';
-  figure.setAttribute('aria-hidden', 'true');
-  const canvas = document.createElement('canvas');
-  figure.appendChild(canvas);
-  sequence.after(figure);
-
-  // The reading column at the current width, read from the opening's grid.
+  // The reading column at the current width: where the opening's heading column
+  // stands relative to the figure. When the margin folds above it, it starts at 0.
   function column(width) {
-    const style = getComputedStyle(opening);
-    const cols = style.gridTemplateColumns.split(' ').map(parseFloat);
-    if (cols.length < 2) return { mobile: true, from: 0, to: width };
-    const from = cols[0] + (parseFloat(style.columnGap) || 0);
-    return { mobile: false, from, to: Math.min(width, from + cols[1]) };
+    const from = Math.max(0, main.getBoundingClientRect().left - canvas.getBoundingClientRect().left);
+    if (from < 1) return { mobile: true, from: 0, to: width };
+    return { mobile: false, from, to: Math.min(width, from + main.getBoundingClientRect().width) };
   }
 
   function lattice(from, to, pitch) {
