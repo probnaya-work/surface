@@ -14,7 +14,7 @@ import {
 } from './constants.js';
 import { enrollmentGrantHash, generateRecoveryCodes, keyedHash, normalizeRecoveryCode, randomToken, safeEqual } from './crypto.js';
 import { AccessError, badRequest, forbidden, rateLimited, unauthorized } from './errors.js';
-import { base64url, credentialLabel, exactObject, requestEmail, webauthnResponse } from './validation.js';
+import { base64url, credentialLabel, exactObject, observationNumber, requestEmail, webauthnResponse } from './validation.js';
 
 const REFERENCE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
@@ -363,6 +363,38 @@ export class AccessService {
         recovery: recovery ? 'CODES ACTIVE' : 'NONE ACTIVE',
       },
     };
+  }
+
+  // Observations privately associated with this holder (docs/observation-ownership.md).
+  // Only public facts leave here: the archival number, the published title and day.
+  // Never an address, lookup, status history, or another holder.
+  async observations({ sessionToken, csrf }) {
+    const auth = await this.authenticated(sessionToken, csrf, { requireCsrf: true });
+    return this.store.holderObservations(auth.session.holderId, auth.now);
+  }
+
+  // Ownership is only ever the holder's explicit act. A repeated request after a
+  // lost response reports the same outcome and writes nothing new.
+  async claimObservation({ sessionToken, csrf, payload, network }) {
+    const auth = await this.authenticated(sessionToken, csrf, { requireCsrf: true });
+    await this.limit('observation-claim', auth.session.holderId, network, { limit: 20 });
+    exactObject(payload, ['number']);
+    const number = observationNumber(payload.number);
+    const audit = { id: randomUUID(), holderId: auth.session.holderId, type: 'observation-claimed', outcome: 'success', occurredAt: auth.now, networkHash: this.networkHash(network) };
+    const result = await this.store.claimObservation({ holderId: auth.session.holderId, number, now: auth.now, audit });
+    if (!result.claimed) throw new AccessError(409, 'observation_unavailable', 'THIS OBSERVATION CANNOT BE ADDED');
+    return { claimed: true };
+  }
+
+  async declineObservation({ sessionToken, csrf, payload, network }) {
+    const auth = await this.authenticated(sessionToken, csrf, { requireCsrf: true });
+    await this.limit('observation-decline', auth.session.holderId, network, { limit: 20 });
+    exactObject(payload, ['number']);
+    const number = observationNumber(payload.number);
+    const audit = { id: randomUUID(), holderId: auth.session.holderId, type: 'observation-declined', outcome: 'success', occurredAt: auth.now, networkHash: this.networkHash(network) };
+    const result = await this.store.declineObservation({ holderId: auth.session.holderId, number, now: auth.now, audit });
+    if (!result.declined) throw new AccessError(409, 'observation_unavailable', 'THIS OBSERVATION CANNOT BE CHANGED');
+    return { declined: true };
   }
 
   async presenceOptions({ sessionToken, csrf, network }) {

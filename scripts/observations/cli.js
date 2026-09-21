@@ -180,6 +180,10 @@ function cmdPublish({ positional: [number], flags }) {
   console.log('Check it, then commit these paths:');
   console.log(`  observations/${number}/  observations/ledger.json  observations.html  sitemap.xml`);
   console.log('After a deploy, the canonical address is https://probnaya.work/observations/' + number);
+  // Ownership is private and lives only in the Access database; nothing about it
+  // is written here (docs/observation-ownership.md).
+  console.log('\nOptional, after the deploy: let the sender add it to a PROBNAYA account later, from access/:');
+  console.log(`  npm run observation-owner -- register ${number}`);
 }
 
 function cmdUnpublish({ positional: [number] }) {

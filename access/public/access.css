@@ -71,6 +71,14 @@ a.button, a.text-button { display: inline-block; text-decoration: none; }
 .record-block strong { font-size: 12px; letter-spacing: .1em; }
 .add-key { grid-template-columns: minmax(190px, 360px) auto; align-items: end; margin-top: 38px; }
 .codes-body { padding-bottom: 60px; }
+.offer-lead { margin: 0 0 18px; }
+.offer-meta { margin: 18px 0 0; }
+.offer-meta .text-button { font-size: inherit; }
+.offer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 26px; }
+.offer-note { margin-top: 30px; }
+.held-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; font-size: 12px; letter-spacing: .02em; }
+.held-list a { color: inherit; }
+.held-list time { margin-left: 12px; color: var(--muted); font-size: 10px; letter-spacing: .12em; }
 .code-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 40px; margin: 0 0 38px; padding-left: 24px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; line-height: 1.7; }
 
 @media (max-width: 700px) {

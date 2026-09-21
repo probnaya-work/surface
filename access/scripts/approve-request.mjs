@@ -3,6 +3,7 @@ import { createInterface } from 'node:readline/promises';
 import { ENROLLMENT_GRANT_MS, ESTABLISHMENT_FRAGMENT } from '../lib/constants.js';
 import { enrollmentGrantHash, randomToken } from '../lib/crypto.js';
 import { readMaskedLine } from '../lib/masked-prompt.js';
+import { readContactLookup } from '../lib/operator-input.js';
 import { openOperatorStore } from '../lib/operator.js';
 
 const [reference, ...extra] = process.argv.slice(2);
@@ -40,12 +41,21 @@ async function main() {
       return;
     }
 
+    // Optional: the address the link will be mailed to. Opening the link proves it,
+    // which later lets this holder be offered Observations sent from the same
+    // address (docs/observation-ownership.md). Only a keyed lookup is stored.
+    const contactLookup = await readContactLookup({
+      profile,
+      optional: true,
+      prompt: 'Address the link will be sent to, for private Observation matching (Enter to skip; not shown): ',
+    });
+
     const token = randomToken();
     const now = Date.now();
     const expiresAt = now + ENROLLMENT_GRANT_MS;
     const result = await store.approveRequest({
       holder: { id: randomUUID(), webauthnUserId: randomToken() },
-      grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: enrollmentGrantHash(token), expiresAt, operatorNote: reference },
+      grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: enrollmentGrantHash(token), expiresAt, operatorNote: reference, contactLookup },
       now,
     });
     if (!result.issued) {
@@ -77,7 +87,9 @@ async function main() {
       '',
       '────────────────────────────────────',
       '',
-      'Send as a new message to the address in the original request notification.',
+      contactLookup
+        ? 'Send as a new message to exactly the address entered above, from the original request notification.'
+        : 'Send as a new message to the address in the original request notification.',
       'Do not reply to the internal notification.',
       '',
     ].join('\n'));
@@ -89,7 +101,7 @@ async function main() {
 try {
   await main();
 } catch (error) {
-  const safe = /^(ACCESS_ENV|A terminal is required|Credential input|Refusing to run|Production operator commands|Production DATABASE_URL|DATABASE_URL must)/.test(error.message);
+  const safe = /^(OBSERVATION_CONTACT|The address could not|The two addresses|ACCESS_ENV|A terminal is required|Credential input|Refusing to run|Production operator commands|Production DATABASE_URL|DATABASE_URL must)/.test(error.message);
   process.stderr.write(`${safe ? error.message : 'Approval failed. Check the operator credential and database availability.'}\n`);
   process.exitCode = 1;
 }

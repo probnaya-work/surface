@@ -24,6 +24,8 @@ if (!databaseURL) {
     networkHashKey: 'postgres-network-key-'.padEnd(48, 'n'),
   };
   const tables = [
+    'access_observation_declines',
+    'access_observation_ownership',
     'access_audit_events',
     'access_rate_limits',
     'access_recovery_sessions',

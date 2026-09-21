@@ -43,14 +43,14 @@ if (!databaseURL) {
     await admin.end();
   });
 
-  const FORWARD = ['002_holder_authority.sql', '003_suspension_expires_grants.sql'];
+  const FORWARD = ['002_holder_authority.sql', '003_suspension_expires_grants.sql', '004_observation_ownership.sql'];
 
   test('fresh database: migrations apply in order once, then only idempotent forward migrations re-run', { timeout: 30_000 }, async () => {
     const { sql } = await createSchema();
     assert.deepEqual(await applyMigrations(sql), ['001_access.sql', ...FORWARD]);
     assert.deepEqual(await applyMigrations(sql), FORWARD);
     const tables = await sql`SELECT table_name FROM information_schema.tables WHERE table_schema = current_schema() ORDER BY table_name`;
-    assert.equal(tables.length, 10);
+    assert.equal(tables.length, 12);
     const [{ count }] = await sql`SELECT count(*)::int AS count FROM pg_trigger WHERE tgrelid = 'access_holders'::regclass AND NOT tgisinternal`;
     assert.equal(count, 1);
   });

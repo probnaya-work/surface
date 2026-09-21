@@ -264,7 +264,7 @@ It never holds sender email addresses, mail headers or message IDs, mailbox refe
 - correspondence with senders and editorial notes
 - the original files an image was prepared from
 
-There is no database and no external object storage. At the expected scale (a few dozen pieces a year, images of a few hundred kilobytes after preparation) the repository is the simplest durable store, and every change is reviewable in a commit.
+The publishing workflow uses no database and no external object storage. The one exception is outside it: whether a published Observation has been privately added to someone's PROBNAYA account lives only in the Access database, keyed by the archival number and nothing else ([observation-ownership.md](observation-ownership.md)). At the expected scale (a few dozen pieces a year, images of a few hundred kilobytes after preparation) the repository is the simplest durable store, and every change is reviewable in a commit.
 
 **Future migration boundary.** If image weight in the repository ever becomes material, the image files can move to object storage without changing the public model. What stays fixed:
 

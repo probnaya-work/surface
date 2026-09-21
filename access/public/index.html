@@ -110,6 +110,23 @@
       </div>
     </section>
 
+    <section class="view panel" data-view="observation-offer" hidden>
+      <div class="panel-body">
+        <p class="eyebrow">OBSERVATIONS</p>
+        <p class="supporting offer-lead" data-offer-lead></p>
+        <h1 data-offer-title></h1>
+        <p class="verified offer-meta">PUBLISHED <time data-offer-date></time> · <a class="text-button" data-offer-link rel="noreferrer" target="_blank">READ ↗</a></p>
+        <p class="supporting">Add it to your account?</p>
+        <div class="offer-actions">
+          <button class="button" type="button" data-action="claim-observation">ADD TO MY ACCOUNT</button>
+          <button class="text-button" type="button" data-action="decline-observation">NOT MINE</button>
+          <button class="text-button" type="button" data-action="later-observation">NOT NOW</button>
+        </div>
+        <p class="status offer-note">Adding it changes nothing public. The page, its name, and its attribution stay as published.</p>
+        <p class="status" data-status="observation-offer" role="status"></p>
+      </div>
+    </section>
+
     <section class="view record" data-view="record" hidden>
       <button class="back" type="button" data-action="boundary">← AUTHENTICATED</button>
       <div class="record-heading">
@@ -121,6 +138,9 @@
       <section class="record-block">
         <div><span class="record-label">RECOVERY</span><strong data-recovery-state></strong></div>
         <button class="text-button" type="button" data-action="replace-codes">REPLACE CODES</button>
+      </section>
+      <section class="record-block record-observations" data-held-block hidden>
+        <div><span class="record-label">OBSERVATIONS</span><ol class="held-list" data-held></ol></div>
       </section>
       <form class="add-key" data-form="add-key" novalidate>
         <label>NEW KEY LABEL<input name="label" type="text" value="ADDITIONAL PASSKEY" maxlength="48" required autocomplete="off"></label>

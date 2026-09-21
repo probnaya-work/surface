@@ -128,6 +128,11 @@ The only credential an operator needs is the Neon connection string for the `acc
 - [ ] Every operator command prints `Connected as access_operator (production, https://access.probnaya.work)` before acting; anything else is refused.
 - [ ] Keep the database role grants (`access_runtime`, `access_operator`) under review; they are the boundary that makes grant creation an operator-only authority.
 
+## Observation ownership
+
+- [ ] Apply `004_observation_ownership.sql` before deploying a runtime that reads it; confirm `access_runtime` cannot update `contact_lookup` or `offered_holder_id`.
+- [ ] Create `OBSERVATION_CONTACT_KEY` (32 random bytes) in the password manager only. It is operator-only, never a Vercel variable, and must differ from every runtime key. It is a long-lived, recovery-critical secret: losing or changing it silently breaks matching for every earlier lookup, so it is never rotated casually. See `docs/observation-ownership.md` §2.
+
 ## Establishing access
 
 For each request in `mail@probnaya.work` (subject `ACCESS / REQUEST R–XXXXXX`), in the operator environment:

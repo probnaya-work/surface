@@ -6,7 +6,7 @@ import vm from 'node:vm';
 // Runs the real public/app.js against a minimal document, history, and fetch, so
 // the order of operations around an establishment link can be asserted exactly.
 const source = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
-const VIEWS = ['entry', 'request', 'received', 'establish', 'recovery', 'boundary', 'end', 'record', 'codes'];
+const VIEWS = ['entry', 'request', 'received', 'establish', 'recovery', 'boundary', 'end', 'record', 'codes', 'observation-offer'];
 const GRANT = 'Hk3vQ2wZ8pL0sT5yN1bR7cX4mD9fJ6aE2gU3hK5nW0q';
 
 class Element {
@@ -227,4 +227,79 @@ test('a link opened in an Access tab that is already loaded is taken and cleared
   assert.equal(p.form('establish').hidden, false);
   await p.changeHash('#record');
   assert.deepEqual(p.visible(), ['establish'], 'other fragments are left to the existing boot handling');
+});
+
+// Observation ownership (docs/observation-ownership.md): an offer interrupts the way
+// into the Interior, nothing is added without ADD TO MY ACCOUNT, and a failure to
+// read offers never blocks entry.
+function establishedPage(observations) {
+  const calls = [];
+  const p = page({
+    hash: `#establish=${GRANT}`,
+    respond: ({ method, body }) => {
+      if (method === 'GET') return [401, { ok: false }];
+      if (body.action === 'enrollment-options') return [200, { ok: true, ceremonyId: 'ceremony', options: {} }];
+      if (body.action === 'enrollment-verify') return [200, { ok: true, authenticated: true, holder: { publicId: 'PROB–H–0144' }, csrf: 'c', recoveryCodes: ['AAAA-BBBB'] }];
+      calls.push(body);
+      return observations(body, calls);
+    },
+  });
+  return { p, calls };
+}
+
+const OFFER = { number: '001', title: 'A Synthetic Title', publishedOn: '2026-09-21', basis: 'address' };
+const navigations = (p) => p.log.filter((entry) => entry.type === 'navigate').map((entry) => entry.url);
+
+test('a pending Observation is offered before the Interior and added only on ADD TO MY ACCOUNT', async () => {
+  let claimed = false;
+  const { p, calls } = establishedPage((body) => {
+    if (body.action === 'observations') return [200, { ok: true, offers: claimed ? [] : [OFFER], held: claimed ? [OFFER] : [] }];
+    if (body.action === 'observation-claim') { claimed = true; return [200, { ok: true, claimed: true }]; }
+    return [500, { ok: false }];
+  });
+  await p.flush();
+  await p.submit('establish', { label: 'PRIMARY PASSKEY' });
+  await p.click('codes-stored');
+  assert.deepEqual(p.visible(), ['observation-offer']);
+  assert.deepEqual(navigations(p), [], 'the offer is shown first');
+  assert.match(p.text(), /We found an Observation previously published from this email\./);
+  assert.match(p.text(), /A Synthetic Title/);
+  assert.deepEqual(calls.map((c) => c.action), ['observations'], 'finding the offer claims nothing');
+
+  await p.click('claim-observation');
+  const claim = p.fetches().find((entry) => entry.body.includes('observation-claim'));
+  assert.deepEqual(JSON.parse(claim.body), { action: 'observation-claim', data: { number: '001' } });
+  assert.equal(claim.headers['X-PROBNAYA-CSRF'], 'c');
+  assert.deepEqual(navigations(p), ['https://probnaya.work/interior/']);
+});
+
+test('NOT MINE declines without claiming, and NOT NOW leaves the offer in place', async () => {
+  const { p, calls } = establishedPage((body) => {
+    if (body.action === 'observations') return [200, { ok: true, offers: calls.some((c) => c.action === 'observation-decline') ? [] : [OFFER], held: [] }];
+    if (body.action === 'observation-decline') return [200, { ok: true, declined: true }];
+    return [500, { ok: false }];
+  });
+  await p.flush();
+  await p.submit('establish', { label: 'PRIMARY PASSKEY' });
+  await p.click('codes-stored');
+  await p.click('decline-observation');
+  assert.deepEqual(calls.map((c) => c.action), ['observations', 'observation-decline', 'observations']);
+  assert.equal(calls.some((c) => c.action === 'observation-claim'), false);
+  assert.deepEqual(navigations(p), ['https://probnaya.work/interior/']);
+
+  const later = establishedPage((body) => (body.action === 'observations' ? [200, { ok: true, offers: [OFFER], held: [] }] : [500, { ok: false }]));
+  await later.p.flush();
+  await later.p.submit('establish', { label: 'PRIMARY PASSKEY' });
+  await later.p.click('codes-stored');
+  await later.p.click('later-observation');
+  assert.deepEqual(later.calls.map((c) => c.action), ['observations']);
+  assert.deepEqual(navigations(later.p), ['https://probnaya.work/interior/']);
+});
+
+test('if offers cannot be read, entry continues unchanged', async () => {
+  const { p } = establishedPage(() => [500, { ok: false, error: 'ACCESS SERVICE UNAVAILABLE' }]);
+  await p.flush();
+  await p.submit('establish', { label: 'PRIMARY PASSKEY' });
+  await p.click('codes-stored');
+  assert.deepEqual(navigations(p), ['https://probnaya.work/interior/']);
 });

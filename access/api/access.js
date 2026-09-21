@@ -31,6 +31,9 @@ const ACTIONS = new Set([
   'recovery-registration-options',
   'recovery-registration-verify',
   'logout',
+  'observations',
+  'observation-claim',
+  'observation-decline',
 ]);
 
 function setCookies(res, values) {
@@ -168,6 +171,19 @@ export function createHandler({ runtime = getRuntime, logger = console } = {}) {
           result = await service.logout(sessionToken, csrf, network);
           setCookies(res, [expireCookie(config.cookies.session, config.production)]);
           return sendJSON(res, 200, { ok: true, ...result });
+        }
+        case 'observations': {
+          exactObject(body.data, [], []);
+          result = await service.observations({ sessionToken, csrf });
+          return sendJSON(res, 200, { ok: true, offers: result.offers, held: result.held });
+        }
+        case 'observation-claim': {
+          result = await service.claimObservation({ sessionToken, csrf, payload: body.data, network });
+          return sendJSON(res, 200, { ok: true, claimed: true });
+        }
+        case 'observation-decline': {
+          result = await service.declineObservation({ sessionToken, csrf, payload: body.data, network });
+          return sendJSON(res, 200, { ok: true, declined: true });
         }
         default:
           throw badRequest();

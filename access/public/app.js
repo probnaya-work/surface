@@ -2,7 +2,7 @@
   'use strict';
 
   const webauthn = window.SimpleWebAuthnBrowser;
-  const state = { csrf: null, session: null, recovery: null, returnAfterCodes: 'boundary' };
+  const state = { csrf: null, session: null, recovery: null, returnAfterCodes: 'boundary', offers: [], afterOffers: null };
   const views = new Map([...document.querySelectorAll('[data-view]')].map((node) => [node.dataset.view, node]));
 
   // Fixed destinations on the public PROBNAYA origin. The origin is written into
@@ -176,6 +176,83 @@
     return true;
   }
 
+  // Observations privately associated with this record (docs/observation-ownership.md).
+  // Offers are shown one at a time and nothing is added without ADD TO MY ACCOUNT.
+  // Reading them never blocks entry: on any failure the holder simply continues.
+  async function loadObservations() {
+    try {
+      const result = await api('observations');
+      renderHeld(result.held);
+      state.offers = result.offers;
+    } catch {
+      state.offers = [];
+    }
+    return state.offers;
+  }
+
+  function observationURL(number) {
+    return `${publicOrigin}/observations/${number}`;
+  }
+
+  function renderHeld(held) {
+    const list = document.querySelector('[data-held]');
+    list.replaceChildren(...held.map((item) => {
+      const row = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = observationURL(item.number);
+      link.rel = 'noreferrer';
+      link.textContent = item.title || 'Untitled Observation';
+      const published = document.createElement('time');
+      published.dateTime = item.publishedOn;
+      published.textContent = item.publishedOn.replaceAll('-', '.');
+      row.append(link, published);
+      return row;
+    }));
+    document.querySelector('[data-held-block]').hidden = held.length === 0;
+  }
+
+  function showOffer(next) {
+    state.afterOffers = next;
+    const offer = state.offers[0];
+    if (!offer) return next();
+    document.querySelector('[data-offer-lead]').textContent = offer.basis === 'address'
+      ? 'We found an Observation previously published from this email.'
+      : 'PROBNAYA has connected an Observation to this record.';
+    document.querySelector('[data-offer-title]').textContent = offer.title || 'Untitled Observation';
+    const date = document.querySelector('[data-offer-date]');
+    date.dateTime = offer.publishedOn;
+    date.textContent = offer.publishedOn.replaceAll('-', '.');
+    document.querySelector('[data-offer-link]').href = observationURL(offer.number);
+    status('observation-offer');
+    show('observation-offer');
+  }
+
+  async function withOffers(next) {
+    if ((await loadObservations()).length) return showOffer(next);
+    return next();
+  }
+
+  async function decideOffer(button, action) {
+    const offer = state.offers[0];
+    if (!offer) return state.afterOffers?.();
+    busy(button, true);
+    try {
+      await api(action, { number: offer.number });
+      await loadObservations();
+      showOffer(state.afterOffers);
+    } catch (error) {
+      if (error instanceof RequestError && error.status === 401) return endSession();
+      if (error instanceof RequestError && error.status === 409) {
+        await loadObservations();
+        showOffer(state.afterOffers);
+        return status('observation-offer', message(error), true);
+      }
+      await handleAuthenticatedError(error, 'observation-offer');
+    } finally {
+      busy(button, false);
+    }
+  }
+
   // Leaving Access for the Interior replaces this entry, so browser Back from
   // CURRENT does not land on a finished ceremony.
   function enterInterior() {
@@ -193,7 +270,7 @@
       state.csrf = result.csrf;
       status('entry');
       if (requested) return void (await loadSession());
-      enterInterior();
+      await withOffers(enterInterior);
     } catch (error) {
       const failedVerification = error instanceof RequestError && error.status === 400;
       status('entry', failedVerification ? MESSAGES.presentFailed : message(error), true);
@@ -428,7 +505,7 @@
       return;
     }
     // The first key is established: the holder crosses directly into the Interior.
-    if (state.returnAfterCodes === 'boundary') return enterInterior();
+    if (state.returnAfterCodes === 'boundary') return withOffers(enterInterior);
     try {
       if (!(await loadSession({ reveal: false }))) return endSession();
       if (state.returnAfterCodes === 'record') show('record');
@@ -456,6 +533,9 @@
     if (action === 'replace-codes') return replaceCodes(button);
     if (action === 'codes-stored') return codesStored();
     if (action === 'logout') return logout(button);
+    if (action === 'claim-observation') return decideOffer(button, 'observation-claim');
+    if (action === 'decline-observation') return decideOffer(button, 'observation-decline');
+    if (action === 'later-observation') return state.afterOffers?.();
   });
 
   document.querySelector('[data-form="request"]').addEventListener('submit', (event) => { event.preventDefault(); requestAccess(event.currentTarget); });
@@ -478,8 +558,8 @@
     return;
   }
 
-  loadSession().then((present) => {
-    if (present) return;
+  loadSession({ reveal: Boolean(requested) }).then((present) => {
+    if (present) return requested ? loadObservations() : withOffers(() => show('boundary'));
     show('entry');
     if (expired) status('entry', MESSAGES.sessionEnded);
   }, (error) => {

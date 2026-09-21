@@ -122,7 +122,13 @@ async function lockRequestReference(sql, reference) {
 }
 
 async function insertOperatorGrant(sql, { holderId, grant, now }) {
-  await sql`INSERT INTO access_enrollment_grants (id, holder_id, token_hash, created_at, expires_at, consumed_at, operator_note) VALUES (${grant.id}, ${holderId}, ${grant.tokenHash}, ${date(now)}, ${date(grant.expiresAt)}, null, ${grant.operatorNote || null})`;
+  // The contact column (migration 004) is named only when a lookup is recorded, so
+  // ordinary grants keep working on a database that has not been migrated yet.
+  if (grant.contactLookup) {
+    await sql`INSERT INTO access_enrollment_grants (id, holder_id, token_hash, created_at, expires_at, consumed_at, operator_note, contact_lookup) VALUES (${grant.id}, ${holderId}, ${grant.tokenHash}, ${date(now)}, ${date(grant.expiresAt)}, null, ${grant.operatorNote || null}, ${grant.contactLookup})`;
+  } else {
+    await sql`INSERT INTO access_enrollment_grants (id, holder_id, token_hash, created_at, expires_at, consumed_at, operator_note) VALUES (${grant.id}, ${holderId}, ${grant.tokenHash}, ${date(now)}, ${date(grant.expiresAt)}, null, ${grant.operatorNote || null})`;
+  }
   await insertAudit(sql, { id: grant.auditId, holderId, type: 'enrollment-grant-issued', outcome: 'operator', occurredAt: now });
 }
 
@@ -133,6 +139,30 @@ async function updateCredential(sql, credentialId, expectedCounter, item) {
       counter_anomaly_at = CASE WHEN ${item.anomaly} THEN ${date(item.lastUsedAt)} ELSE counter_anomaly_at END
     WHERE credential_id = ${credentialId} AND signature_counter = ${expectedCounter} AND revoked_at IS NULL RETURNING id
   `;
+}
+
+// Observations a holder may be offered: unclaimed, not declined by this holder, and
+// either offered to this holder by an operator or sent from an address this holder
+// verified by opening an establishment link mailed to it (a consumed grant).
+function offerable(sql, holderId) {
+  return sql`
+    o.holder_id IS NULL AND o.status IN ('awaiting_account', 'offered')
+    AND NOT EXISTS (
+      SELECT 1 FROM access_observation_declines d
+      WHERE d.observation_number = o.observation_number AND d.holder_id = ${holderId}
+    )
+    AND (
+      o.offered_holder_id = ${holderId}
+      OR (o.offered_holder_id IS NULL AND o.contact_lookup IN (
+        SELECT g.contact_lookup FROM access_enrollment_grants g
+        WHERE g.holder_id = ${holderId} AND g.consumed_at IS NOT NULL AND g.contact_lookup IS NOT NULL
+      ))
+    )`;
+}
+
+function publicObservation(row) {
+  // `date` is read as text so no time zone can move the day.
+  return { number: row.observation_number, title: row.title, publishedOn: row.published_on_text };
 }
 
 export class PostgresStore {
@@ -183,6 +213,7 @@ export class PostgresStore {
     await this.sql.begin(async (sql) => {
       await sql`INSERT INTO access_holders (id, public_id, webauthn_user_id, condition, created_at, updated_at) VALUES (${item.id}, ${item.publicId}, ${item.webauthnUserId}, ${item.condition}, ${date(item.createdAt)}, ${date(item.updatedAt)})`;
       await sql`INSERT INTO access_enrollment_grants (id, holder_id, token_hash, created_at, expires_at, consumed_at) VALUES (${grant.id}, ${grant.holderId}, ${grant.tokenHash}, ${date(grant.createdAt)}, ${date(grant.expiresAt)}, null)`;
+      if (grant.contactLookup) await sql`UPDATE access_enrollment_grants SET contact_lookup = ${grant.contactLookup} WHERE id = ${grant.id}`;
     });
   }
 
@@ -552,6 +583,144 @@ export class PostgresStore {
       if (error instanceof TransactionConflict) return false;
       throw error;
     }
+  }
+
+  // ---- Observation ownership: runtime (holder) side ----------------------
+
+  async holderObservations(holderId, now) {
+    return this.sql.begin(async (sql) => {
+      await sql`
+        UPDATE access_observation_ownership o
+        SET status = 'offered', offered_at = COALESCE(o.offered_at, ${date(now)}), updated_at = ${date(now)}
+        WHERE o.status = 'awaiting_account' AND ${offerable(sql, holderId)}`;
+      const offers = await sql`SELECT o.*, o.published_on::text AS published_on_text FROM access_observation_ownership o WHERE ${offerable(sql, holderId)} ORDER BY o.observation_number`;
+      const held = await sql`SELECT o.*, o.published_on::text AS published_on_text FROM access_observation_ownership o WHERE o.status = 'claimed' AND o.holder_id = ${holderId} ORDER BY o.observation_number`;
+      return {
+        offers: offers.map((row) => ({ ...publicObservation(row), basis: row.offered_holder_id ? 'operator' : 'address' })),
+        held: held.map(publicObservation),
+      };
+    });
+  }
+
+  // One statement decides ownership. Concurrent claims serialise on the row lock and
+  // the loser re-evaluates the predicate against the committed claim, so exactly one
+  // holder can ever own an Observation.
+  async claimObservation({ holderId, number, now, audit }) {
+    return this.sql.begin(async (sql) => {
+      const [row] = await sql`
+        UPDATE access_observation_ownership o
+        SET status = 'claimed', holder_id = ${holderId}, claimed_at = ${date(now)},
+            offered_at = COALESCE(o.offered_at, ${date(now)}), updated_at = ${date(now)}
+        WHERE o.observation_number = ${number} AND ${offerable(sql, holderId)}
+        RETURNING o.observation_number`;
+      if (row) {
+        await insertAudit(sql, audit);
+        return { claimed: true, repeated: false };
+      }
+      const [current] = await sql`SELECT status, holder_id FROM access_observation_ownership WHERE observation_number = ${number}`;
+      if (current?.status === 'claimed' && current.holder_id === holderId) return { claimed: true, repeated: true };
+      return { claimed: false };
+    });
+  }
+
+  async declineObservation({ holderId, number, now, audit }) {
+    return this.sql.begin(async (sql) => {
+      const [declined] = await sql`SELECT 1 FROM access_observation_declines WHERE observation_number = ${number} AND holder_id = ${holderId}`;
+      if (declined) return { declined: true, repeated: true };
+      const [row] = await sql`
+        SELECT o.observation_number FROM access_observation_ownership o
+        WHERE o.observation_number = ${number} AND ${offerable(sql, holderId)}
+        FOR UPDATE`;
+      if (!row) return { declined: false };
+      await sql`INSERT INTO access_observation_declines (observation_number, holder_id, declined_at) VALUES (${number}, ${holderId}, ${date(now)}) ON CONFLICT DO NOTHING`;
+      await insertAudit(sql, audit);
+      return { declined: true, repeated: false };
+    });
+  }
+
+  // ---- Observation ownership: operator side --------------------------------
+
+  async registerObservationContact({ number, contactLookup, title, publishedOn, replace = false, now, auditId }) {
+    return this.sql.begin(async (sql) => {
+      const [inserted] = await sql`
+        INSERT INTO access_observation_ownership (observation_number, contact_lookup, title, published_on, status, created_at, updated_at)
+        VALUES (${number}, ${contactLookup}, ${title}, ${publishedOn}, 'awaiting_account', ${date(now)}, ${date(now)})
+        ON CONFLICT (observation_number) DO NOTHING
+        RETURNING observation_number`;
+      if (inserted) {
+        await insertAudit(sql, { id: auditId, type: 'observation-contact-registered', outcome: 'operator', occurredAt: now });
+        return { registered: true, created: true };
+      }
+      const [existing] = await sql`SELECT * FROM access_observation_ownership WHERE observation_number = ${number} FOR UPDATE`;
+      if (existing.contact_lookup === contactLookup) {
+        await sql`UPDATE access_observation_ownership SET title = ${title}, published_on = ${publishedOn}, updated_at = ${date(now)} WHERE observation_number = ${number}`;
+        return { registered: true, created: false, status: existing.status };
+      }
+      if (!replace) return { registered: false, reason: 'different-contact', status: existing.status };
+      if (existing.status === 'claimed') return { registered: false, reason: 'claimed', status: existing.status };
+      await sql`
+        UPDATE access_observation_ownership
+        SET contact_lookup = ${contactLookup}, title = ${title}, published_on = ${publishedOn},
+            status = 'awaiting_account', holder_id = NULL, offered_holder_id = NULL, claimed_at = NULL,
+            detached_at = NULL, offered_at = NULL, updated_at = ${date(now)}
+        WHERE observation_number = ${number}`;
+      await insertAudit(sql, { id: auditId, type: 'observation-contact-replaced', outcome: 'operator', occurredAt: now });
+      return { registered: true, created: false, replaced: true };
+    });
+  }
+
+  async offerObservation({ number, publicId, title, publishedOn, now, auditId }) {
+    return this.sql.begin(async (sql) => {
+      const [target] = await sql`SELECT id, condition FROM access_holders WHERE public_id = ${publicId}`;
+      if (!target) return { offered: false, reason: 'unknown-holder' };
+      if (target.condition === 'suspended') return { offered: false, reason: 'suspended' };
+      await sql`
+        INSERT INTO access_observation_ownership (observation_number, contact_lookup, title, published_on, status, offered_holder_id, created_at, updated_at, offered_at)
+        VALUES (${number}, NULL, ${title}, ${publishedOn}, 'offered', ${target.id}, ${date(now)}, ${date(now)}, ${date(now)})
+        ON CONFLICT (observation_number) DO NOTHING`;
+      const [existing] = await sql`SELECT * FROM access_observation_ownership WHERE observation_number = ${number} FOR UPDATE`;
+      if (existing.status === 'claimed') {
+        return existing.holder_id === target.id ? { offered: true, repeated: true, status: 'claimed' } : { offered: false, reason: 'claimed' };
+      }
+      await sql`
+        UPDATE access_observation_ownership
+        SET status = 'offered', offered_holder_id = ${target.id}, holder_id = NULL, claimed_at = NULL, detached_at = NULL,
+            title = ${title}, published_on = ${publishedOn}, offered_at = ${date(now)}, updated_at = ${date(now)}
+        WHERE observation_number = ${number}`;
+      await sql`DELETE FROM access_observation_declines WHERE observation_number = ${number} AND holder_id = ${target.id}`;
+      await insertAudit(sql, { id: auditId, holderId: target.id, type: 'observation-offered', outcome: 'operator', occurredAt: now });
+      return { offered: true, repeated: false };
+    });
+  }
+
+  // Undoes a private association only. The public Observation is untouched.
+  async detachObservation({ number, now, auditId }) {
+    return this.sql.begin(async (sql) => {
+      const [existing] = await sql`SELECT * FROM access_observation_ownership WHERE observation_number = ${number} FOR UPDATE`;
+      if (!existing) return { detached: false, reason: 'unknown' };
+      if (existing.status === 'detached') return { detached: true, repeated: true };
+      await sql`
+        UPDATE access_observation_ownership
+        SET status = 'detached', offered_holder_id = NULL, detached_at = ${date(now)}, updated_at = ${date(now)}
+        WHERE observation_number = ${number}`;
+      await insertAudit(sql, { id: auditId, holderId: existing.holder_id, type: 'observation-detached', outcome: 'operator', occurredAt: now });
+      return { detached: true, repeated: false, previous: existing.status };
+    });
+  }
+
+  // Read-only operator view. Never returns a lookup value.
+  async listObservationOwnership() {
+    return this.sql.begin('read only', async (sql) => {
+      const rows = await sql`
+        SELECT o.observation_number, o.status, o.contact_lookup IS NOT NULL AS has_contact,
+          owner.public_id AS owner, offered.public_id AS offered_to,
+          (SELECT count(*)::int FROM access_observation_declines d WHERE d.observation_number = o.observation_number) AS declines
+        FROM access_observation_ownership o
+        LEFT JOIN access_holders owner ON owner.id = o.holder_id
+        LEFT JOIN access_holders offered ON offered.id = o.offered_holder_id
+        ORDER BY o.observation_number`;
+      return rows.map((row) => ({ number: row.observation_number, status: row.status, hasContact: row.has_contact, owner: row.owner, offeredTo: row.offered_to, declines: row.declines }));
+    });
   }
 
   async checkRateLimit({ key, limit, windowMs, blockMs, now }) {

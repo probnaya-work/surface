@@ -45,6 +45,12 @@ export function requestEmail(value) {
   return address;
 }
 
+// The archival address of a published Observation: three digits, 001–999.
+export function observationNumber(value) {
+  if (typeof value !== 'string' || !/^[0-9]{3}$/.test(value) || value === '000') throw badRequest();
+  return value;
+}
+
 export function base64url(value, max = 4096) {
   return boundedString(value, { max, pattern: BASE64URL });
 }

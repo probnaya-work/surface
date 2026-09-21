@@ -1,11 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { ENROLLMENT_GRANT_MS, ESTABLISHMENT_FRAGMENT } from '../lib/constants.js';
 import { enrollmentGrantHash, randomToken } from '../lib/crypto.js';
+import { readContactLookup } from '../lib/operator-input.js';
 import { openOperatorStore } from '../lib/operator.js';
 
 // Usage (from access/, with ACCESS_ENV and DATABASE_URL for the access_operator role):
 //   node scripts/create-enrollment.mjs --new 'PROB–H–…' ['R–XXXXXX']
 //   node scripts/create-enrollment.mjs --reissue 'PROB–H–…' ['R–XXXXXX']
+// Add --contact to record, privately, the address the link will be sent to
+// (read without echo or from OBSERVATION_CONTACT_FD; docs/observation-ownership.md).
 // --new creates a pending holder under an unused identifier, and refuses a request
 // reference that already produced a grant. --reissue replaces the link of a holder
 // that is still pending and expires its earlier links.
@@ -13,14 +16,24 @@ import { openOperatorStore } from '../lib/operator.js';
 // for that holder's first key: deliver it once, to the requester only, and keep
 // no other copy. Only its SHA-256 digest is stored. The optional note is the
 // request reference, never an address or other personal detail.
-const USAGE = "Usage: node scripts/create-enrollment.mjs --new|--reissue 'PROB–H–…' ['R–XXXXXX']";
-const [flag, publicId, reference, ...extra] = process.argv.slice(2);
+const USAGE = "Usage: node scripts/create-enrollment.mjs --new|--reissue 'PROB–H–…' ['R–XXXXXX'] [--contact]";
+const args = process.argv.slice(2);
+const withContact = args.includes('--contact');
+const [flag, publicId, reference, ...extra] = args.filter((arg) => arg !== '--contact');
 const mode = { '--new': 'new', '--reissue': 'reissue' }[flag];
 if (!mode || extra.length || !/^PROB–H–[0-9A-Z][0-9A-Z-]{1,30}$/.test(publicId || '')) throw new Error(USAGE);
 if (reference !== undefined && !/^R–[0-9A-HJKMNP-TV-Z]{6}$/.test(reference)) {
   throw new Error('The note must be a request reference such as R–4QX7NC');
 }
 const { config, store } = await openOperatorStore();
+let contactLookup = null;
+try {
+  if (withContact) contactLookup = await readContactLookup({ profile: config.profile, prompt: 'Address the link will be sent to (not shown): ' });
+} catch (error) {
+  await store.close();
+  process.stderr.write(`No link issued: ${/^(OBSERVATION_CONTACT|The address could not|The two addresses|No address was given|A terminal)/.test(error.message) ? error.message : 'the address could not be read'}\n`);
+  process.exit(1);
+}
 const token = randomToken();
 const now = Date.now();
 const expiresAt = now + ENROLLMENT_GRANT_MS;
@@ -29,12 +42,17 @@ try {
   result = await store.issueEnrollmentGrant({
     mode,
     holder: { id: randomUUID(), publicId, webauthnUserId: randomToken() },
-    grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: enrollmentGrantHash(token), expiresAt, operatorNote: reference },
+    grant: { id: randomUUID(), auditId: randomUUID(), tokenHash: enrollmentGrantHash(token), expiresAt, operatorNote: reference, contactLookup },
     now,
   });
+} catch {
+  // Driver errors can quote row values, including a contact lookup: never print them.
+  process.stderr.write('No link issued: the database refused the operation. Check the operator credential and database availability.\n');
+  process.exitCode = 1;
 } finally {
   await store.close();
 }
+if (!result) process.exit(1);
 if (!result.issued) {
   const reasons = {
     exists: `${publicId} already exists${result.condition ? ` (${result.condition})` : ''}. Use --reissue only for a pending holder, or choose an unused identifier.`,

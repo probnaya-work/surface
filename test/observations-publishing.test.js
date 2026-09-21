@@ -936,3 +936,65 @@ test('render: dates in the margin and in titles', () => {
   assert.equal(render.marginDate('2027-03-02T09:15:00Z'), '02 MAR 2027');
   assert.equal(render.plainDate('2027-03-02'), '2 Mar 2027');
 });
+
+// ---------------------------------------------------------------------------
+// Private ownership boundary (docs/observation-ownership.md). Ownership lives
+// only in the Access database; the Git-backed record and everything built from
+// it must never carry an address, lookup, account, or ownership state.
+// ---------------------------------------------------------------------------
+
+test('ownership: a record refuses private identity or ownership fields', () => {
+  const root = tempSite();
+  const f = FIXTURES[0];
+  publishFixture(root, f.name);
+  const file = path.join(root, 'observations', f.number, 'observation.json');
+  const original = JSON.parse(read(root, `observations/${f.number}/observation.json`));
+  for (const [key, value] of Object.entries({
+    email: 'synthetic.sender@example.test',
+    contributor_email: 'synthetic.sender@example.test',
+    contact_lookup: 'hmac-sha256:contact-v1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    account: 'PROB–H–0001',
+    owner: 'PROB–H–0001',
+    ownership: 'awaiting_account',
+    claim_token: 'x',
+    reference: 'O–ABCDEF',
+    notes: 'editorial',
+  })) {
+    fs.writeFileSync(file, JSON.stringify({ ...original, [key]: value }, null, 2));
+    const result = records.inspect(root, f.number, 'published');
+    assert.ok(result.errors.some((e) => e.includes(`unknown field "${key}"`)), key);
+  }
+});
+
+test('ownership: the public build is independent of Access and emits no private identity data', () => {
+  const root = tempSite();
+  seedAll(root);
+  build(root, { now: NOW });
+  const outputs = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.(html|json|xml|txt|md)$/.test(entry.name)) outputs.push(full);
+    }
+  };
+  walk(path.join(root, 'observations'));
+  outputs.push(path.join(root, 'observations.html'), path.join(root, 'sitemap.xml'));
+  const text = outputs.map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+  for (const needle of ['hmac-sha256', 'contact_lookup', 'contact-v1', 'awaiting_account', 'observation-owner', 'access.probnaya.work/api', 'PROB–H–', 'O–']) {
+    assert.equal(text.includes(needle), false, `public output contains ${needle}`);
+  }
+  assert.equal(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.test(text.replace(/mail@probnaya\.work/gi, '')), false, 'no email address in public output');
+  // The publishing scripts never reach the ownership system or a database.
+  for (const name of fs.readdirSync(path.join(REPO, 'scripts', 'observations'))) {
+    const source = fs.readFileSync(path.join(REPO, 'scripts', 'observations', name), 'utf8');
+    for (const needle of ['postgres', 'DATABASE_URL', 'access/lib', 'OBSERVATION_CONTACT', 'fetch(']) {
+      assert.equal(source.includes(needle), false, `${name} references ${needle}`);
+    }
+  }
+});
+
+test('ownership: private ownership files never reach the public site deployment', () => {
+  const ignore = fs.readFileSync(path.join(REPO, '.vercelignore'), 'utf8').split(/\r?\n/).map((line) => line.trim());
+  assert.ok(ignore.includes('/access/') || ignore.includes('access/') || ignore.includes('/access'), 'access/ is excluded from the public deployment');
+});

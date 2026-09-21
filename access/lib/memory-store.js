@@ -19,6 +19,8 @@ export class MemoryStore {
     this.activeRecoverySets = new Map();
     this.rateLimits = new Map();
     this.auditEvents = [];
+    this.observations = new Map();
+    this.observationDeclines = new Set();
   }
 
   async seedHolder(holder, grant) {
@@ -222,6 +224,95 @@ export class MemoryStore {
     this.sessions.set(session.tokenHash, structuredClone(session));
     this.auditEvents.push(structuredClone(audit));
     return true;
+  }
+
+  // ---- Observation ownership (mirrors postgres-store.js) --------------------
+
+  offerable(item, holderId) {
+    if (item.holderId || !['awaiting_account', 'offered'].includes(item.status)) return false;
+    if (this.observationDeclines.has(`${item.number}:${holderId}`)) return false;
+    if (item.offeredHolderId) return item.offeredHolderId === holderId;
+    return Boolean(item.contactLookup) && [...this.grants.values()].some((grant) =>
+      grant.holderId === holderId && grant.consumedAt && grant.contactLookup === item.contactLookup);
+  }
+
+  async holderObservations(holderId, now) {
+    const items = [...this.observations.values()].sort((a, b) => a.number.localeCompare(b.number));
+    for (const item of items) {
+      if (item.status === 'awaiting_account' && this.offerable(item, holderId)) Object.assign(item, { status: 'offered', offeredAt: item.offeredAt ?? now, updatedAt: now });
+    }
+    const view = (item) => ({ number: item.number, title: item.title, publishedOn: item.publishedOn });
+    return {
+      offers: items.filter((item) => this.offerable(item, holderId)).map((item) => ({ ...view(item), basis: item.offeredHolderId ? 'operator' : 'address' })),
+      held: items.filter((item) => item.status === 'claimed' && item.holderId === holderId).map(view),
+    };
+  }
+
+  async claimObservation({ holderId, number, now, audit }) {
+    const item = this.observations.get(number);
+    if (item && this.offerable(item, holderId)) {
+      Object.assign(item, { status: 'claimed', holderId, claimedAt: now, offeredAt: item.offeredAt ?? now, updatedAt: now });
+      this.auditEvents.push(structuredClone(audit));
+      return { claimed: true, repeated: false };
+    }
+    if (item?.status === 'claimed' && item.holderId === holderId) return { claimed: true, repeated: true };
+    return { claimed: false };
+  }
+
+  async declineObservation({ holderId, number, now, audit }) {
+    const key = `${number}:${holderId}`;
+    if (this.observationDeclines.has(key)) return { declined: true, repeated: true };
+    const item = this.observations.get(number);
+    if (!item || !this.offerable(item, holderId)) return { declined: false };
+    this.observationDeclines.add(key);
+    this.auditEvents.push(structuredClone(audit));
+    return { declined: true, repeated: false };
+  }
+
+  async registerObservationContact({ number, contactLookup, title, publishedOn, replace = false, now, auditId }) {
+    const existing = this.observations.get(number);
+    if (!existing) {
+      this.observations.set(number, { number, contactLookup, title, publishedOn, status: 'awaiting_account', holderId: null, offeredHolderId: null, createdAt: now, updatedAt: now, offeredAt: null, claimedAt: null, detachedAt: null });
+      this.auditEvents.push({ id: auditId, type: 'observation-contact-registered', outcome: 'operator', occurredAt: now });
+      return { registered: true, created: true };
+    }
+    if (existing.contactLookup === contactLookup) {
+      Object.assign(existing, { title, publishedOn, updatedAt: now });
+      return { registered: true, created: false, status: existing.status };
+    }
+    if (!replace) return { registered: false, reason: 'different-contact', status: existing.status };
+    if (existing.status === 'claimed') return { registered: false, reason: 'claimed', status: existing.status };
+    Object.assign(existing, { contactLookup, title, publishedOn, status: 'awaiting_account', holderId: null, offeredHolderId: null, claimedAt: null, detachedAt: null, offeredAt: null, updatedAt: now });
+    this.auditEvents.push({ id: auditId, type: 'observation-contact-replaced', outcome: 'operator', occurredAt: now });
+    return { registered: true, created: false, replaced: true };
+  }
+
+  async offerObservation({ number, publicId, title, publishedOn, now, auditId }) {
+    const target = [...this.holders.values()].find((item) => item.publicId === publicId);
+    if (!target) return { offered: false, reason: 'unknown-holder' };
+    if (target.condition === 'suspended') return { offered: false, reason: 'suspended' };
+    let existing = this.observations.get(number);
+    if (existing?.status === 'claimed') {
+      return existing.holderId === target.id ? { offered: true, repeated: true, status: 'claimed' } : { offered: false, reason: 'claimed' };
+    }
+    if (!existing) {
+      existing = { number, contactLookup: null, createdAt: now };
+      this.observations.set(number, existing);
+    }
+    Object.assign(existing, { title, publishedOn, status: 'offered', offeredHolderId: target.id, holderId: null, claimedAt: null, detachedAt: null, offeredAt: now, updatedAt: now });
+    this.observationDeclines.delete(`${number}:${target.id}`);
+    this.auditEvents.push({ id: auditId, holderId: target.id, type: 'observation-offered', outcome: 'operator', occurredAt: now });
+    return { offered: true, repeated: false };
+  }
+
+  async detachObservation({ number, now, auditId }) {
+    const existing = this.observations.get(number);
+    if (!existing) return { detached: false, reason: 'unknown' };
+    if (existing.status === 'detached') return { detached: true, repeated: true };
+    const previous = existing.status;
+    Object.assign(existing, { status: 'detached', offeredHolderId: null, detachedAt: now, updatedAt: now });
+    this.auditEvents.push({ id: auditId, holderId: existing.holderId, type: 'observation-detached', outcome: 'operator', occurredAt: now });
+    return { detached: true, repeated: false, previous };
   }
 
   async checkRateLimit({ key, limit, windowMs, blockMs, now }) {
