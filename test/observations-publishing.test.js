@@ -208,9 +208,14 @@ describe('content combinations', () => {
     assert.doesNotMatch(last, /rel="next"/);
   });
 
-  test('the index states its extent and links every date to its sheet', () => {
+  test('the index states its extent without a count and links every date to its sheet', () => {
     const html = read(root, 'observations.html');
-    assert.match(html, /<p>SENT BY OTHERS · PUBLISHED BY PROBNAYA · 7 SINCE OCT 2025<\/p>/);
+    assert.match(html, /<p>SENT BY OTHERS · PUBLISHED BY PROBNAYA · PUBLISHED SINCE OCT 2025<\/p>/);
+    // The total number of publications is never displayed, in words or digits.
+    const extent = /BEGIN GENERATED: observations-extent[^>]*-->([\s\S]*?)<!-- END GENERATED/.exec(html)[1];
+    assert.doesNotMatch(extent, /\b(7|SEVEN)\b|\d+\s+(SINCE|OBSERVATIONS?|PIECES?|PUBLISHED)/i);
+    const visible = html.replace(/<(script|style)[\s\S]*?<\/\1>/g, '').replace(/<[^>]+>/g, ' ');
+    assert.doesNotMatch(visible, /\b7\s+(SINCE|OBSERVATIONS?|PIECES?)\b/i);
     for (const f of FIXTURES) assert.match(html, new RegExp(`<a class="obs-date" href="/observations/${f.number}">`));
   });
 

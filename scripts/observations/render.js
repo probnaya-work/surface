@@ -228,13 +228,14 @@ function renderSequence(items) {
   return items.map((item) => renderObservation(item, { on: 'index' })).join('\n');
 }
 
-// The extent of the sequence, stated before it is read. An archive says how
-// much of it there is; it does not count views.
+// The extent of the sequence, stated before it is read: since when, taken from
+// the earliest published Observation. The total number of publications is never
+// shown here or anywhere else (docs/observations-publishing.md §6).
 function renderExtent(items) {
   const by = 'SENT BY OTHERS · PUBLISHED BY PROBNAYA';
   if (!items.length) return `<p>${by}</p>`;
   const first = marginDate(items[0].record.published_at).slice(3);
-  return `<p>${by} · ${items.length} SINCE ${first}</p>\n<p>NOTHING IS WITHHELD HERE. EACH DATE OPENS ITS PIECE ON ITS OWN SHEET.</p>`;
+  return `<p>${by} · PUBLISHED SINCE ${first}</p>\n<p>NOTHING IS WITHHELD HERE. EACH DATE OPENS ITS PIECE ON ITS OWN SHEET.</p>`;
 }
 
 // --- one Observation on its own sheet ----------------------------------------

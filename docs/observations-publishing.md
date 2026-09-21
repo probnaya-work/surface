@@ -189,6 +189,8 @@ npm run observation:publish -- <number> --reissue           # only for a withdra
 
 Publishing validates the draft again and refuses if anything is wrong. As a final collision check, it refuses a number that is published or listed in the ledger. A withdrawn number is accepted only with `--reissue`, and only for the same Observation returning. It then records the number in `observations/ledger.json`, sets `status` and `published_at`, moves the directory from `observations/_drafts/` to `observations/`, and rebuilds the index, the sheet pages, and the sitemap. Nothing else changes. The text and images are never modified. Sheets are ordered earliest first by `published_at`, then by number; a number never changes when others are added, withdrawn, or reordered.
 
+The index states its extent as `SENT BY OTHERS · PUBLISHED BY PROBNAYA · PUBLISHED SINCE <MON YYYY>`, with the month and year taken from the earliest published Observation. The total number of publications is never displayed, on the index or anywhere else. Like the archival number, a count is not part of the interface.
+
 Then:
 
 1. Serve the site locally (the `probnaya-static` launch configuration, or `node .claude/dev-server.js`) and look at the result. Check the browser console.
