@@ -45,7 +45,7 @@ surface: api/observations.js
 mail@probnaya.work — Gmail filter: OBSERVATIONS/RECEIVED
    │  REVIEW → KEEP or DECLINE, or publish
    ▼
-Local branch: hand edit observations.html + assets/observations/<slug>.<ext>
+Local branch: hand edit observations.html + assets/observations/<slug>.<ext>   (superseded 2026-09-21: publication is now the terminal workflow in docs/observations-publishing.md, and addresses are archival numbers, /observations/001)
    │  publication checklist, including media sanitisation (section 5)
    ▼
 git push main → Vercel production → probnaya.work/observations

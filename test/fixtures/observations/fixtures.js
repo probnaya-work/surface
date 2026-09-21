@@ -104,7 +104,7 @@ const TEXT_MD = [
   '',
   '# 1. A heading the sender wrote',
   '',
-  'A paragraph with *asterisks* and _underscores_ that stay exactly as typed.',
+  'A paragraph with *italic*, **bold**, and _underscores_ that stay as typed.',
   '',
   '- a first item',
   '- a second item, with an emoji 💤',
@@ -116,21 +116,22 @@ const TEXT_MD = [
   '2. with their own numbers',
 ].join('\n');
 
-// Each fixture: the files to write, the draft spec (blocks in reading order,
+// Each fixture: a readable name (for tests only; it is never an address), its
+// archival number (900s, so they never look like real Observations), the files to write, the draft spec (blocks in reading order,
 // with paths relative to the fixture directory), and its publication date.
 const FIXTURES = [
   {
-    slug: 'fixture-text-only', date: '2025-10-07',
+    name: 'fixture-text-only', number: '901', date: '2025-10-07',
     files: { 'text.txt': TEXT_PLAIN },
     spec: { author: 'Fixture Sender', context: 'fixture context line', blocks: [{ text: 'text.txt' }] },
   },
   {
-    slug: 'fixture-image-only', date: '2025-10-07',
+    name: 'fixture-image-only', number: '902', date: '2025-10-07',
     images: { 'portrait.png': [900, 1600] },
     spec: { blocks: [{ image: 'portrait.png', alt: 'FIXTURE: a synthetic portrait-format test card, a blue frame and a dark cross.' }] },
   },
   {
-    slug: 'fixture-images-only', date: '2025-11-10',
+    name: 'fixture-images-only', number: '903', date: '2025-11-10',
     images: { 'landscape.png': [1600, 1000], 'square.png': [1000, 1000], 'tall.png': [600, 2400] },
     spec: {
       author: 'F. S.',
@@ -142,7 +143,7 @@ const FIXTURES = [
     },
   },
   {
-    slug: 'fixture-image-then-text', date: '2025-12-02',
+    name: 'fixture-image-then-text', number: '904', date: '2025-12-02',
     files: { 'text.txt': 'FIXTURE. Not a real Observation.\n\nOne paragraph under one wide image, written inside PROBNAYA.' },
     images: { 'wide.png': [1440, 860] },
     spec: {
@@ -151,13 +152,13 @@ const FIXTURES = [
     },
   },
   {
-    slug: 'fixture-text-then-image', date: '2025-12-20',
+    name: 'fixture-text-then-image', number: '905', date: '2025-12-20',
     files: { 'text.txt': 'FIXTURE. Not a real Observation.\n\nThis text was declared first, so it stands above the image.' },
     images: { 'square.png': [1000, 1000] },
     spec: { author: 'F. S.', blocks: [{ text: 'text.txt' }, { image: 'square.png', alt: 'FIXTURE: a synthetic square test card below the text.' }] },
   },
   {
-    slug: 'fixture-interleaved', date: '2026-01-29',
+    name: 'fixture-interleaved', number: '906', date: '2026-01-29',
     files: { 'intro.md': TEXT_MD, 'after.txt': 'FIXTURE. A second text block, between the images.' },
     images: { 'a.png': [1600, 1200], 'b.png': [1200, 1600], 'c.png': [1200, 800] },
     spec: {
@@ -172,7 +173,7 @@ const FIXTURES = [
     },
   },
   {
-    slug: 'fixture-small-original', date: '2026-02-19',
+    name: 'fixture-small-original', number: '907', date: '2026-02-19',
     files: { 'text.txt': 'FIXTURE. Not a real Observation.\n\nThe image below is 240 × 160 pixels and must not be enlarged.' },
     images: { 'small.png': [240, 160] },
     spec: { blocks: [{ text: 'text.txt' }, { image: 'small.png', alt: 'FIXTURE: a very small synthetic test card.' }] },
@@ -186,7 +187,7 @@ function materialise(fixture, dir) {
   for (const [name, text] of Object.entries(fixture.files || {})) fs.writeFileSync(path.join(dir, name), text);
   for (const [name, [w, h]] of Object.entries(fixture.images || {})) fs.writeFileSync(path.join(dir, name), makePng(w, h));
   return {
-    ...fixture.spec, slug: fixture.slug,
+    ...fixture.spec, number: fixture.number,
     blocks: fixture.spec.blocks.map((b) => (b.text ? { text: path.join(dir, b.text) } : { ...b, image: path.join(dir, b.image) })),
   };
 }
@@ -203,8 +204,8 @@ if (require.main === module) {
   const workflow = require(path.join(repo, 'scripts/observations/workflow.js'));
   const sources = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'obs-fixture-src-'));
   for (const f of FIXTURES) {
-    workflow.createDraft(target, materialise(f, path.join(sources, f.slug)));
-    workflow.publish(target, f.slug, { date: f.date });
+    workflow.createDraft(target, materialise(f, path.join(sources, f.name)));
+    workflow.publish(target, f.number, { date: f.date });
   }
   console.log(`Seeded ${FIXTURES.length} FIXTURE Observations into ${target}.`);
 }

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Observations OG image source</title>
+<!--
+  Source of assets/og-observations-1200x630.png, the one social-sharing image for
+  /observations and every /observations/<number>. Not deployed (scripts/ is in
+  .vercelignore). Open it through any local server, wait for "ready", and save the
+  canvas as PNG (window.ogPNG() returns the data URL).
+
+  It carries no contributor name, title, number, quotation, or image: only the
+  section's own frame. Everything that matters stays inside the central 630 × 630,
+  so a square crop keeps the name, and a 2:1 crop (X) loses only the edges.
+  The field is the one on /observations (js/observations-field.js), drawn at a
+  fixed instant so every render is identical.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: #D2D5DA; }
+  canvas { display: block; width: 1200px; height: 630px; }
+  p { font: 12px 'Geist Mono', monospace; margin: 8px; }
+</style>
+</head>
+<body>
+<canvas id="og" width="1200" height="630"></canvas>
+<p id="state">loading fonts…</p>
+<script>
+(async function () {
+  'use strict';
+  // Tokens from css/style.css.
+  const INK = '#16181C', PAPER = '#EFF0F2', BLUE = '#2233CC', MID = '#767B84', BODY = '#3B3E45';
+  const W = 1200, H = 630;
+  const COL = 300;            // the reading column's left edge: the square crop starts at 285
+  const COL_W = 600;
+
+  await Promise.all([
+    document.fonts.load("500 100px 'Archivo'"),
+    document.fonts.load("600 26px 'Archivo'"),
+    document.fonts.load("400 17px 'Geist Mono'"),
+  ]);
+
+  const c = document.getElementById('og');
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = PAPER;
+  ctx.fillRect(0, 0, W, H);
+
+  function text(str, x, y, font, color, spacing) {
+    ctx.font = font;
+    ctx.fillStyle = color;
+    ctx.letterSpacing = spacing || '0px';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(str, x, y);
+    ctx.letterSpacing = '0px';
+  }
+
+  // The brand, as in the site header: the mark (32-unit box) and the name.
+  const s = 26 / 32, bx = COL, by = 78;
+  ctx.strokeStyle = INK; ctx.fillStyle = INK; ctx.lineWidth = 2 * s;
+  ctx.strokeRect(bx + 4 * s, by + 3 * s, 20 * s, 26 * s);
+  ctx.fillRect(bx + 14 * s, by + 14 * s, 17 * s, 3 * s);
+  text('PROBNAYA', bx + 40, by + 21, "600 22px 'Archivo'", INK, '1.3px');
+
+  // PROBNAYA's margin label, beside the heading, as on the page.
+  text('FROM OUTSIDE', 80, 232, "400 16px 'Geist Mono'", BODY, '2.6px');
+  text('THE LABORATORY', 80, 258, "400 16px 'Geist Mono'", BODY, '2.6px');
+
+  // The section name and the line under it.
+  text('Observations', COL - 5, 276, "500 100px 'Archivo'", INK, '-2px');
+  text('SENT BY OTHERS · PUBLISHED BY PROBNAYA', COL, 332, "400 17px 'Geist Mono'", BODY, '2.7px');
+
+  // The ink rule that closes the opening.
+  ctx.fillStyle = INK;
+  ctx.fillRect(80, 372, W - 160, 2);
+
+  // The field, in the reading column (js/observations-field.js), at a fixed instant.
+  const PERIOD_A = 5 * 3600, PERIOD_B = 8 * 3600, WITHHELD = 0.34;
+  const fx = COL, fy = 400, fw = COL_W, fh = 180;
+  function lattice(from, to, pitch) {
+    const n = Math.max(1, Math.floor((to - from) / pitch));
+    const start = from + (to - from - (n - 1) * pitch) / 2;
+    return Array.from({ length: n }, (_, i) => start + i * pitch);
+  }
+  function around(u, w, h, out) {
+    const ww = w + out * 2, hh = h + out * 2, P = 2 * (ww + hh);
+    let d = (((u % 1) + 1) % 1) * P;
+    if (d < ww) return [d - out, -out];
+    d -= ww; if (d < hh) return [w + out, d - out];
+    d -= hh; if (d < ww) return [w + out - d, h + out];
+    d -= ww; return [-out, h + out - d];
+  }
+  // A fixed instant, so the image never changes (?t= tries another while choosing).
+  const seconds = Number(new URLSearchParams(location.search).get("t")) || 1800019940;
+  const a = around(seconds / PERIOD_A, fw, fh, 90);
+  const b = around(0.5 + seconds / PERIOD_B, fw, fh, 120);
+  const pts = [];
+  for (const y of lattice(0, fh, 24)) for (const x of lattice(0, fw, 24)) pts.push({ x, y });
+  const field = pts.map((p) => {
+    const ax = p.x - a[0], ay = p.y - a[1], bxx = b[0] - p.x, byy = b[1] - p.y;
+    const ra = ax * ax + ay * ay, rb = bxx * bxx + byy * byy;
+    const ex = ax / ra + bxx / rb, ey = ay / ra + byy / rb;
+    return { angle: Math.atan2(ey, ex), mag: Math.hypot(ex, ey) };
+  });
+  const threshold = field.map((f) => f.mag).sort((p, q) => p - q)[Math.floor(field.length * WITHHELD)];
+  const half = 6;
+  function stroke(p, angle) {
+    const cx = Math.cos(angle) * half, sy = Math.sin(angle) * half;
+    ctx.moveTo(fx + p.x - cx, fy + p.y - sy); ctx.lineTo(fx + p.x + cx, fy + p.y + sy);
+  }
+  ctx.lineCap = 'butt'; ctx.lineWidth = 1.5;
+  ctx.strokeStyle = MID; ctx.beginPath();
+  pts.forEach((p, n) => { if (n > 0 && field[n].mag >= threshold) stroke(p, field[n].angle); });
+  ctx.stroke();
+  ctx.strokeStyle = BLUE; ctx.lineWidth = 2; ctx.beginPath(); stroke(pts[0], field[0].angle); ctx.stroke();
+
+  window.ogPNG = () => c.toDataURL('image/png');
+  document.getElementById('state').textContent = 'ready';
+})();
+</script>
+</body>
+</html>

@@ -12,7 +12,7 @@ Observations is where PROBNAYA publishes things other people noticed and sent to
 |---|---|---|
 | Send form | `observations.html` (send section and inline script) | Collects the material, one optional file, an optional name and context, and an email address. Shows preparing, sending, received, and failure states. |
 | Field | `js/observations-field.js` | Draws the field in the reading column above the sequence, into the page's `<canvas data-field>`. |
-| Publishing | `scripts/observations/` | Drafts, validation, preview, publication, and the build that writes the index regions, each Observation's sheet (`observations/<slug>/index.html`), and the sitemap region. See `docs/observations-publishing.md`. |
+| Publishing | `scripts/observations/` | Drafts, validation, preview, publication, and the build that writes the index regions, each Observation's sheet (`observations/<number>/index.html`), and the sitemap region. See `docs/observations-publishing.md`. |
 | Attachment preparation | `js/observation-attachment.js` | Checks the file's content signature and, only when the file exceeds the transport budget, prepares an image to fit. |
 | Endpoint | `api/observations.js` | Validates everything again, checks content signatures, and sends one plain-text message to `mail@probnaya.work` with `Reply-To` set to the sender and the file attached. Stores nothing. |
 | Tests | `test/observations.test.js` | Endpoint behaviour with a mocked mailer. No real mail. |
@@ -170,8 +170,8 @@ Work on a local branch. **Until launch, never push real material:** the reposito
 
 1. Copy the material exactly as sent into a UTF-8 `.txt` file (or `.md`, see `docs/observations-publishing.md` §2). Keep the sender's words, paragraphs, and punctuation. Do not correct, summarise, shorten, or retitle.
 2. Create the draft with `npm run observation:new` and give the title, name, role, and context exactly as the sender gave them. A blank name is unsigned. A title and a context line appear only if the sender gave them.
-3. Choose a slug that will stay the piece's address for good, for example `what-i-do-now-is-read`.
-4. `npm run observation:validate -- <slug>` warns about anything that looks like an email address or a reference `O–`. Neither may be published without the sender's agreement.
+3. Accept the proposed archival number (`001`, `002`, …). It is the piece's permanent address and is never shown on the page (`docs/observations-publishing.md` §0).
+4. `npm run observation:validate -- <number>` warns about anything that looks like an email address or a reference `O–`. Neither may be published without the sender's agreement.
 
 ### 6.2 Media sanitisation
 
@@ -179,7 +179,7 @@ Every published file, without exception:
 
 1. **Look at the image itself before anything else.** Check for faces; names and signatures; email addresses and account names; notification banners; open tabs, window titles, and file paths; internal URLs, tickets, and chat messages from other people; QR codes and barcodes; badges and ID cards; addresses, licence plates, and house numbers; screens and documents in the background; reflections in glass and screens.
 2. **Anything unintentionally identifying goes back to the sender as a question.** Do not crop, blur, or edit silently: that edits the material. Publish only a version the sender has agreed to.
-3. **Renaming is automatic.** `observation:new` and `observation:image` copy each file to `observations/_drafts/<slug>/images/<slug>-<n>.<ext>`. The original file name is never kept.
+3. **Renaming is automatic.** `observation:new` and `observation:image` copy each file to `observations/_drafts/<number>/images/<number>-<n>.<ext>`. The original file name is never kept.
 4. **Size, if needed.** For photographs, a long edge of 2,400–3,000 px is enough. Resize before stripping metadata: `sips -Z 3000 <file>`.
 5. **Strip metadata** from the copy in the draft's `images/` directory while keeping colour and orientation (install once with `brew install exiftool`):
 
@@ -199,10 +199,10 @@ Every published file, without exception:
 
 ### 6.3 Check, publish, and deploy
 
-1. `npm run observation:preview -- <slug>` and check the Observation on its own sheet and in the index, at desktop and mobile widths, including *Open original* for images. Check the browser console for errors.
-2. `npm run observation:publish -- <slug>`, then `npm test`.
-3. Commit `observations/<slug>/`, `observations.html`, and `sitemap.xml`, for example `feat(observations): publish what-i-do-now-is-read`. Push `main` and confirm the production deployment as separate, deliberate steps.
-4. Write to the sender from `mail@probnaya.work` with the address of the piece (`https://probnaya.work/observations/<slug>`), and move their message to `OBSERVATIONS/PUBLISHED`.
+1. `npm run observation:preview -- <number>` and check the Observation on its own sheet and in the index, at desktop and mobile widths, including *Open original* for images. Check the browser console for errors.
+2. `npm run observation:publish -- <number>`, then `npm test`.
+3. Commit `observations/<number>/`, `observations.html`, and `sitemap.xml`, with `observations/ledger.json`, for example `feat(observations): publish observation 001`. Push `main` and confirm the production deployment as separate, deliberate steps.
+4. Write to the sender from `mail@probnaya.work` with the address of the piece (`https://probnaya.work/observations/<number>`), and move their message to `OBSERVATIONS/PUBLISHED`.
 
 The markup is generated from the record; there is no hand-written template to follow. The grammar (margin date and FROM, the material on its own sheet, the signature) lives in `scripts/observations/render.js`.
 
@@ -210,8 +210,8 @@ The markup is generated from the record; there is no hand-written template to fo
 
 ## 7. Additions, corrections, and withdrawal
 
-- **Correction.** Edit the record in `observations/<slug>/observation.json` (never the sender's text without their agreement), run `npm run observations:build`, commit, deploy, and reply. A dated addition by the sender is not yet part of the record format; it needs an editorial decision before it is added.
-- **Withdrawal.** The sender writes from the same address. Run `npm run observation:unpublish -- <slug>`, commit the removal of `observations/<slug>/` with `observations.html` and `sitemap.xml`, and deploy. Reply to confirm, then delete the mailbox message. Tell the sender plainly: the piece is removed from PROBNAYA, but its earlier version remains in the public repository's history and in any copies made while it was public.
+- **Correction.** Edit the record in `observations/<number>/observation.json` (never the sender's text without their agreement), run `npm run observations:build`, commit, deploy, and reply. A dated addition by the sender is not yet part of the record format; it needs an editorial decision before it is added.
+- **Withdrawal.** The sender writes from the same address. Run `npm run observation:unpublish -- <number>`, commit the removal of `observations/<number>/` with `observations.html` and `sitemap.xml`, and deploy. Reply to confirm, then delete the mailbox message. Tell the sender plainly: the piece is removed from PROBNAYA, but its earlier version remains in the public repository's history and in any copies made while it was public.
 
 ---
 

@@ -18,11 +18,11 @@ const TYPES = {
 };
 
 // The draft as it would read if it were published now. Returns { item, problems }.
-function previewItem(root, slug, { now = Date.now() } = {}) {
-  const where = records.locate(root, slug);
-  if (!where) return { item: null, problems: [`no Observation "${slug}"`] };
-  if (where === 'both') return { item: null, problems: [`"${slug}" exists both as a draft and as published`] };
-  const item = records.inspect(root, slug, where, { now });
+function previewItem(root, number, { now = Date.now() } = {}) {
+  const where = records.locate(root, number);
+  if (!where) return { item: null, problems: [`no Observation "${number}"`] };
+  if (where === 'both') return { item: null, problems: [`"${number}" exists both as a draft and as published`] };
+  const item = records.inspect(root, number, where, { now });
   const expected = (m) => where === 'draft' && /^a draft has no published_at/.test(m);
   const problems = item.errors.filter((m) => !expected(m));
   const record = item.record;
@@ -46,18 +46,18 @@ function resolveStatic(root, urlPath) {
   return candidates.find((c) => fs.existsSync(c) && fs.statSync(c).isFile()) || null;
 }
 
-function startPreview(root, slug, { port = 4177, log = console.log } = {}) {
+function startPreview(root, number, { port = 4177, log = console.log } = {}) {
   const server = http.createServer((req, res) => {
     const send = (code, type, body) => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(body); };
     let urlPath;
     try { urlPath = new URL(req.url, 'http://localhost').pathname; } catch { return send(400, 'text/plain', 'Bad request'); }
 
     // The draft's own images, from the draft directory.
-    const imagePrefix = `/observations/${slug}/images/`;
+    const imagePrefix = `/observations/${number}/images/`;
     if (urlPath.startsWith(imagePrefix)) {
-      const where = records.locate(root, slug);
-      const dir = where && records.recordDir(root, slug, where === 'both' ? 'draft' : where);
-      const rel = decodeURIComponent(urlPath.slice(`/observations/${slug}/`.length));
+      const where = records.locate(root, number);
+      const dir = where && records.recordDir(root, number, where === 'both' ? 'draft' : where);
+      const rel = decodeURIComponent(urlPath.slice(`/observations/${number}/`.length));
       if (!dir || records.safeRelative(dir, rel)) return send(404, 'text/plain; charset=utf-8', 'Not found');
       res.writeHead(200, { 'Content-Type': TYPES[path.extname(rel).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-store' });
       return fs.createReadStream(path.join(dir, rel)).pipe(res);
@@ -67,14 +67,14 @@ function startPreview(root, slug, { port = 4177, log = console.log } = {}) {
     if (page || urlPath === '/observations.html') {
       let rendered;
       try {
-        const { item, problems, published } = previewItem(root, slug);
-        if (!item && !published) return send(409, 'text/plain; charset=utf-8', `Cannot preview "${slug}":\n${problems.join('\n')}`);
+        const { item, problems, published } = previewItem(root, number);
+        if (!item && !published) return send(409, 'text/plain; charset=utf-8', `Cannot preview "${number}":\n${problems.join('\n')}`);
         rendered = plan(root, { extra: item ? [item] : [], robots: 'noindex, nofollow' });
       } catch (err) {
         return send(500, 'text/plain; charset=utf-8', err.message);
       }
       const want = page && page[1]
-        ? rendered.items.find((it) => it.slug === page[1])
+        ? rendered.items.find((it) => it.number === page[1])
         : null;
       if (page && page[1] && !want) return send(404, 'text/plain; charset=utf-8', 'Not found');
       const file = want
@@ -96,9 +96,9 @@ function startPreview(root, slug, { port = 4177, log = console.log } = {}) {
     server.once('error', reject);
     server.listen(port, '127.0.0.1', () => {
       const actual = server.address().port;
-      log(`Preview of "${slug}" (not published, noindex):`);
-      log(`  its own sheet  http://localhost:${actual}/observations/${slug}`);
-      log(`  in the index   http://localhost:${actual}/observations#${slug}`);
+      log(`Preview of "${number}" (not published, noindex):`);
+      log(`  its own sheet  http://localhost:${actual}/observations/${number}`);
+      log(`  in the index   http://localhost:${actual}/observations#${number}`);
       log('Reload after editing. Ctrl-C to stop.');
       resolve(server);
     });

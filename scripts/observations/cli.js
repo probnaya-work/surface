@@ -4,11 +4,11 @@
 // Observations from the terminal. See docs/observations-publishing.md.
 //
 //   npm run observation:new
-//   npm run observation:image     -- <slug> <file> --alt "…" [--caption "…"]
-//   npm run observation:validate  -- [<slug>]
-//   npm run observation:preview   -- <slug> [--port 4177]
-//   npm run observation:publish   -- <slug> [--date YYYY-MM-DD]
-//   npm run observation:unpublish -- <slug>
+//   npm run observation:image     -- <number> <file> --alt "…" [--caption "…"]
+//   npm run observation:validate  -- [<number>]
+//   npm run observation:preview   -- <number> [--port 4177]
+//   npm run observation:publish   -- <number> [--date YYYY-MM-DD] [--reissue]
+//   npm run observation:unpublish -- <number>
 //   npm run observations:build    [-- --check]
 //
 // Nothing here commits, pushes, deploys, or sends anything.
@@ -43,7 +43,7 @@ function parseArgs(argv) {
 function report(result, { quiet = false } = {}) {
   const where = result.where === 'published' ? records.PUBLISHED_DIR : records.DRAFTS_DIR;
   const status = result.errors.length ? 'NOT READY' : 'OK';
-  console.log(`${status}  ${result.slug}  (${where}/${result.slug})`);
+  console.log(`${status}  ${result.number}  (${where}/${result.number})`);
   for (const e of result.errors) console.log(`  error    ${e}`);
   for (const w of result.warnings) console.log(`  warning  ${w}`);
   if (!quiet && !result.errors.length && result.record) {
@@ -105,48 +105,49 @@ async function cmdNew() {
       const caption = await ask('  Caption, only if the sender gave one: ');
       blocks.push({ image: source, alt, caption });
     }
-    const firstText = blocks.find((b) => b.text);
-    const bodyText = firstText ? records.readText(firstText.text).text || null : null;
-    const suggested = workflow.suggestSlug({ title, author, bodyText });
-    const slug = (await ask(`Slug, the permanent address /observations/<slug> [${suggested}]: `)).trim() || suggested;
+    // The archival number is the permanent address, /observations/<number>. It
+    // is proposed as the next unused number and never shown on the page.
+    const suggested = records.nextNumber(ROOT);
+    const number = (await ask(`Archival number, the permanent address /observations/<number> [${suggested}]: `)).trim() || suggested;
 
     const result = workflow.createDraft(ROOT, {
-      slug, title, author, author_role: role, context, blocks,
+      number, title, author, author_role: role, context, blocks,
     });
     console.log('');
     report(result);
     console.log(`\nCreated ${path.relative(ROOT, result.dir)}/. Next:`);
-    console.log(`  npm run observation:validate -- ${slug}`);
-    console.log(`  npm run observation:preview -- ${slug}`);
-    console.log(`  npm run observation:publish -- ${slug}`);
+    console.log(`  npm run observation:validate -- ${number}`);
+    console.log(`  npm run observation:preview -- ${number}`);
+    console.log(`  npm run observation:publish -- ${number}`);
   } finally {
     io.close();
   }
 }
 
-function cmdImage({ positional: [slug, file], flags }) {
-  if (!slug || !file) throw new workflow.WorkflowError('usage: npm run observation:image -- <slug> <file> --alt "…" [--caption "…"]');
-  const { result, where, built } = workflow.addImage(ROOT, slug, {
+function cmdImage({ positional: [number, file], flags }) {
+  if (!number || !file) throw new workflow.WorkflowError('usage: npm run observation:image -- <number> <file> --alt "…" [--caption "…"]');
+  const { result, where, built } = workflow.addImage(ROOT, number, {
     source: resolveInput(file), alt: typeof flags.alt === 'string' ? flags.alt : '', caption: typeof flags.caption === 'string' ? flags.caption : undefined,
   });
   report(result);
   if (where === 'published') printBuilt(built);
 }
 
-function cmdValidate({ positional: [slug] }) {
+function cmdValidate({ positional: [number] }) {
   let results;
-  if (slug) {
-    const where = records.locate(ROOT, slug);
-    if (!where) throw new workflow.WorkflowError(`no Observation "${slug}"`);
+  if (number) {
+    const where = records.locate(ROOT, number);
+    if (!where) throw new workflow.WorkflowError(`no Observation "${number}"`);
     results = where === 'both'
-      ? records.inspectAll(ROOT).filter((r) => r.slug === slug)
-      : [records.inspect(ROOT, slug, where)];
+      ? records.inspectAll(ROOT).filter((r) => r.number === number)
+      : [records.inspect(ROOT, number, where)];
   } else {
     results = records.inspectAll(ROOT);
     if (!results.length) console.log('No Observations yet.');
   }
   for (const r of results) report(r);
-  if (!slug) {
+  if (!number) {
+    for (const issue of records.ledgerIssues(ROOT)) { console.log(`NOT READY  ledger\n  error    ${issue}`); process.exitCode = 1; }
     const check = build(ROOT, { check: true });
     if (check.changed.length) {
       console.log(`\nThe generated pages are out of date: ${check.changed.join(', ')}. Run npm run observations:build.`);
@@ -156,13 +157,13 @@ function cmdValidate({ positional: [slug] }) {
   if (results.some((r) => r.errors.length)) process.exitCode = 1;
 }
 
-async function cmdPreview({ positional: [slug], flags }) {
-  if (!slug) throw new workflow.WorkflowError('usage: npm run observation:preview -- <slug> [--port 4177]');
-  const { item, problems, published } = previewItem(ROOT, slug);
-  if (!item && !published) throw new workflow.WorkflowError(`cannot preview "${slug}":\n${problems.map((p) => `  - ${p}`).join('\n')}`);
+async function cmdPreview({ positional: [number], flags }) {
+  if (!number) throw new workflow.WorkflowError('usage: npm run observation:preview -- <number> [--port 4177]');
+  const { item, problems, published } = previewItem(ROOT, number);
+  if (!item && !published) throw new workflow.WorkflowError(`cannot preview "${number}":\n${problems.map((p) => `  - ${p}`).join('\n')}`);
   for (const p of problems) console.log(`  note     ${p}`);
   if (problems.length) console.log('  (the preview renders anyway; these must be resolved before publishing)\n');
-  await startPreview(ROOT, slug, { port: Number(flags.port) || 4177 });
+  await startPreview(ROOT, number, { port: Number(flags.port) || 4177 });
 }
 
 function printBuilt(built) {
@@ -170,23 +171,24 @@ function printBuilt(built) {
   console.log(built.changed.length ? `Rebuilt: ${built.changed.join(', ')}` : 'Pages already up to date.');
 }
 
-function cmdPublish({ positional: [slug], flags }) {
-  if (!slug) throw new workflow.WorkflowError('usage: npm run observation:publish -- <slug> [--date YYYY-MM-DD]');
-  const { result, built } = workflow.publish(ROOT, slug, { date: typeof flags.date === 'string' ? flags.date : undefined });
+function cmdPublish({ positional: [number], flags }) {
+  if (!number) throw new workflow.WorkflowError('usage: npm run observation:publish -- <number> [--date YYYY-MM-DD] [--reissue]');
+  const { result, built } = workflow.publish(ROOT, number, { date: typeof flags.date === 'string' ? flags.date : undefined, reissue: flags.reissue === true });
   report(result);
   printBuilt(built);
-  console.log(`\nPublished locally at /observations/${slug}. Nothing was committed, pushed, or deployed.`);
+  console.log(`\nPublished locally at /observations/${number}. Nothing was committed, pushed, or deployed.`);
   console.log('Check it, then commit these paths:');
-  console.log(`  observations/${slug}/  observations.html  sitemap.xml`);
-  console.log('After a deploy, the canonical address is https://probnaya.work/observations/' + slug);
+  console.log(`  observations/${number}/  observations/ledger.json  observations.html  sitemap.xml`);
+  console.log('After a deploy, the canonical address is https://probnaya.work/observations/' + number);
 }
 
-function cmdUnpublish({ positional: [slug] }) {
-  if (!slug) throw new workflow.WorkflowError('usage: npm run observation:unpublish -- <slug>');
-  const { built } = workflow.unpublish(ROOT, slug);
+function cmdUnpublish({ positional: [number] }) {
+  if (!number) throw new workflow.WorkflowError('usage: npm run observation:unpublish -- <number>');
+  const { built } = workflow.unpublish(ROOT, number);
   printBuilt(built);
-  console.log(`\n"${slug}" is a draft again in ${records.DRAFTS_DIR}/${slug}/ and is no longer in the pages.`);
-  console.log(`Commit the removal of observations/${slug}/ with observations.html and sitemap.xml.`);
+  console.log(`\n"${number}" is a draft again in ${records.DRAFTS_DIR}/${number}/ and is no longer in the pages.`);
+  console.log(`Commit the removal of observations/${number}/ with observations/ledger.json, observations.html, and sitemap.xml.`);
+  console.log(`Number ${number} is marked withdrawn and will not be given to another Observation.`);
   console.log('Its earlier version stays in the public repository history and in any copies made while it was public.');
 }
 

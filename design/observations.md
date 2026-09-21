@@ -38,7 +38,7 @@ Kept as editorial knowledge, not as rules.
 
 **From the table**
 
-- No `PROB–` mark on another person's words. The mark identifies what PROBNAYA issues.
+- No `PROB–` mark on another person's words. The mark identifies what PROBNAYA issues. (An observation's archival address, `/observations/001`, is not a mark. It is never shown in the interface; see `docs/observations-publishing.md` §0.)
 - The sender's words are never rewritten and never summarised by a generator.
 - It is allowed to be small.
 - No profiles, per-person pages, comments, reactions, or counts.
@@ -1099,7 +1099,7 @@ Questions may one day appear as an occasional editorial device: PROBNAYA might s
 - Any per-person page, per-person list, or link from an attribution.
 - Comments, replies, reactions, likes, follows, sharing counts, or rankings.
 - Tags, categories, themes, search, filters, or a "related observations" feature.
-- Numbers or `PROB–` identifiers on observations.
+- Numbers or `PROB–` identifiers on observations. (Clarified 2026-09-21: this forbids *visible* numbers and marks. Each published observation has an archival numeric address, `/observations/001`. That number is an address only, never shown on the page or in the index, never a `PROB–` form, and never reused. `O–XXXXXX` stays reserved for incoming mail. See `docs/observations-publishing.md` §0.)
 - Generated titles, summaries, digests, classifications, or suggested edits.
 - Assemblies, editions, issues, findings, clearing, or issuance to senders.
 - Questions as containers, observation periods, standpoints, or panels.

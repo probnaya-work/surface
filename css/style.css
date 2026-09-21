@@ -792,7 +792,7 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
 }
 .obs-from > span:first-child { color: var(--body-text); }
 .obs-from-name { color: var(--ink); text-transform: uppercase; overflow-wrap: anywhere; }
-.obs-role { color: var(--mid); text-transform: uppercase; overflow-wrap: anywhere; }
+.obs-role, .obs-context { color: var(--mid); text-transform: uppercase; overflow-wrap: anywhere; }
 
 /* What arrived from elsewhere is laid on its own sheet, inside a hairline. */
 .obs-sheet {
@@ -816,6 +816,12 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
 .obs-text p { margin: 0 0 0.9em 0; font-weight: 300; line-height: 1.56; max-width: 34em; }
 .obs-text .obs-h { margin: 1.7em 0 0.55em 0; font-weight: 500; line-height: 1.34; letter-spacing: -0.008em; max-width: 34em; }
 .obs-text > .obs-h:first-child { margin-top: 0; }
+/* A heading below another of the sender's headings: same face, one step down. */
+.obs-text .obs-h--sub { margin-top: 1.3em; font-size: clamp(16px, 0.9vw + 8.4px, 18px); }
+/* The sender's own emphasis. Bold takes the weight the design gives a lead line;
+   italic is the face's oblique. */
+.obs-text strong { font-weight: 500; }
+.obs-text em { font-style: italic; }
 .obs-list { list-style: none; margin: 0 0 1.3em 0; padding: 0; display: flex; flex-direction: column; gap: 10px; max-width: 34em; }
 .obs-list li { display: flex; align-items: flex-start; gap: 14px; font-weight: 300; line-height: 1.5; }
 .obs-list li::before {
@@ -846,17 +852,9 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
 .obs-open { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--mid); }
 .obs-open:hover { color: var(--blue); }
 
-/* The signature: a short drawn stroke, then the name in the sender's own face,
-   against the words it signs. */
-.obs-sender {
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px;
-  margin: 26px 0 0 0; font-size: clamp(14px, 0.45vw + 10.6px, 15px); line-height: 1.4;
-}
-.obs-sender::before { content: ""; align-self: center; width: 18px; height: 1px; background: var(--ink); flex-shrink: 0; }
-.obs-name { font-weight: 400; color: var(--ink); }
-.obs-context { font-weight: 300; color: var(--body-text); }
-.obs-sender.is-unsigned .obs-name { color: var(--mid); }
-.obs-sender.is-unsigned::before { background: var(--faint); }
+/* The material ends the sheet: no signature line follows it (the margin already
+   says who it is from), so its last block keeps no trailing space. */
+.obs-sheet > :last-child, .obs-sheet > .obs-text:last-child > :last-child { margin-bottom: 0; }
 
 /* One Observation on its own sheet: the way back, the piece, what PROBNAYA did
    with it, its address, and the pieces published either side. */
@@ -872,7 +870,6 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
   border-top: 1px solid var(--ink); padding: 14px 0 26px;
 }
 .obs-sheet-foot p { margin: 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; line-height: 1.5; color: var(--mid); }
-.obs-sheet-foot .obs-address { color: var(--faint); overflow-wrap: anywhere; }
 .obs-neighbours { display: flex; flex-wrap: wrap; column-gap: 24px; border-top: 1px solid var(--faint-line); }
 .obs-neighbour { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 9px; padding: 20px 0 22px; }
 .obs-neighbour:hover { background: var(--hover-bg); }

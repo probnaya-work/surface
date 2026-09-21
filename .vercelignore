@@ -18,6 +18,7 @@ interior/fixtures.js
 # directory only the generated page and its images are deployed; the record, the
 # text files, and anything else placed there stay in the repository only.
 observations/_drafts/
+observations/ledger.json
 observations/*/*
 !observations/*/index.html
 !observations/*/images/

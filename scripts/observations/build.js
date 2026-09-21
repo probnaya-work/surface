@@ -2,7 +2,7 @@
 
 // Writes the public pages from the published records, and nothing else:
 //   observations.html        the sequence and its extent, between GENERATED markers
-//   observations/<slug>/index.html   each Observation on its own sheet
+//   observations/<number>/index.html   each Observation on its own sheet
 //   sitemap.xml              the sheet addresses, between GENERATED markers
 // The output depends only on the repository's files, so building twice gives the
 // same bytes. Records, text, and images are only read.
@@ -61,7 +61,7 @@ function plan(root, { extra = [], robots = null, now } = {}) {
   const sitemapPath = path.join(root, SITEMAP_FILE);
   if (fs.existsSync(sitemapPath)) {
     const urls = published.length
-      ? records.sortRecords(published).map((it) => `<url><loc>${render.SITE}${render.url(it.slug)}</loc></url>`).join('\n')
+      ? records.sortRecords(published).map((it) => `<url><loc>${render.SITE}${render.url(it.number)}</loc></url>`).join('\n')
       : '';
     out.push({ file: SITEMAP_FILE, content: replaceRegion(fs.readFileSync(sitemapPath, 'utf8'), 'observations', urls, SITEMAP_FILE) });
   }
