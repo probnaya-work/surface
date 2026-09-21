@@ -2,7 +2,7 @@
 
 Observations is where PROBNAYA publishes things other people noticed and sent to it. This document is the working procedure for receiving and publishing them. The editorial model is in `design/observations.md`; the architecture decision is in `design/observations-production.md`.
 
-**Submission is not publication.** Nothing sent through the form appears anywhere until an editor deliberately edits `observations.html`, commits, and deploys.
+**Submission is not publication.** Nothing sent through the form appears anywhere until an editor deliberately creates a draft, publishes it with `npm run observation:publish`, commits, and deploys. The commands are in `docs/observations-publishing.md`.
 
 ---
 
@@ -11,12 +11,13 @@ Observations is where PROBNAYA publishes things other people noticed and sent to
 | Part | File | Does |
 |---|---|---|
 | Send form | `observations.html` (send section and inline script) | Collects the material, one optional file, an optional name and context, and an email address. Shows preparing, sending, received, and failure states. |
-| Field before the first publication | `js/observations-field.js` | While `<ol class="obs-sequence">` has no `<li>`, draws the field in the reading area. It is not mounted once the list holds an observation, so publishing the first one removes it with no other edit. |
+| Field | `js/observations-field.js` | Draws the field in the reading column above the sequence, into the page's `<canvas data-field>`. |
+| Publishing | `scripts/observations/` | Drafts, validation, preview, publication, and the build that writes the index regions, each Observation's sheet (`observations/<slug>/index.html`), and the sitemap region. See `docs/observations-publishing.md`. |
 | Attachment preparation | `js/observation-attachment.js` | Checks the file's content signature and, only when the file exceeds the transport budget, prepares an image to fit. |
 | Endpoint | `api/observations.js` | Validates everything again, checks content signatures, and sends one plain-text message to `mail@probnaya.work` with `Reply-To` set to the sender and the file attached. Stores nothing. |
 | Tests | `test/observations.test.js` | Endpoint behaviour with a mocked mailer. No real mail. |
 
-There is no database, file store, dashboard, content generator, or automatic email to senders. The mailbox message is the only copy of an unpublished submission.
+There is no database, file store, dashboard, or automatic email to senders. The only generator is the repository's own publishing build, which reads committed records. The mailbox message is the only copy of an unpublished submission.
 
 ---
 
@@ -167,16 +168,10 @@ Work on a local branch. **Until launch, never push real material:** the reposito
 
 ### 6.1 Material
 
-1. Copy the material exactly as sent. Keep the sender's words, paragraphs, and punctuation. Do not correct, summarise, shorten, or retitle.
-2. Escape `&` as `&amp;`, `<` as `&lt;`, and `>` as `&gt;`. Keep curly quotes and dashes as typed.
-3. Add a new `<li class="observation">` at the **end** of `<ol class="obs-sequence">` (earliest first), using the template in 6.4.
-4. Give it a stable `id` of the form `<published-date>-<slug>`, for example `2027-03-02-what-i-do-now-is-read`. The same value goes in the `PUBLISHED` link.
-5. Attribution:
-   - A name or initials appear identically in the margin `FROM` line and the signature.
-   - A blank name is `UNSIGNED` in the margin and `Unsigned` in the signature, with `is-unsigned` on the signature.
-   - A context line appears only if the sender gave one.
-   - A title appears only if the sender gave one.
-6. Search the new markup for `@` and for the reference `O–`. Neither may appear.
+1. Copy the material exactly as sent into a UTF-8 `.txt` file (or `.md`, see `docs/observations-publishing.md` §2). Keep the sender's words, paragraphs, and punctuation. Do not correct, summarise, shorten, or retitle.
+2. Create the draft with `npm run observation:new` and give the title, name, role, and context exactly as the sender gave them. A blank name is unsigned. A title and a context line appear only if the sender gave them.
+3. Choose a slug that will stay the piece's address for good, for example `what-i-do-now-is-read`.
+4. `npm run observation:validate -- <slug>` warns about anything that looks like an email address or a reference `O–`. Neither may be published without the sender's agreement.
 
 ### 6.2 Media sanitisation
 
@@ -184,9 +179,9 @@ Every published file, without exception:
 
 1. **Look at the image itself before anything else.** Check for faces; names and signatures; email addresses and account names; notification banners; open tabs, window titles, and file paths; internal URLs, tickets, and chat messages from other people; QR codes and barcodes; badges and ID cards; addresses, licence plates, and house numbers; screens and documents in the background; reflections in glass and screens.
 2. **Anything unintentionally identifying goes back to the sender as a question.** Do not crop, blur, or edit silently: that edits the material. Publish only a version the sender has agreed to.
-3. **Rename** the file to `assets/observations/<published-date>-<slug>.<ext>`. Never publish the original file name.
+3. **Renaming is automatic.** `observation:new` and `observation:image` copy each file to `observations/_drafts/<slug>/images/<slug>-<n>.<ext>`. The original file name is never kept.
 4. **Size, if needed.** For photographs, a long edge of 2,400–3,000 px is enough. Resize before stripping metadata: `sips -Z 3000 <file>`.
-5. **Strip metadata** while keeping colour and orientation (install once with `brew install exiftool`):
+5. **Strip metadata** from the copy in the draft's `images/` directory while keeping colour and orientation (install once with `brew install exiftool`):
 
    ```bash
    exiftool -all= -tagsfromfile @ -ICC_Profile -Orientation -overwrite_original <file>
@@ -200,77 +195,23 @@ Every published file, without exception:
 
 7. **PDFs are not published as PDFs in v1.** Publish a sanitised image of the relevant page, or the text as the material.
 8. **Text files** are published as the material or as the file object in the grammar, never as a download.
-9. Write `alt` text describing what the image shows, in plain words.
+9. Write `alt` text describing what the image shows, in plain words. It is required, and validation refuses an image without it and an image that still carries identifying metadata.
 
-### 6.3 Check and deploy
+### 6.3 Check, publish, and deploy
 
-1. Serve locally and check the new observation at desktop and mobile widths, including *Open original* for images.
-2. Check the browser console for errors.
-3. Run the test suites (section 9).
-4. Commit, for example `feat(observations): publish what-i-do-now-is-read`, push `main`, and confirm the production deployment.
-5. Write to the sender from `mail@probnaya.work` with the address of the piece (`https://probnaya.work/observations#<id>`), and move their message to `OBSERVATIONS/PUBLISHED`.
+1. `npm run observation:preview -- <slug>` and check the Observation on its own sheet and in the index, at desktop and mobile widths, including *Open original* for images. Check the browser console for errors.
+2. `npm run observation:publish -- <slug>`, then `npm test`.
+3. Commit `observations/<slug>/`, `observations.html`, and `sitemap.xml`, for example `feat(observations): publish what-i-do-now-is-read`. Push `main` and confirm the production deployment as separate, deliberate steps.
+4. Write to the sender from `mail@probnaya.work` with the address of the piece (`https://probnaya.work/observations/<slug>`), and move their message to `OBSERVATIONS/PUBLISHED`.
 
-### 6.4 Markup templates (the frozen grammar)
-
-Text, with a name and context:
-
-```html
-<li class="observation" id="2027-03-02-what-i-do-now-is-read">
-  <div class="obs-margin">
-    <a class="obs-published" href="#2027-03-02-what-i-do-now-is-read"><span>PUBLISHED</span><span>02 MAR 2027</span></a>
-    <span class="obs-from"><span>FROM</span><span>Sabine Hartmann</span></span>
-  </div>
-  <div class="obs-body">
-    <div class="obs-text">
-      <h2 class="obs-title">What I do now is read</h2>          <!-- only if the sender gave a title -->
-      <p>First paragraph as sent.</p>
-      <p>Second paragraph as sent.</p>
-    </div>
-    <p class="obs-sender"><span class="obs-name">Sabine Hartmann</span><span class="obs-context">legal translator, Vienna</span></p>
-  </div>
-</li>
-```
-
-Unsigned:
-
-```html
-    <span class="obs-from"><span>FROM</span><span>UNSIGNED</span></span>
-    …
-    <p class="obs-sender is-unsigned"><span class="obs-name">Unsigned</span></p>
-```
-
-Photograph or screenshot, before the text:
-
-```html
-    <figure class="obs-thing obs-thing--photograph">                <!-- or obs-thing--screenshot -->
-      <a class="obs-thing-link" href="assets/observations/2026-11-10-door.jpg" target="_blank" rel="noopener"><img src="assets/observations/2026-11-10-door.jpg" width="825" height="1050" alt="Describe what the image shows."></a>
-      <figcaption class="obs-thing-open"><a href="assets/observations/2026-11-10-door.jpg" target="_blank" rel="noopener">OPEN ORIGINAL ↗</a></figcaption>
-    </figure>
-```
-
-Provenance note in the margin, only for what the sender chose, for example an excerpt:
-
-```html
-    <span class="obs-provenance"><span>TEN OF 912 LINES</span><span>CHOSEN BY THE SENDER</span></span>
-```
-
-A later addition by the sender, after the first `obs-body` inside the same `<li>`:
-
-```html
-  <div class="obs-margin obs-margin--addition">
-    <span class="obs-provenance"><span>ADDED BY THE SENDER</span><span>03 MAR 2027</span></span>
-  </div>
-  <div class="obs-body obs-body--addition">
-    <div class="obs-text"><p>The addition as sent.</p></div>
-  </div>
-```
+The markup is generated from the record; there is no hand-written template to follow. The grammar (margin date and FROM, the material on its own sheet, the signature) lives in `scripts/observations/render.js`.
 
 ---
 
 ## 7. Additions, corrections, and withdrawal
 
-- **Addition or correction.** The sender writes from the same address. Add the dated addition block; never change the original text. Commit, deploy, and reply.
-- **Withdrawal.** The sender writes from the same address. Remove the `<li>` and its media, commit, and deploy. Reply to confirm, then delete the mailbox message. Tell the sender plainly: the piece is removed from PROBNAYA, but its earlier version remains in the public repository's history and in any copies made while it was public.
+- **Correction.** Edit the record in `observations/<slug>/observation.json` (never the sender's text without their agreement), run `npm run observations:build`, commit, deploy, and reply. A dated addition by the sender is not yet part of the record format; it needs an editorial decision before it is added.
+- **Withdrawal.** The sender writes from the same address. Run `npm run observation:unpublish -- <slug>`, commit the removal of `observations/<slug>/` with `observations.html` and `sitemap.xml`, and deploy. Reply to confirm, then delete the mailbox message. Tell the sender plainly: the piece is removed from PROBNAYA, but its earlier version remains in the public repository's history and in any copies made while it was public.
 
 ---
 
@@ -279,7 +220,7 @@ A later addition by the sender, after the first `obs-body` inside the same `<li>
 - [ ] Section 4 applied and verified.
 - [ ] Gmail filter and labels created (section 5).
 - [ ] One controlled real submission received, with an attachment, and then deleted.
-- [x] Launch release: `<meta name="robots" content="noindex">` removed from `observations.html`; `https://probnaya.work/observations` added to `sitemap.xml`; OBSERVATIONS in the desktop and mobile navigation; the homepage entry. The page opened with no published observations and shows the field until the first is published (section 6).
+- [x] Launch release: `<meta name="robots" content="noindex">` removed from `observations.html`; `https://probnaya.work/observations` added to `sitemap.xml`; OBSERVATIONS in the desktop and mobile navigation; the homepage entry. The page opened with no published observations (section 6).
 - [ ] After deploy: desktop, mobile, and a recognized holder's header checked in production; one test submission through production; each published sender told.
 
 ---
@@ -287,7 +228,9 @@ A later addition by the sender, after the first `obs-body` inside the same `<li>
 ## 9. Tests
 
 ```bash
-node --test test/intake.test.js test/machine-portrait.test.js test/observations.test.js
+npm test
 ```
+
+`npm test` also runs `test/observations-publishing.test.js`, which covers the publishing workflow (`docs/observations-publishing.md` §8).
 
 `test/observations.test.js` never contacts SMTP. It covers methods and content types, both size guards, every field limit, header-injection defence, the honeypot, all content signatures and refusals, file-name reduction, the largest permitted request, message construction (recipient, sender, `Reply-To`, subject, text, attachment), missing configuration, delivery failures, log hygiene, and the local outbox, including its refusal on Vercel.

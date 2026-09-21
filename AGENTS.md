@@ -34,19 +34,21 @@ The canvas figures on every page are live simulations, not decorative animations
 
 ## The mail handlers (`api/intake.js`, `api/observations.js`)
 
-Vercel serverless functions, separate from the static site. `package.json` exists for them alone; `nodemailer` is the only dependency, and nothing in the site pages uses it.
+Vercel serverless functions, separate from the static site. `package.json` exists for them and for the Observations publishing scripts (`npm run observation:*`, which use Node's standard library only); `nodemailer` is the only dependency, and nothing in the site pages uses it.
 
 Mail delivery uses Google Workspace SMTP with credentials supplied by the environment (`SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`). Never hardcode or commit credentials. The sender address must remain the authenticated account or a verified alias on it. Both handlers send only to `mail@probnaya.work`, never to the person who submitted, and log codes only, never submitted content or addresses.
 
-`api/observations.js` receives Observations. It stores nothing: the mailbox message is the editorial queue, and publication is a manual edit to `observations.html`. Its limits keep every request under the Vercel Function body limit (4.5 MB), and `js/observation-attachment.js` prepares oversized images in the browser to match. Until the first observation is published, `js/observations-field.js` draws a field in the reading area; it is not mounted once the sequence has an `<li>`. Never add storage, a database, or automatic mail to senders without an explicit decision. Working procedure, limits, the pending mail-credential change, and the publication and media-sanitisation checklist are in `docs/observations.md`. The repository is public: never commit unpublished material or sender addresses.
+`api/observations.js` receives Observations. It stores nothing: the mailbox message is the editorial queue. Publication is a deliberate terminal step: `npm run observation:new`, `:validate`, `:preview`, `:publish` (`scripts/observations/`, documented in `docs/observations-publishing.md`). Each published Observation is a committed record in `observations/<slug>/`, and the build writes its sheet page, two GENERATED regions of `observations.html`, and one of `sitemap.xml`. The approved visual source for Observations is fixed in `docs/observations-publishing.md` §0 (the first-pass design file, approved despite "superseded" in its name); never switch to another design file on your own. Never edit generated output by hand, never commit `observations/_drafts/`, and keep the publishing commands free of git, network, and deployment side effects. The endpoint's limits keep every request under the Vercel Function body limit (4.5 MB), and `js/observation-attachment.js` prepares oversized images in the browser to match. `js/observations-field.js` draws the field above the sequence. Never add storage, a database, or automatic mail to senders without an explicit decision. Working procedure, limits, the pending mail-credential change, and the publication and media-sanitisation checklist are in `docs/observations.md`. The repository is public: never commit unpublished material or sender addresses.
 
 ## Testing / verification
 
 The serverless functions have executable test suites; none of them contacts SMTP or Stripe:
 
 ```
-node --test test/intake.test.js test/machine-portrait.test.js test/observations.test.js
+npm test
 ```
+
+(`node --test test/intake.test.js test/machine-portrait.test.js test/observations.test.js test/observations-publishing.test.js`.)
 
 To exercise the Observations form locally without sending mail, set `OBSERVATIONS_DEV_OUTBOX=1` for the dev server; the endpoint then prints the message to the terminal. It refuses to do so on Vercel.
 
