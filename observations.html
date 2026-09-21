@@ -17,7 +17,11 @@
 </head>
 <body>
 
-<!-- Observations. Published observations are written into the list below.
+<!-- Observations. The extent line and the sequence below are generated from
+     observations/<slug>/observation.json by `npm run observations:build` (see
+     docs/observations-publishing.md); edit the records, never the generated
+     regions. Everything else on this page is hand-written, and the sheet pages
+     take their header, footer, and tab bar from this file.
      Sending posts to /api/observations, which delivers one message to the PROBNAYA
      mailbox. js/observations-field.js draws the field above the sequence. -->
 
@@ -58,7 +62,9 @@
       <div class="obs-opening-main">
         <h1>Observations</h1>
         <div class="obs-opening-by">
-          <p>SENT BY OTHERS · PUBLISHED BY PROBNAYA</p>
+          <!-- BEGIN GENERATED: observations-extent (npm run observations:build) -->
+<p>SENT BY OTHERS · PUBLISHED BY PROBNAYA</p>
+          <!-- END GENERATED: observations-extent -->
         </div>
         <a class="obs-send-link obs-send-link--main" href="#send">SEND AN OBSERVATION <span aria-hidden="true">→</span></a>
       </div>
@@ -71,6 +77,8 @@
       </div>
 
       <ol class="obs-sequence" aria-label="Published observations, earliest first">
+        <!-- BEGIN GENERATED: observations-sequence (npm run observations:build) -->
+        <!-- END GENERATED: observations-sequence -->
       </ol>
     </div>
 

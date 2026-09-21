@@ -4,6 +4,16 @@
   "engines": {
     "node": ">=20"
   },
+  "scripts": {
+    "observation:new": "node scripts/observations/cli.js new",
+    "observation:image": "node scripts/observations/cli.js image",
+    "observation:validate": "node scripts/observations/cli.js validate",
+    "observation:preview": "node scripts/observations/cli.js preview",
+    "observation:publish": "node scripts/observations/cli.js publish",
+    "observation:unpublish": "node scripts/observations/cli.js unpublish",
+    "observations:build": "node scripts/observations/cli.js build",
+    "test": "node --test test/intake.test.js test/machine-portrait.test.js test/observations.test.js test/observations-publishing.test.js"
+  },
   "dependencies": {
     "nodemailer": "10.0.1"
   }

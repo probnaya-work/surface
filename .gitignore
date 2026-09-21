@@ -2,3 +2,6 @@
 !.env.example
 .vercel
 node_modules
+
+# Observation drafts are unpublished material; the repository is public.
+/observations/_drafts/

@@ -14,3 +14,10 @@ assets/machine-portrait-synthetic.png
 instrument-mpa/SOURCE.json
 interior/fixtures.js
 /access/
+# Observations: drafts are never deployed. Inside a published Observation's
+# directory only the generated page and its images are deployed; the record, the
+# text files, and anything else placed there stay in the repository only.
+observations/_drafts/
+observations/*/*
+!observations/*/index.html
+!observations/*/images/
