@@ -186,6 +186,68 @@ function renderMaterial(item, { base, lazy }) {
   return out.join('\n');
 }
 
+// --- the trace ----------------------------------------------------------------
+
+// A figure of the piece drawn from its own text, in the margin. Every sentence is
+// one graduation, as tall as the sentence is long; a paragraph or list item ends
+// with a gap; a heading the sender wrote is a short mark below the line. The
+// longest sentence is PROBNAYA blue. It carries no numbers and says nothing the
+// text does not: it is the same figure for the same text, on every build.
+const TRACE = Object.freeze({ width: 184, pitch: 4, bar: 2, paraGap: 8, rowH: 44, rowGap: 12, maxWords: 48, minH: 3, maxH: 36 });
+
+function traceUnits(item) {
+  const plan = textPlan(item);
+  const units = [];
+  const sentences = (text) => text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?…])\s+(?=\S)/).filter((x) => /[\p{L}\p{N}]/u.test(x));
+  const words = (x) => x.split(' ').filter(Boolean).length;
+  for (const block of item.blocks) {
+    if (block.type !== 'text') continue;
+    for (const b of plan.parsed.get(block)) {
+      if (b.t === 'h') { units.push({ kind: 'heading' }); continue; }
+      const parts = b.t === 'list' ? b.items : b.t === 'p' ? [b.text] : [];
+      for (const part of parts) {
+        for (const x of sentences(part)) units.push({ kind: 'sentence', words: words(x) });
+        units.push({ kind: 'break' });
+      }
+    }
+  }
+  while (units.length && units[units.length - 1].kind === 'break') units.pop();
+  return units;
+}
+
+function renderTrace(item) {
+  const T = TRACE;
+  const units = traceUnits(item);
+  if (!units.some((u) => u.kind === 'sentence')) return '';
+  let longest = -1;
+  units.forEach((u, i) => { if (u.kind === 'sentence' && (longest < 0 || u.words > units[longest].words)) longest = i; });
+  const marks = [];
+  let x = 0;
+  let row = 0;
+  units.forEach((u, i) => {
+    if (u.kind === 'break') { x += T.paraGap; return; }
+    if (x + T.bar > T.width) { x = 0; row += 1; }
+    const base = row * (T.rowH + T.rowGap) + T.rowH;
+    if (u.kind === 'heading') marks.push({ x, y: base + 3, h: 5, cls: 'obs-trace-mark obs-trace-mark--heading' });
+    else {
+      const h = T.minH + (Math.min(u.words, T.maxWords) / T.maxWords) * (T.maxH - T.minH);
+      marks.push({ x, y: base - h, h, cls: i === longest ? 'obs-trace-mark obs-trace-mark--longest' : 'obs-trace-mark' });
+    }
+    x += T.pitch;
+  });
+  const height = (row + 1) * (T.rowH + T.rowGap) - T.rowGap + 8;
+  const n = (v) => (Math.round(v * 10) / 10).toString();
+  const lines = Array.from({ length: row + 1 }, (_, r) => {
+    const y = n(r * (T.rowH + T.rowGap) + T.rowH + 0.5);
+    return `<line class="obs-trace-base" x1="0" x2="${T.width}" y1="${y}" y2="${y}"/>`;
+  });
+  const rects = marks.map((m) => `<rect class="${m.cls}" x="${n(m.x)}" y="${n(m.y)}" width="${T.bar}" height="${n(m.h)}"/>`);
+  return `<div class="obs-trace" aria-hidden="true">
+<svg class="obs-trace-plot" viewBox="0 0 ${T.width} ${height}" width="${T.width}" height="${height}" focusable="false">${lines.join('')}${rects.join('')}</svg>
+<p class="obs-trace-caption">RHYTHM OF THE TEXT</p>
+</div>`;
+}
+
 // --- one Observation --------------------------------------------------------
 
 // `on`: 'index' (the date opens the sheet; the heading is h2) or 'sheet' (the
@@ -208,11 +270,12 @@ function renderObservation(item, { on }) {
     : `<h${h} class="visually-hidden">${esc(lead(r))}</h${h}>`;
 
 
+  const trace = renderTrace(item);
   const tag = on === 'index' ? 'li' : 'article';
   return `<${tag} class="observation" id="${esc(item.number)}">
 <div class="obs-margin">
 ${dateMark}
-${from}
+${from}${trace ? `\n${trace}` : ''}
 </div>
 <div class="obs-body">
 <div class="obs-sheet">
@@ -368,6 +431,6 @@ function extractChrome(indexHtml) {
 }
 
 module.exports = {
-  SITE, SHARE_IMAGE, esc, inline, textPlan, marginDate, plainDate, parseBody, renderObservation, renderSequence, renderExtent,
+  SITE, SHARE_IMAGE, TRACE, esc, inline, textPlan, traceUnits, renderTrace, marginDate, plainDate, parseBody, renderObservation, renderSequence, renderExtent,
   renderSheetPage, extractChrome, describe, lead, url,
 };

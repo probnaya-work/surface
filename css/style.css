@@ -788,6 +788,18 @@ p { text-wrap: pretty; }
 }
 .observation > .obs-body { flex: 1 1 400px; max-width: 700px; }
 
+/* The trace: a figure of the piece drawn from its own text (render.js
+   renderTrace), under who it is from. Graduations in ink, the longest sentence in
+   PROBNAYA blue, on hairline baselines. */
+.obs-trace { flex: 1 1 100%; margin: 18px 0 0 0; min-width: 0; }
+.obs-trace-plot { display: block; max-width: 100%; height: auto; }
+.obs-trace-base { stroke: var(--faint-line); stroke-width: 1; }
+.obs-trace-mark { fill: var(--ink); }
+.obs-trace-mark--longest { fill: var(--blue); }
+.obs-trace-caption {
+  margin: 8px 0 0 0; font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; color: var(--mid);
+}
+
 /* The margin record, in PROBNAYA's voice: the date (on the index, the way to the
    piece's own sheet) and who it is from. A role, when there is one, is a quiet
    third line; it gives no one a different place or face. */

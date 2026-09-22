@@ -1006,3 +1006,60 @@ test('ownership: private ownership files never reach the public site deployment'
   const ignore = fs.readFileSync(path.join(REPO, '.vercelignore'), 'utf8').split(/\r?\n/).map((line) => line.trim());
   assert.ok(ignore.includes('/access/') || ignore.includes('access/') || ignore.includes('/access'), 'access/ is excluded from the public deployment');
 });
+
+// ---------------------------------------------------------------------------
+// The trace: a figure of each piece drawn from its own text, in the margin.
+// ---------------------------------------------------------------------------
+
+describe('the trace', () => {
+  function draftWith(text, ext = 'txt') {
+    const root = tempSite();
+    const src = tempDir();
+    fs.writeFileSync(path.join(src, `t.${ext}`), text);
+    workflow.createDraft(root, { number: '950', author: 'S.', blocks: [{ text: path.join(src, `t.${ext}`) }] });
+    return records.inspect(root, '950', 'draft');
+  }
+  const figure = (html) => /<div class="obs-trace"[\s\S]*?<\/div>/.exec(html)?.[0] ?? null;
+  const marks = (fig) => [...fig.matchAll(/<rect class="([^"]+)" x="([^"]+)" y="([^"]+)" width="2" height="([^"]+)"\/>/g)]
+    .map((m) => ({ cls: m[1], x: Number(m[2]), h: Number(m[4]) }));
+
+  test('one graduation per sentence, a gap per paragraph, the longest sentence in blue', () => {
+    const item = draftWith('One two three. Four five!\n\nSix seven eight nine ten? Eleven.');
+    const ms = marks(render.renderTrace(item));
+    assert.equal(ms.length, 4);
+    assert.deepEqual(ms.map((m) => m.x), [0, 4, 16, 20], 'a paragraph break adds a gap');
+    assert.deepEqual(ms.map((m) => m.cls.includes('--longest')), [false, false, true, false]);
+    assert.ok(ms[2].h > ms[0].h && ms[0].h > ms[1].h, 'height follows sentence length');
+  });
+
+  test('a heading is a short mark below the line; list items end with gaps', () => {
+    const ms = marks(render.renderTrace(draftWith('# A heading\n\n- first item\n- second item here\n\nA closing sentence.', 'md')));
+    assert.equal(ms.filter((m) => m.cls.includes('--heading')).length, 1);
+    assert.equal(ms.length, 4);
+  });
+
+  test('the same text always gives the same figure, which says nothing in words or numbers', () => {
+    const text = 'The same words. Always the same figure.\n\nA second paragraph that runs a little longer than the first.';
+    const a = render.renderTrace(draftWith(text));
+    assert.equal(render.renderTrace(draftWith(text)), a);
+    assert.match(a, /^<div class="obs-trace" aria-hidden="true">/);
+    const visible = a.replace(/<[^>]+>/g, ' ').trim();
+    assert.equal(visible, 'RHYTHM OF THE TEXT');
+    assert.doesNotMatch(visible, /\d/);
+  });
+
+  test('a long piece wraps onto further rows within the margin width', () => {
+    const fig = render.renderTrace(draftWith(Array.from({ length: 60 }, () => 'Short one.').join(' ')));
+    assert.equal((fig.match(/<line /g) || []).length, 2);
+    for (const m of marks(fig)) assert.ok(m.x + 2 <= render.TRACE.width);
+  });
+
+  test('both the index and each sheet carry the trace; an Observation without text has none', () => {
+    const root = tempSite();
+    seedAll(root);
+    assert.ok(figure(sheet(root, 'fixture-text-only')));
+    assert.ok(figure(indexEntry(root, 'fixture-text-only')));
+    assert.equal(figure(sheet(root, 'fixture-images-only')), null);
+    assert.equal(figure(indexEntry(root, 'fixture-images-only')), null);
+  });
+});
