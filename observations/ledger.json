@@ -3,6 +3,10 @@
     "001": {
       "first_published_at": "2026-09-21",
       "withdrawn_at": null
+    },
+    "002": {
+      "first_published_at": "2026-09-22",
+      "withdrawn_at": null
     }
   }
 }
