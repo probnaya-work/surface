@@ -766,6 +766,17 @@ p { text-wrap: pretty; }
   position: relative; display: flex; flex-wrap: wrap; column-gap: 56px; row-gap: 18px;
   padding: clamp(20px, 3vw, 34px) 0; scroll-margin-top: calc(var(--header-h) + 8px);
 }
+/* Each publication stands apart: a hairline across the whole row with PROBNAYA's
+   blue mark where the margin begins, like an index mark on a scale, and room on
+   both sides of it. The first one keeps its place under the field. */
+.observation + .observation {
+  border-top: 1px solid var(--faint-line);
+  margin-top: clamp(24px, 5vw, 64px); padding-top: clamp(28px, 6vw, 88px);
+}
+.observation + .observation::before {
+  content: ''; position: absolute; top: -3px; left: 0;
+  width: 5px; height: 5px; background: var(--blue);
+}
 .obs-send { scroll-margin-top: calc(var(--header-h) + 8px); }
 
 .obs-margin { display: flex; flex-direction: column; gap: 18px; padding-top: 7px; }
