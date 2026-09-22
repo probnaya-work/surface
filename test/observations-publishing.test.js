@@ -343,15 +343,18 @@ describe('drafts are never public', () => {
 });
 
 describe('deterministic output', () => {
-  test('earliest first, then by number, whatever order they were published in', () => {
+  test('the index shows the newest first, whatever order they were published in', () => {
     const root = tempSite();
     seedAll(root, FIXTURES.map((f) => f.name).reverse());
     const html = read(root, 'observations.html');
     const order = [...html.matchAll(/<li class="observation" id="([^"]+)">/g)].map((m) => m[1]);
     assert.deepEqual(order, [
-      '901', '902',   // the same day: by number
-      '903', '904', '905', '906', '907',
+      '907', '906', '905', '904', '903',
+      '902', '901',   // the same day: the later number first
     ]);
+    assert.match(html, /aria-label="Published observations, newest first"/);
+    // The extent still dates from the earliest publication.
+    assert.match(html, /PUBLISHED SINCE OCT 2025/);
   });
 
   test('a publication instant orders pieces published on the same day', () => {
@@ -726,14 +729,14 @@ describe('archival numbers', () => {
     const src = tempDir();
     fs.writeFileSync(path.join(src, 't.txt'), 'FIXTURE later.');
     workflow.createDraft(root, { number: records.nextNumber(root), blocks: [{ text: path.join(src, 't.txt') }] });
-    workflow.publish(root, '908', { date: '2025-01-01', now: NOW }); // dated earlier than all: it reads first, and keeps 908
+    workflow.publish(root, '908', { date: '2025-01-01', now: NOW }); // dated earlier than all: it reads last (newest first), and keeps 908
     for (const f of FIXTURES.filter((x) => x.name !== 'fixture-images-only')) {
       assert.equal(JSON.parse(read(root, `observations/${f.number}/observation.json`)).number, f.number);
       assert.match(sheet(root, f.name), new RegExp(`<link rel="canonical" href="https://probnaya.work/observations/${f.number}">`));
     }
     assert.deepEqual(before, FIXTURES.map((f) => f.number));
     const order = [...read(root, 'observations.html').matchAll(/<li class="observation" id="([^"]+)">/g)].map((m) => m[1]);
-    assert.equal(order[0], '908');
+    assert.equal(order.at(-1), '908');
   });
 
   test('a withdrawn number is never given to another Observation, and returns only with --reissue', () => {

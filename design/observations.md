@@ -974,7 +974,7 @@ Candidate structures compared against the year:
 ### Structure
 
 - **One page.** Every observation is fully visible on it. No cards, no teasers, no click-through to read.
-- **In publication order, earliest first.** A reader meets the collection in the order it was made, which is how its value accumulates. The most recent piece is reachable from the top by one plain link. Newest-first would privilege recency, which is a feed's value and not this collection's.
+- **In publication order, newest first** (changed 2026-09-22 by decision). The original rule was earliest first, so that a reader met the collection in the order it was made. In practice the newest piece should be the first thing a returning reader sees. The collection still does not become a feed: nothing is counted, nothing refreshes, and each sheet's before/after links keep publication order.
 - **Each observation has a stable address**, so it can be pointed to and cited. The address shows nothing but that observation.
 - **No numbers, no counts, no tags, no search, no filters.** At about thirty a year, the page stays readable for several years. When it does not, split by year.
 - **One statement at the head**, in PROBNAYA's voice: what this is, that the words belong to the people named, and that PROBNAYA published them.
@@ -1071,7 +1071,7 @@ An unsigned observation may be connected privately; the relation shows it only t
 | **Privacy and legal exposure** | A face, a patient, an employer's internal system, a colleague. | The two confirmations; asking before publishing; unsigned; withdrawal at any time. Needs legal review before opening. |
 | **Generated material floods in** | Generated text and images sent as observations. | Declined unless it was met by someone (12, 14 published; 15, 45 declined). |
 | **"Send us anything interesting"** | Nature facts, pretty machines, curiosities. | The attention is PROBNAYA's even when the subject is not (section 7). |
-| **Becomes a feed anyway** | Rising pace, visitors checking daily. | Pace set by editor; nothing counted; earliest-first; no notifications. |
+| **Becomes a feed anyway** | Rising pace, visitors checking daily. | Pace set by editor; nothing counted; no notifications. |
 | **Tip line** | Unverifiable allegations sent "not for publication". | Not kept (52). Keep is for material the sender wants held, not for accusations. |
 | **Impersonation** | A real person's name on something they did not send. | Names are published as given, and PROBNAYA does not publish a name it doubts. |
 | **This document's material is too good** | Real submissions are flatter than these. | See Test 1 and the recommendation. |
@@ -1084,7 +1084,7 @@ An unsigned observation may be connected privately; the relation shows it only t
 
 1. **Start privately.** Tell ten to fifteen people personally that PROBNAYA publishes small things people notice, and give them a way to send them. The sending path can be as plain as an address at first. No relation is needed.
 2. **Edit for real.** Read everything. Publish, keep, or decline. Ask sparingly. Never edit.
-3. **Publish by hand** to a single page, earliest first, with attribution as the sender chose.
+3. **Publish by hand** to a single page, newest first, with attribution as the sender chose.
 4. **Do not open the page publicly** until about a dozen real observations are published and Test 1 passes on *them*, not on this document's examples.
 5. **Only then** add a sending path on the page, with the statement from section 14.
 6. **Change nothing else.** No Interior trace, no citation machinery, no figure, no year split, until the collection needs it.

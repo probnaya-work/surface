@@ -365,8 +365,8 @@ function inspectAll(root, opts) {
   return results;
 }
 
-// Published records in reading order: earliest first, then by number, so the
-// order never depends on the file system.
+// Published records in publication order: earliest first, then by number, so the
+// order never depends on the file system. The index reverses it for display.
 function publishedInOrder(root, opts) {
   const results = listNumbers(dirs(root).published).map((s) => inspect(root, s, 'published', opts));
   const bad = results.filter((r) => r.errors.length);

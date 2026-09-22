@@ -224,8 +224,11 @@ ${[heading, renderMaterial(item, { base: h, lazy: on === 'index' })].filter(Bool
 
 // --- the index ------------------------------------------------------------
 
+// `items` arrive in publication order, earliest first. The index shows them
+// newest first; the extent and each sheet's before/after links keep publication
+// order (docs/observations-publishing.md §6).
 function renderSequence(items) {
-  return items.map((item) => renderObservation(item, { on: 'index' })).join('\n');
+  return items.slice().reverse().map((item) => renderObservation(item, { on: 'index' })).join('\n');
 }
 
 // The extent of the sequence, stated before it is read: since when, taken from
