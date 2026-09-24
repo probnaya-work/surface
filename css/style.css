@@ -817,6 +817,14 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
 .obs-from-name { color: var(--ink); text-transform: uppercase; overflow-wrap: anywhere; }
 .obs-role, .obs-context { color: var(--mid); text-transform: uppercase; overflow-wrap: anywhere; }
 
+/* How many times the piece has been read: one browser, once a day
+   (js/observation-views.js). The last line of the margin, and the quietest. */
+.obs-views {
+  flex: 1 1 100%; margin: 0; padding-top: 10px; border-top: 1px solid var(--border);
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; line-height: 1.4; color: var(--mid);
+}
+.obs-views[hidden] { display: none; }
+
 /* What arrived from elsewhere is laid on its own sheet, inside a hairline. */
 .obs-sheet {
   background: var(--sheet); border: 1px solid var(--faint-line);

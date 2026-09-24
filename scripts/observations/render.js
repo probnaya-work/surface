@@ -271,11 +271,15 @@ function renderObservation(item, { on }) {
 
 
   const trace = renderTrace(item);
+  // The public reading count, filled in by js/observation-views.js. It stays
+  // hidden until there is a count; the number only names the slot.
+  const views = `<p class="obs-views" data-views="${esc(item.number)}" hidden></p>`;
   const tag = on === 'index' ? 'li' : 'article';
   return `<${tag} class="observation" id="${esc(item.number)}">
 <div class="obs-margin">
 ${dateMark}
 ${from}${trace ? `\n${trace}` : ''}
+${views}
 </div>
 <div class="obs-body">
 <div class="obs-sheet">
@@ -408,6 +412,7 @@ ${chrome.bottomNav}
 <script src="/js/records.js"></script>
 <script src="/js/register.js"></script>
 <script src="/js/site.js"></script>
+<script src="/js/observation-views.js"></script>
 </body>
 </html>
 `;
