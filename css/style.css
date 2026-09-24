@@ -303,7 +303,7 @@ p { text-wrap: pretty; }
 
 .index-list { max-width: 1120px; margin: 0 auto; padding: 0 40px; }
 .index-row {
-  display: grid; grid-template-columns: 120px 1fr 150px; gap: 28px; align-items: baseline;
+  display: grid; grid-template-columns: 150px 1fr 170px; gap: 28px; align-items: baseline;
   padding: 26px 0; border-bottom: 1px solid var(--border);
 }
 .index-row:hover { background: var(--hover-bg); }
@@ -329,7 +329,7 @@ p { text-wrap: pretty; }
 }
 .apparatus-band .access { letter-spacing: 0.16em; color: var(--mid); }
 .apparatus-band .band-row { display: flex; flex-wrap: wrap; gap: 6px 28px; align-items: baseline; }
-.apparatus-band .id { flex: 0 0 120px; font-weight: 500; font-size: 26px; }
+.apparatus-band .id { flex: 0 0 150px; font-weight: 500; font-size: 26px; }
 .apparatus-band .name {
   flex: 1 1 260px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; color: var(--body-text);
 }
@@ -359,7 +359,7 @@ p { text-wrap: pretty; }
 }
 .apparatus-band .access { letter-spacing: 0.16em; color: var(--mid); }
 .apparatus-band .band-row { display: flex; flex-wrap: wrap; gap: 6px 28px; align-items: baseline; }
-.apparatus-band .id { flex: 0 0 120px; font-weight: 500; font-size: 26px; }
+.apparatus-band .id { flex: 0 0 150px; font-weight: 500; font-size: 26px; }
 .apparatus-band .name {
   flex: 1 1 260px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; color: var(--body-text);
 }
@@ -484,23 +484,115 @@ p { text-wrap: pretty; }
   align-self: flex-start; border-bottom: 1px solid var(--blue); padding-bottom: 3px; display: inline-block;
 }
 
-/* ---------- instruments overview ---------- */
+/* ---------- instruments: the register ----------
+   One line per instrument, the same fields in the same places, so the list can
+   be read down a single column of names and can hold more instruments than it
+   holds today. A line opens in place; the page it opens onto is the instrument
+   itself. Blue marks the line being pointed at or opened — where you are —
+   never a state. A state is written only when the instrument cannot be used as
+   usual, and then in plain words. */
 
-.instrument-block { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; padding: 44px 0 0 0; align-items: start; }
-.instrument-block + .instrument-block { padding-top: 76px; }
-.instrument-copy { display: flex; flex-direction: column; gap: 18px; }
-.instrument-copy .head { display: flex; align-items: baseline; justify-content: space-between; }
-.instrument-copy .head .num { font-weight: 500; font-size: 52px; letter-spacing: -0.02em; line-height: 1; }
-.instrument-copy .head .status { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; }
-.instrument-block#heard { scroll-margin-top: 80px; }
-.instrument-block#heard .action-link[hidden] { display: none; }
-.heard-catalogue-status { align-self: flex-start; padding-top: 12px; border-top: 1px solid var(--border); color: var(--mid); font: 10px/1.6 var(--mono); letter-spacing: 0.14em; }
-.heard-catalogue-plate { min-height: 280px; display: flex; flex-direction: column; justify-content: space-between; gap: 26px; padding: 22px; border: 1px solid var(--ink); background: var(--sheet); }
-.heard-catalogue-plate > span { color: var(--mid); font: 10px var(--mono); letter-spacing: 0.15em; }
-.heard-catalogue-plate strong { max-width: 24ch; font-size: clamp(20px, 2.2vw, 30px); font-weight: 300; line-height: 1.2; }
-.heard-catalogue-line { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; padding-top: 8px; border-top: 1px solid var(--ink); }
-.heard-catalogue-line i { display: block; height: 3px; background: var(--faint-line); }
-.heard-catalogue-line i:first-child { height: 9px; background: var(--blue); }
+.instrument-cols, .instrument-line {
+  display: grid; align-items: baseline; gap: 20px;
+  grid-template-columns: 168px 92px minmax(0, 1fr) 118px 150px 14px;
+}
+.instrument-cols {
+  padding: 26px 16px 10px; border-bottom: 1px solid var(--ink);
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--faint);
+}
+.instrument-row { border-bottom: 1px solid var(--border); box-shadow: inset 2px 0 0 transparent; }
+.instrument-row[open] { background: var(--hover-bg); box-shadow: inset 2px 0 0 var(--blue); }
+.instrument-line {
+  list-style: none; cursor: pointer; padding: 22px 16px;
+  font: 10px/1.5 var(--mono); letter-spacing: 0.13em; color: var(--body-text);
+}
+.instrument-line::-webkit-details-marker { display: none; }
+.instrument-line:hover { background: var(--hover-bg); }
+.instrument-line .id { font: 500 22px/1 var(--sans); letter-spacing: -0.01em; color: var(--ink); }
+.instrument-line .state { text-align: right; color: var(--mid); }
+.instrument-line .tg { text-align: right; color: var(--mid); }
+.instrument-line .tg::before { content: "+"; }
+.instrument-row[open] .tg::before { content: "\2212"; }
+.instrument-line:hover .id, .instrument-row[open] .id,
+.instrument-line:hover .tg, .instrument-row[open] .tg { color: var(--blue); }
+
+.instrument-open {
+  display: grid; gap: 28px 56px; padding: 30px 32px 52px 16px; margin-top: 1px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 200px;
+  border-top: 1px solid var(--border);
+}
+.instrument-open .figure-plate { height: 240px; }
+.instrument-text { display: flex; flex-direction: column; gap: 20px; max-width: 46ch; }
+.instrument-text .lede { font-size: 19px; }
+.instrument-foot {
+  display: flex; justify-content: flex-end; padding: 16px 16px 0;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--faint);
+}
+
+/* ---------- one instrument: its plate is the page ----------
+   The figure is the first thing, at the size it deserves, with the instrument's
+   name over it. Everything stated about the instrument stands under it. */
+
+.stage { position: relative; height: calc(min(72vh, 660px) + var(--header-h)); min-height: 520px; border-bottom: 1px solid var(--ink); }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage-over {
+  position: absolute; inset: 0; pointer-events: none;
+  max-width: 1120px; margin: 0 auto; padding: calc(var(--header-h) + 28px) 40px 22px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.stage-over a { pointer-events: auto; }
+.stage-top { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.stage-top .kicker { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--mid); }
+.stage-top h1 { margin: 0; font-size: clamp(64px, 11vw, 150px); font-weight: 500; letter-spacing: -0.04em; line-height: 0.85; }
+.stage-top .state { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--mid); }
+.stage-caption {
+  display: flex; justify-content: space-between; gap: 16px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--mid);
+}
+.instrument-sheet { padding-top: 40px; }
+.instrument-sheet .sheet-body { padding-top: 0; }
+.sheet-body {
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 0.85fr); gap: 40px;
+  align-items: start;
+}
+.sheet-text { display: flex; flex-direction: column; gap: 20px; }
+.sheet-body .specs { margin: 0; }
+.sheet-access { display: flex; flex-direction: column; gap: 16px; padding-top: 14px; border-top: 1px solid var(--ink); }
+.sheet-access .label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--faint); }
+.sheet-access .state { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--mid); }
+
+/* A release that exists but is not handed out yet. Each channel keeps its place
+   and its name; it is simply not a link. */
+.release { display: flex; flex-direction: column; gap: 8px; }
+.release-item {
+  display: flex; justify-content: space-between; gap: 16px; padding: 11px 12px;
+  border: 1px dashed var(--faint-line); color: var(--faint); cursor: not-allowed;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
+}
+.release-item .channel-state { color: var(--mid); }
+.release-note { margin: 0; font: 10px/1.7 var(--mono); letter-spacing: 0.12em; color: var(--mid); }
+
+/* The other instruments, each still running, under the one being read. */
+.others { padding-top: 72px; }
+.others-head {
+  display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--ink);
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--mid);
+}
+.others-row {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 220px; gap: 20px;
+  overflow-x: auto; padding: 18px 0 8px;
+}
+.others-row .tile { display: flex; flex-direction: column; gap: 10px; }
+.others-row .figure-plate { height: auto; aspect-ratio: 4 / 3; }
+.others-row .tile-label {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding-top: 10px; border-top: 1px solid var(--ink);
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--mid);
+}
+.others-row .tile-label .id { font-family: var(--sans); font-size: 18px; font-weight: 500; letter-spacing: -0.01em; color: var(--ink); }
+.others-row .tile:hover .figure-plate { border-color: var(--blue); }
+.others-row .tile:hover .tile-label { border-top-color: var(--blue); }
+.others-row .tile:hover .tile-label .id { color: var(--blue); }
 
 .object-figure img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
@@ -1098,7 +1190,21 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
   .lab-entry-documents .lab-entry-paths a span:nth-child(2) { padding: 0; }
   .lab-entry-documents .lab-entry-paths a span:last-child { position: static; transform: none; }
   .lab-entry-paths a span:nth-child(2) { font-size: 17px; }
-  .instrument-block + .instrument-block { padding-top: 30px; }
+  .instrument-cols { display: none; }
+  .instrument-line { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 16px 12px; }
+  .instrument-line .cls, .instrument-line .locus, .instrument-line .tg { display: none; }
+  .instrument-line .state { grid-row: 1; grid-column: 2; }
+  .instrument-line .subject { grid-column: 1 / -1; color: var(--mid); }
+  .instrument-open { grid-template-columns: 1fr; gap: 24px; padding: 22px 12px 36px; }
+  .instrument-open .figure-plate { height: 220px; }
+  .instrument-foot { padding: 16px 12px 0; }
+  .stage { height: 64vh; min-height: 380px; }
+  .stage-over { padding: calc(var(--header-h-mobile) + 20px) 18px 16px; }
+  .stage-top h1 { font-size: 56px; }
+  .instrument-sheet { padding-top: 26px; }
+  .sheet-body { grid-template-columns: 1fr; gap: 28px; }
+  .others { padding-top: 48px; }
+  .others-row { grid-auto-columns: 200px; }
   .instruments-page { padding-bottom: 68px; }
   .laboratory-apparatus-inner { padding: 28px 18px 52px; }
   .laboratory-apparatus-head, .laboratory-apparatus-entry { grid-template-columns: 1fr; gap: 18px; }
@@ -1152,4 +1258,16 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
   .site-header .nav-link span.label, .site-header .recognized-return, .site-header .access-entry { letter-spacing: 0.1em; }
   .site-header .nav-cta { padding: 7px 12px; letter-spacing: 0.1em; }
   .site-header .nav-cta-rest { display: none; }
+}
+
+/* 761–1060px. The register drops the fields that repeat what the subject already
+   says, and the opened entry falls to two columns. */
+@media (min-width: 761px) and (max-width: 1060px) {
+  .instrument-cols, .instrument-line { grid-template-columns: 150px minmax(0, 1fr) 140px 14px; }
+  .instrument-cols span:nth-child(2), .instrument-cols span:nth-child(4),
+  .instrument-line .cls, .instrument-line .locus { display: none; }
+  .instrument-open { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 30px 24px 48px 16px; }
+  .instrument-act { grid-column: 1 / -1; }
+  .sheet-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .sheet-text { grid-column: 1 / -1; }
 }

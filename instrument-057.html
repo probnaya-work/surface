@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>057 — Spatial Interface for Computational Activity | PROBNAYA</title>
-<meta name="description" content="057 reads telemetry from the process table and AI coding runtimes on your machine and renders it as a deformable field.">
+<meta name="description" content="057 is a spatial interface for observing the shape of a computational workday, read from the process table and AI coding runtimes.">
 <link rel="icon" type="image/svg+xml" href="assets/probnaya-mark.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
@@ -14,13 +14,13 @@
 <meta property="og:url" content="https://probnaya.work/instrument-057">
 <meta property="og:site_name" content="PROBNAYA">
 <meta property="og:title" content="057 — Spatial Interface for Computational Activity | PROBNAYA">
-<meta property="og:description" content="057 reads telemetry from the process table and AI coding runtimes on your machine and renders it as a deformable field.">
+<meta property="og:description" content="057 is a spatial interface for observing the shape of a computational workday, read from the process table and AI coding runtimes.">
 <meta property="og:image" content="https://probnaya.work/assets/og-1200x630.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="057 — Spatial Interface for Computational Activity | PROBNAYA">
-<meta name="twitter:description" content="057 reads telemetry from the process table and AI coding runtimes on your machine and renders it as a deformable field.">
+<meta name="twitter:description" content="057 is a spatial interface for observing the shape of a computational workday, read from the process table and AI coding runtimes.">
 <meta name="twitter:image" content="https://probnaya.work/assets/og-1200x630.png">
 <script type="application/ld+json">
 {
@@ -68,39 +68,57 @@
 </header>
 
 <main class="main">
-  <div class="page detail">
-    <a class="back-link" href="/instruments">← INSTRUMENTS</a>
-
-    <div class="split-title">
-      <h1 class="num" style="margin:0;">057</h1>
-      <span class="status status-observation">IN OBSERVATION</span>
-    </div>
-    <span class="attr-line attr-line--detail">057 · BY PROBNAYA</span>
-
-    <div class="split">
-      <div class="figure">
-        <div class="figure-plate" style="height:320px;">
-          <canvas id="cv-raster"></canvas>
-        </div>
-        <div class="figure-caption">
-          <span class="dim">FIG. 3 — RASTER OF ONE SESSION · SWEEP 06 S / LINE</span>
-        </div>
+  <section class="stage">
+    <canvas data-plate="raster"></canvas>
+    <div class="stage-over">
+      <div class="stage-top">
+        <a class="back-link" href="/instruments"><span aria-hidden="true">← </span>INSTRUMENTS</a>
+        <span class="kicker">INSTRUMENT · SURFACE · BY PROBNAYA</span>
+        <h1>057</h1>
+        <span class="state">IN OBSERVATION</span>
       </div>
-      <div style="display:flex; flex-direction:column; gap:24px;">
+      <div class="stage-caption"><span>FIG. 3 — RASTER OF ONE SESSION · LIVE</span><span>SWEEP 06 S / LINE</span></div>
+    </div>
+  </section>
+
+  <div class="page detail instrument-sheet">
+    <div class="sheet-body">
+      <div class="sheet-text">
         <p class="lede">A spatial interface for observing the shape of a computational workday.</p>
         <p class="body-copy">057 reads telemetry from the process table and AI coding runtimes on your machine and renders it as a deformable field.</p>
-        <dl class="specs">
-          <dt>CLASS</dt><dd>INSTRUMENT</dd>
-          <dt>SUBJECT</dt><dd>PERCEPTION OF MACHINE ACTIVITY</dd>
-          <dt>INPUT</dt><dd>PROCESS TABLE + RUNTIME FILES</dd>
-          <dt>ISSUED BY</dt><dd>PROBNAYA</dd>
-          <dt>ACCESS</dt><dd class="accent">OPEN</dd>
-        </dl>
+      </div>
+      <dl class="specs">
+        <dt>CLASS</dt><dd>SURFACE</dd>
+        <dt>SUBJECT</dt><dd>PERCEPTION OF MACHINE ACTIVITY</dd>
+        <dt>INPUT</dt><dd>PROCESS TABLE + RUNTIME FILES</dd>
+        <dt>ISSUED BY</dt><dd>PROBNAYA</dd>
+      </dl>
+      <div class="sheet-access">
+        <span class="label">ACCESS</span>
         <a class="action-link" href="https://057.probnaya.work" target="_blank" rel="noopener noreferrer">OPEN INSTRUMENT →</a>
       </div>
     </div>
+
+    <section class="others">
+      <div class="others-head"><span>OTHER INSTRUMENTS</span><a href="/instruments">ALL →</a></div>
+      <div class="others-row">
+        <a class="tile" href="/instrument-0x2f">
+          <div class="figure-plate"><canvas data-plate="step"></canvas></div>
+          <div class="tile-label"><span class="id">0x2F</span><span></span></div>
+        </a>
+        <a class="tile" href="/instrument-chinotto">
+          <div class="figure-plate"><canvas data-plate="record"></canvas></div>
+          <div class="tile-label"><span class="id">CHINOTTO</span><span>NEW VERSION COMING</span></div>
+        </a>
+        <a class="tile" href="/instrument-heard">
+          <div class="figure-plate"><canvas data-plate="field"></canvas></div>
+          <div class="tile-label"><span class="id">HEARD</span><span></span></div>
+        </a>
+      </div>
+    </section>
   </div>
 </main>
+
 
 <footer class="site-footer">
   <a href="/lab">PROBNAYA · WHAT THIS LABORATORY IS →</a>
@@ -122,7 +140,22 @@
 <script src="js/register.js"></script>
 <script src="js/site.js"></script>
 <script>
-  Apparatus.mount(document.getElementById('cv-raster'), (S) => Apparatus.buildRaster(S));
+  const PLATES = {
+    step: (S, o) => Apparatus.buildStepLanes(S, o),
+    raster: (S, o) => Apparatus.buildRaster(S, o),
+    record: (S, o) => Apparatus.buildRecord(S, o),
+    field: (S, o) => Apparatus.buildField(S, o)
+  };
+  // On the stage the drawing keeps out of the upper band, where the name is, and
+  // the plates that lay down a path rather than fill a field run a little faster,
+  // so a plate the size of the page is not empty while it is being looked at.
+  const HURRY = { step: 1.8, raster: 1.4 };
+  document.querySelectorAll('canvas[data-plate]').forEach(c => {
+    const onStage = !!c.closest('.stage');
+    const opts = onStage ? { top: 0.45 } : {};
+    const speed = onStage ? (HURRY[c.dataset.plate] || 1) : 1;
+    Apparatus.mount(c, (S) => PLATES[c.dataset.plate](S, opts), { speed });
+  });
 </script>
 </body>
 </html>

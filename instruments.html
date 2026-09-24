@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Computational Instruments — PROBNAYA</title>
-<meta name="description" content="Computational instruments by PROBNAYA: 0x2F and 057, with HEARD in development.">
+<meta name="description" content="Computational instruments by PROBNAYA: 0x2F, 057, Chinotto and HEARD.">
 <link rel="icon" type="image/svg+xml" href="assets/probnaya-mark.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
@@ -14,13 +14,13 @@
 <meta property="og:url" content="https://probnaya.work/instruments">
 <meta property="og:site_name" content="PROBNAYA">
 <meta property="og:title" content="Computational Instruments — PROBNAYA">
-<meta property="og:description" content="Computational instruments by PROBNAYA: 0x2F and 057, with HEARD in development.">
+<meta property="og:description" content="Computational instruments by PROBNAYA: 0x2F, 057, Chinotto and HEARD.">
 <meta property="og:image" content="https://probnaya.work/assets/og-1200x630.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Computational Instruments — PROBNAYA">
-<meta name="twitter:description" content="Computational instruments by PROBNAYA: 0x2F and 057, with HEARD in development.">
+<meta name="twitter:description" content="Computational instruments by PROBNAYA: 0x2F, 057, Chinotto and HEARD.">
 <meta name="twitter:image" content="https://probnaya.work/assets/og-1200x630.png">
 <script type="application/ld+json">
 {
@@ -29,11 +29,13 @@
   "@id": "https://probnaya.work/instruments#page",
   "url": "https://probnaya.work/instruments",
   "name": "Computational Instruments — PROBNAYA",
-  "description": "Computational instruments by PROBNAYA: 0x2F and 057, with HEARD in development.",
+  "description": "Computational instruments by PROBNAYA: 0x2F, 057, Chinotto and HEARD.",
   "isPartOf": { "@id": "https://probnaya.work/#website" },
   "about": [
     { "@id": "https://0x2f.space/#software" },
-    { "@id": "https://057.probnaya.work/#software" }
+    { "@id": "https://057.probnaya.work/#software" },
+    { "@id": "https://getchinotto.app/#software" },
+    { "@id": "https://heard.probnaya.work/#software" }
   ]
 }
 </script>
@@ -72,69 +74,110 @@
   <div class="page instruments-page">
     <div class="eyebrow-row">
       <h1 class="eyebrow" style="margin:0;font-weight:400;">INSTRUMENTS</h1>
-      <span class="eyebrow-meta">03 DISCLOSED</span>
+      <span class="eyebrow-meta">04</span>
     </div>
 
-    <div class="instrument-block">
-      <div class="instrument-copy">
-        <div class="head">
-          <span class="num">0x2F</span>
-          <span class="status status-operational">OPERATIONAL</span>
-        </div>
-        <span class="attr-line">0x2F · BY PROBNAYA</span>
-        <p class="body-copy">A local task runtime for coding agents. Tasks persist across runs, so a task can be continued through a different agent without losing previous work, decisions, or results.</p>
-        <a class="action-link" href="/instrument-0x2f">OPEN INSTRUMENT →</a>
-      </div>
-      <div class="figure">
-        <div class="figure-plate" style="height:280px;">
-          <canvas id="cv-step"></canvas>
-        </div>
-        <div class="figure-caption">
-          <span class="dim">FIG. 2 — TASK PATH, FOUR LANES</span>
-          <span class="note">■ COMPLETED</span>
-        </div>
-      </div>
+    <!-- The register. One line per instrument, the same fields for each; a line
+         opens in place and its name opens the instrument's own page. A state is
+         stated only when the instrument cannot be used as usual. -->
+    <div class="instrument-cols" aria-hidden="true">
+      <span>INSTRUMENT</span><span>CLASS</span><span>SUBJECT</span><span>LOCUS</span><span></span><span></span>
     </div>
 
-    <div class="instrument-block">
-      <div class="figure">
-        <div class="figure-plate" style="height:280px;">
-          <canvas id="cv-raster"></canvas>
+    <details class="instrument-row" id="0x2f">
+      <summary class="instrument-line">
+        <span class="id">0x2F</span>
+        <span class="cls">RUNTIME</span>
+        <span class="subject">TASK PERSISTENCE</span>
+        <span class="locus">LOCAL</span>
+        <span class="state"></span>
+        <span class="tg" aria-hidden="true"></span>
+      </summary>
+      <div class="instrument-open">
+        <div class="figure">
+          <div class="figure-plate"><canvas data-plate="step"></canvas></div>
+          <div class="figure-caption"><span class="dim">FIG. 2 — TASK PATH, FOUR LANES</span></div>
         </div>
-        <div class="figure-caption">
-          <span class="dim">FIG. 3 — RASTER OF ONE SESSION</span>
-          <span class="note">SWEEP 06 S / LINE</span>
+        <div class="instrument-text">
+          <p class="lede">A local task runtime for coding agents.</p>
+          <p class="body-copy">Tasks persist across runs, so a task can be continued through a different agent without losing previous work, decisions, or results.</p>
+        </div>
+        <div class="instrument-act">
+          <a class="action-link" href="/instrument-0x2f">OPEN →</a>
         </div>
       </div>
-      <div class="instrument-copy">
-        <div class="head">
-          <span class="num">057</span>
-          <span class="status status-observation">IN OBSERVATION</span>
+    </details>
+    <details class="instrument-row" id="057">
+      <summary class="instrument-line">
+        <span class="id">057</span>
+        <span class="cls">SURFACE</span>
+        <span class="subject">PERCEPTION OF MACHINE ACTIVITY</span>
+        <span class="locus">YOUR MACHINE</span>
+        <span class="state">IN OBSERVATION</span>
+        <span class="tg" aria-hidden="true"></span>
+      </summary>
+      <div class="instrument-open">
+        <div class="figure">
+          <div class="figure-plate"><canvas data-plate="raster"></canvas></div>
+          <div class="figure-caption"><span class="dim">FIG. 3 — RASTER OF ONE SESSION</span></div>
         </div>
-        <span class="attr-line">057 · BY PROBNAYA</span>
-        <p class="body-copy">A spatial interface for observing the shape of a computational workday. 057 reads telemetry from the process table and AI coding runtimes and renders it as a deformable field.</p>
-        <a class="action-link" href="/instrument-057">OPEN INSTRUMENT →</a>
+        <div class="instrument-text">
+          <p class="lede">A spatial interface for observing the shape of a computational workday.</p>
+          <p class="body-copy">057 reads telemetry from the process table and AI coding runtimes and renders it as a deformable field.</p>
+        </div>
+        <div class="instrument-act">
+          <a class="action-link" href="/instrument-057">OPEN →</a>
+        </div>
       </div>
-    </div>
+    </details>
+    <details class="instrument-row" id="chinotto">
+      <summary class="instrument-line">
+        <span class="id">CHINOTTO</span>
+        <span class="cls">RECORD</span>
+        <span class="subject">WHAT CONTINUES BETWEEN MOMENTS</span>
+        <span class="locus">ON DEVICE</span>
+        <span class="state">NEW VERSION COMING</span>
+        <span class="tg" aria-hidden="true"></span>
+      </summary>
+      <div class="instrument-open">
+        <div class="figure">
+          <div class="figure-plate"><canvas data-plate="record"></canvas></div>
+          <div class="figure-caption"><span class="dim">FIG. 6 — MOMENTS, AND WHAT CONTINUES</span></div>
+        </div>
+        <div class="instrument-text">
+          <p class="lede">A private record of thoughts, encounters, and what continues between them.</p>
+          <p class="body-copy">Nothing is filed. A moment keeps its date; continuing it adds another, dated now. A new version of the apps is on its way; downloads are paused until it arrives.</p>
+        </div>
+        <div class="instrument-act">
+          <a class="action-link" href="/instrument-chinotto">OPEN →</a>
+        </div>
+      </div>
+    </details>
+    <details class="instrument-row" id="heard">
+      <summary class="instrument-line">
+        <span class="id">HEARD</span>
+        <span class="cls">FIELD</span>
+        <span class="subject">HOW PEOPLE DESCRIBE LIVING WITH MACHINES</span>
+        <span class="locus">PUBLIC SOURCES</span>
+        <span class="state"></span>
+        <span class="tg" aria-hidden="true"></span>
+      </summary>
+      <div class="instrument-open">
+        <div class="figure">
+          <div class="figure-plate"><canvas data-plate="field"></canvas></div>
+          <div class="figure-caption"><span class="dim">FIG. 4 — A FIELD OF VOICES, READ</span></div>
+        </div>
+        <div class="instrument-text">
+          <p class="lede">A temporary editorial field of public voices describing life with AI.</p>
+          <p class="body-copy">A signal is noticed first; whether to hear the voice behind it is the reader’s choice. No quote appears before one is opened, and the field claims to be nobody’s opinion but its own sources’.</p>
+        </div>
+        <div class="instrument-act">
+          <a class="action-link" href="/instrument-heard">OPEN →</a>
+        </div>
+      </div>
+    </details>
 
-    <div class="instrument-block" id="heard">
-      <div class="instrument-copy">
-        <div class="head">
-          <span class="num">HEARD</span>
-          <span class="status status-observation">IN DEVELOPMENT</span>
-        </div>
-        <span class="attr-line">HEARD · BY PROBNAYA</span>
-        <p class="body-copy">An instrument for noticing how people describe their relationships with increasingly capable machines. Its standalone prototype uses six invented records; no live sources are connected.</p>
-        <span class="heard-catalogue-status">STANDALONE PROTOTYPE · NO LIVE INPUT</span>
-        <a class="action-link" href="https://heard.probnaya.work/" hidden>OPEN HEARD →</a>
-      </div>
-      <div class="heard-catalogue-plate" aria-hidden="true">
-        <span>FIELD / SYNTHETIC</span>
-        <div class="heard-catalogue-line"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        <strong>What changes when a machine becomes part of a person's ordinary thinking?</strong>
-        <span>FIG. 4 — SIX EXPRESSION RECORDS</span>
-      </div>
-    </div>
+    <div class="instrument-foot"><span>AN ENTRY OPENS IN PLACE</span></div>
   </div>
 
   <section class="laboratory-apparatus" aria-labelledby="laboratory-apparatus-title">
@@ -176,8 +219,26 @@
 <script src="js/apparatus.js"></script>
 <script src="js/site.js"></script>
 <script>
-  Apparatus.mount(document.getElementById('cv-step'), (S) => Apparatus.buildStepLanes(S));
-  Apparatus.mount(document.getElementById('cv-raster'), (S) => Apparatus.buildRaster(S));
+  // A plate is mounted the first time its line is opened: a closed line has no
+  // size, and a canvas with no size has nothing to draw on.
+  const PLATES = {
+    step: (S) => Apparatus.buildStepLanes(S),
+    raster: (S) => Apparatus.buildRaster(S),
+    record: (S) => Apparatus.buildRecord(S),
+    field: (S) => Apparatus.buildField(S)
+  };
+  document.querySelectorAll('.instrument-row').forEach(row => {
+    row.addEventListener('toggle', () => {
+      const canvas = row.querySelector('canvas');
+      if (!row.open || canvas.dataset.mounted) return;
+      canvas.dataset.mounted = '1';
+      Apparatus.mount(canvas, PLATES[canvas.dataset.plate]);
+    });
+  });
+  // A line addressed directly (/instruments#heard) opens itself. getElementById,
+  // not a selector: an id like "057" is not a valid one.
+  const addressed = document.getElementById(location.hash.slice(1));
+  if (addressed && addressed.classList.contains('instrument-row')) addressed.open = true;
 </script>
 </body>
 </html>

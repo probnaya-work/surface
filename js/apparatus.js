@@ -163,16 +163,45 @@ const Apparatus = (() => {
   }
 
   // ---- FIG.2 — 0x2F: rectilinear pen stepping between four task lanes ----
-  function buildStepLanes(S) {
+  function buildStepLanes(S, opts) {
+    opts = opts || {};
+    const top = opts.top == null ? 0 : opts.top;   // leave the upper band clear
     let lanes = [], px = 0, py = 0, target = null, fadeAcc = 0;
     const sheet = () => {
       const { ctx } = S;
-      lanes = [0.22, 0.4, 0.58, 0.76].map(f => Math.round(S.h * f) + 0.5);
+      const head = S.h * top, band = S.h - head;
+      lanes = [0.22, 0.4, 0.58, 0.76].map(f => Math.round(head + band * f) + 0.5);
       ctx.fillStyle = PAPER; ctx.fillRect(0, 0, S.w, S.h);
       ctx.strokeStyle = FAINT;
       lanes.forEach(y => { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(S.w, y); ctx.stroke(); });
       px = 14; py = lanes[1]; target = null;
+      history();
     };
+
+    // A plate the size of a page would otherwise be watched while it is still
+    // empty. A wide sheet therefore arrives with the path already walked once,
+    // laid down quieter than the live pen: the runtime was running before the
+    // page was opened. Narrow figures start clean, as they always have.
+    const history = () => {
+      if (S.w < 700) return;
+      const { ctx } = S;
+      let x = 14, y = lanes[1];
+      ctx.strokeStyle = INK;
+      while (x < S.w - 14) {
+        const nx = Math.min(S.w - 14, x + 30 + Math.random() * 90);
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(nx, y); ctx.stroke();
+        if (Math.random() < 0.4) { ctx.fillStyle = BLUE; ctx.fillRect(nx - 2, y - 2, 4, 4); }
+        x = nx;
+        if (Math.random() < 0.35) {
+          const ny = lanes[Math.floor(Math.random() * lanes.length)];
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, ny); ctx.stroke();
+          y = ny;
+        }
+      }
+      ctx.fillStyle = "rgba(239,240,242,0.55)"; ctx.fillRect(0, 0, S.w, S.h);
+      px = 14; py = lanes[Math.floor(Math.random() * lanes.length)];
+    };
+
     S.onFit = sheet; sheet();
 
     return {
@@ -208,12 +237,15 @@ const Apparatus = (() => {
   }
 
   // ---- FIG.3 — 057: raster sweep, one line per pass, amplitude = activity ----
-  function buildRaster(S) {
+  function buildRaster(S, opts) {
+    opts = opts || {};
+    const top = opts.top == null ? 0 : opts.top;   // leave the upper band clear
     const RH = 9;
-    let x = 0, row = 0, rows = 0, seed = Math.random() * 100;
+    let x = 0, row = 0, rows = 0, head = 0, seed = Math.random() * 100;
     const clear = () => {
       S.ctx.fillStyle = PAPER; S.ctx.fillRect(0, 0, S.w, S.h);
-      rows = Math.max(1, Math.floor((S.h - 16) / RH)); x = 0; row = 0;
+      head = S.h * top;
+      rows = Math.max(1, Math.floor((S.h - head - 16) / RH)); x = 0; row = 0;
     };
     S.onFit = clear; clear();
     const amp = (r, xx) => (Math.sin(xx * 0.07 + r * 1.7 + seed) * Math.sin(xx * 0.017 + r * 0.4)
@@ -222,7 +254,7 @@ const Apparatus = (() => {
     return {
       tick: (dt, norm) => {
         const { ctx } = S;
-        const step = 5 * norm * S.speed(), y0 = 10 + row * RH;
+        const step = 5 * norm * S.speed(), y0 = head + 10 + row * RH;
         ctx.strokeStyle = row % 4 === 3 ? BLUE : INK;
         ctx.beginPath();
         for (let i = 0; i <= step; i++) {
@@ -454,9 +486,139 @@ const Apparatus = (() => {
     };
   }
 
+  // ---- FIG.6 — Chinotto: moments on a time axis. What is further from now is
+  // quieter; continuing an old moment draws it back up for a while, then it
+  // settles again. The axis drifts left at a fixed physical speed. ----
+  function buildRecord(S, opts) {
+    opts = opts || {};
+    const top = opts.top == null ? 0.16 : opts.top;
+    const NOW = 44, EVERY = 80;       // ticks between moments, at 1/60s each
+    let moments = [], links = [], rows = [], acc = 0;
+
+    const lines = () => {
+      const y0 = S.h * top + 16, y1 = S.h - 44, n = Math.max(3, Math.floor((y1 - y0) / 22));
+      return Array.from({ length: n }, (_, i) => y0 + i * (y1 - y0) / (n - 1));
+    };
+    const leave = (x) => {
+      const m = { x, y: rows[Math.floor(Math.random() * rows.length)], len: 24 + Math.random() * 70, glow: 0 };
+      moments.push(m);
+      return m;
+    };
+    const sheet = () => {
+      rows = lines(); moments = []; links = []; acc = 0;
+      for (let x = S.w - NOW; x > -40; x -= 16 + Math.random() * 34) leave(x);
+    };
+    S.onFit = sheet; sheet();
+
+    return {
+      tick: (dt, norm) => {
+        const { ctx, w, h } = S;
+        const drift = 0.12 * norm * S.speed();
+        moments.forEach(m => { m.x -= drift; m.glow *= Math.pow(0.992, norm); });
+
+        acc += norm;
+        while (acc >= EVERY) {
+          acc -= EVERY;
+          const m = leave(w - NOW);
+          const older = moments.filter(o => o !== m && o.x < w - NOW - 120);
+          if (older.length && Math.random() < 0.45) {
+            const o = older[Math.floor(Math.random() * older.length)];
+            o.glow = 1; m.y = o.y; links.push({ a: o, b: m });
+          }
+        }
+        moments = moments.filter(m => m.x > -120);
+        links = links.filter(l => moments.includes(l.a) && moments.includes(l.b));
+
+        ctx.fillStyle = PAPER; ctx.fillRect(0, 0, w, h);
+        const quiet = (m) => Math.max(0.1, Math.min(1, 1 - (w - NOW - m.x) / (w * 0.9)));
+
+        ctx.strokeStyle = FAINT; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(w - NOW + 0.5, h * top); ctx.lineTo(w - NOW + 0.5, h - 12); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = MID; ctx.textAlign = "right"; ctx.fillText("NOW", w - NOW - 6, h - 12);
+        ctx.textAlign = "left";
+
+        links.forEach(l => {
+          const a = Math.max(quiet(l.a), l.a.glow);
+          ctx.strokeStyle = l.a.glow > 0.2 ? BLUE : INK; ctx.globalAlpha = 0.25 + 0.5 * a;
+          ctx.beginPath(); ctx.moveTo(l.a.x, l.a.y);
+          ctx.quadraticCurveTo((l.a.x + l.b.x) / 2, l.a.y - 26, l.b.x, l.b.y); ctx.stroke();
+        });
+        moments.forEach(m => {
+          ctx.globalAlpha = Math.max(quiet(m), m.glow);
+          ctx.fillStyle = m.glow > 0.2 ? BLUE : INK;
+          ctx.beginPath(); ctx.arc(m.x, m.y, 2.5, 0, Math.PI * 2); ctx.fill();
+          ctx.fillRect(m.x + 7, m.y - 0.5, Math.min(m.len, w - NOW - m.x - 10), 1);
+        });
+        ctx.globalAlpha = 1;
+      }
+    };
+  }
+
+  // ---- FIG.4 — HEARD: a field of public voices, read one line at a time. What
+  // the reading has passed is inked; a phrase that recurs across the field is
+  // marked. The field is redrawn once every line has been read. ----
+  function buildField(S, opts) {
+    opts = opts || {};
+    const top = opts.top == null ? 0 : opts.top;   // leave the upper band clear
+    const REST = 120;                 // ticks held on a finished field
+    let lines = [], row = 0, cur = 0, rest = 0;
+
+    const field = () => {
+      // As many lines as the plate has room for: six on a small figure, more when
+      // the plate is the page.
+      const head = S.h * top;
+      const n = Math.max(6, Math.floor((S.h - head - 44) / 26)), y0 = head + 26, gap = (S.h - head - 44) / n;
+      lines = Array.from({ length: n }, (_, i) => {
+        const marks = []; let x = 14;
+        for (;;) {
+          const w = 8 + Math.random() * 42;
+          if (x + w > S.w - 14) break;
+          marks.push({ x, w, recurring: Math.random() < 0.12 });
+          x += w + 5;
+        }
+        return { y: y0 + i * gap + gap / 2, marks };
+      });
+      row = 0; cur = 0; rest = 0;
+    };
+    S.onFit = field; field();
+
+    return {
+      tick: (dt, norm) => {
+        const { ctx, w, h } = S;
+        if (rest > 0) {
+          rest -= norm;
+          if (rest <= 0) field();
+        } else {
+          cur += 2.2 * norm * S.speed();
+          if (cur > w) {
+            cur = 0; row++;
+            if (row >= lines.length) { row = lines.length - 1; cur = w; rest = REST; }
+          }
+        }
+
+        ctx.fillStyle = PAPER; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = MID; ctx.fillText("PUBLIC FIELD", 14, h * top + 16);
+        lines.forEach((l, i) => {
+          l.marks.forEach(m => {
+            const read = i < row || (i === row && m.x + m.w < cur);
+            const lift = read && m.recurring;
+            ctx.fillStyle = read ? (m.recurring ? BLUE : INK) : FAINT;
+            ctx.fillRect(m.x, l.y - (lift ? 3 : 1), m.w, lift ? 6 : 2);
+          });
+        });
+        if (rest <= 0) {
+          ctx.strokeStyle = BLUE;
+          ctx.beginPath(); ctx.moveTo(cur + 0.5, lines[row].y - 9); ctx.lineTo(cur + 0.5, lines[row].y + 9); ctx.stroke();
+        }
+      }
+    };
+  }
+
   return {
     INK, PAPER, BLUE, MID, FAINT,
     mount,
-    buildTrace, buildStepLanes, buildRaster, buildStrip, buildRecordReading, buildSeismo, buildHarmonograph, buildPlate
+    buildTrace, buildStepLanes, buildRaster, buildStrip, buildRecordReading, buildSeismo, buildHarmonograph, buildPlate,
+    buildRecord, buildField
   };
 })();
