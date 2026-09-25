@@ -144,6 +144,11 @@ p { text-wrap: pretty; }
   backdrop-filter: blur(6px);
 }
 .mobile-header .brand-name { font-size: 13px; letter-spacing: 0.07em; cursor: pointer; }
+.mobile-header .mobile-lab-link {
+  margin-left: 13px; padding-bottom: 2px; border-bottom: 1px solid var(--blue);
+  color: var(--blue); font-family: var(--mono); font-size: 9px; letter-spacing: 0.11em;
+}
+.mobile-header .mobile-lab-link:hover, .mobile-header .mobile-lab-link[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }
 .mobile-header .crumb { font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; color: var(--faint); }
 
 .bottom-nav {
