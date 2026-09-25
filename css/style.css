@@ -745,7 +745,7 @@ p { text-wrap: pretty; }
 @media (hover: hover) { .lab-entry-paths a:hover { background: var(--blue); color: var(--paper); } }
 .lab-entry-paths a span:first-child { font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; }
 .lab-entry-paths a span:nth-child(2) { max-width: 25ch; font-weight: 300; font-size: 19px; line-height: 1.2; }
-.lab-entry-paths a span:last-child { justify-self: end; font-size: 20px; line-height: 1; }
+.lab-entry-paths a span:last-child { justify-self: end; font-size: 20px; line-height: 1; font-variant-emoji: text; }
 .lab-entry-documents .lab-entry-paths a span:nth-child(2) { max-width: none; padding: 0 30px 0 22px; }
 .lab-entry-documents .lab-entry-paths a span:last-child { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
 
