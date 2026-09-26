@@ -87,10 +87,8 @@ export function mountInterest(doc = document, fetchImpl) {
   const submit = form.querySelector('button[type="submit"]');
   const send = fetchImpl || ((...args) => doc.defaultView.fetch(...args));
 
-  for (const [id, key] of [['ex-name', 'name'], ['ex-email', 'email'], ['ex-note', 'note']]) {
-    const el = field(id);
-    if (el && !el.hasAttribute('maxlength')) el.setAttribute('maxlength', String(INTEREST_LIMITS[key]));
-  }
+  const email = field('ex-email');
+  if (email && !email.hasAttribute('maxlength')) email.setAttribute('maxlength', String(INTEREST_LIMITS.email));
 
   let pending = false;
   form.addEventListener('submit', async (e) => {
@@ -100,9 +98,7 @@ export function mountInterest(doc = document, fetchImpl) {
     if (submit) submit.disabled = true;
     if (errorEl) errorEl.hidden = true;
     const payload = interestPayload({
-      name: field('ex-name').value,
-      email: field('ex-email').value,
-      note: field('ex-note') ? field('ex-note').value : '',
+      email: email.value,
       website: field('ex-hp') ? field('ex-hp').value : '',
     });
     try {

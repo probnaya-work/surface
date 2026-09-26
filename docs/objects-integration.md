@@ -1,9 +1,9 @@
 # Objects integration
 
-`/objects` lists the things the laboratory makes to be kept rather than run.
-The first is Object 001, EX–, at `/objects/001`. An object is reached from its
-band on the index, the OBJECTS group on the lab card and `/objects`; it has no
-place in the header.
+`/objects` is the workshop: the things the laboratory makes to be kept rather
+than run, one bay each, on the one page of the site with an ink ground. The
+first is Object 001, EX–, at `/objects/001`. Objects are reached from 03 in the
+index and, while an object is proposed, from its band on the home page.
 
 ## Ownership boundary
 
@@ -23,13 +23,21 @@ files copied. It is excluded from deployment in `.vercelignore`.
 
 ## Interest
 
-The interest form posts to the existing `/api/intake` on channel B. The body
-starts `OBJECT 001 — EX– · INTEREST`, and the mail subject is
-`INTAKE / CHANNEL B — <name>`. It takes a name, an email and an optional note.
-It is not an order: no payment and no postal address are asked for, sent or
-stored. `api/intake.js` is unchanged; `test/objects.test.js` holds the copied
-message builder to that endpoint's validation, the honeypot and the mail it
-produces.
+The page's primary action is the free wallpaper pack; interest is secondary.
+The interest form posts to the existing `/api/intake` on channel B. It asks for
+one thing, an email address, which also stands in for the sender's name: the
+mail subject is `INTAKE / CHANNEL B — <email>` and the body is
+`OBJECT 001 — EX– · INTEREST` with its terms. It is not an order: no payment and
+no postal address are asked for, sent or stored. At 20 registrations PROBNAYA
+asks a printer for a quote; everyone registered then gets one email with the
+price and an order link.
+
+Mail is sent only where `SMTP_USER`, `SMTP_PASS` and `SMTP_FROM` are set. They
+are set for Production only, so on a Preview the endpoint answers 500 and the
+page shows its error line.
+
+`api/intake.js` is unchanged; `test/objects.test.js` holds the copied message
+builder to that endpoint's validation, the honeypot and the mail it produces.
 
 ## Refreshing the artifact
 

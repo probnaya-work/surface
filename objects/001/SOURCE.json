@@ -1,15 +1,18 @@
 {
   "source": "probnaya-work/objects/ex",
-  "commit": "9ba7350d701ead6ec483883d019d9f87e6de3552",
+  "commit": "5c42e5b60d7c6000bac11009bb0febc82f90af14",
   "runtimeFiles": [
     "js/card.js",
     "js/object.js",
     "js/page.js",
-    "wallpapers/preview-desktop.png",
-    "wallpapers/preview-phone.png",
-    "wallpapers/probnaya-ex-desktop-16x10-3456x2160.png",
-    "wallpapers/probnaya-ex-desktop-16x9-3840x2160.png",
-    "wallpapers/probnaya-ex-phone-1320x2868.png"
+    "wallpapers/probnaya-ex-dark-desktop-3840x2160.png",
+    "wallpapers/probnaya-ex-dark-phone-1320x2868.png",
+    "wallpapers/probnaya-ex-light-desktop-3840x2160.png",
+    "wallpapers/probnaya-ex-light-phone-1320x2868.png",
+    "wallpapers/probnaya-ex-interlaced-desktop-3840x2160.png",
+    "wallpapers/probnaya-ex-interlaced-phone-1320x2868.png",
+    "wallpapers/probnaya-ex-preview-sheet.png",
+    "wallpapers/probnaya-ex-wallpapers.zip"
   ],
   "surfaceOwned": "index.html"
 }

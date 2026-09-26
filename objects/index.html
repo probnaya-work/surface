@@ -48,58 +48,89 @@
       <svg viewBox="0 0 32 32" width="15" height="15" style="display:block; flex-shrink:0; overflow:visible;"><rect x="4" y="3" width="20" height="26" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="14" y="14" width="17" height="3" fill="currentColor"></rect></svg>
       <span class="brand-name">PROBNAYA</span>
     </a>
-    <a class="brand-tag" href="/lab">INDEPENDENT COMPUTATIONAL LABORATORY</a>
+    <span class="brand-tag">INDEPENDENT COMPUTATIONAL LABORATORY</span>
   </div>
   <div class="nav-right">
     <span class="relation-slot"><a class="access-entry" href="https://access.probnaya.work/">ENTER</a></span>
-    <a class="nav-link" href="/instruments"><span class="label">INSTRUMENTS</span></a>
-    <a class="nav-link" href="/investigations"><span class="label">INVESTIGATIONS</span></a>
-    <a class="nav-link nav-divided" href="/observations"><span class="label">OBSERVATIONS</span></a>
+    <button type="button" class="index-toggle" aria-expanded="false" aria-controls="site-index"><span class="pos">OBJECTS</span><span class="act" data-index-act>INDEX</span></button>
     <a class="nav-cta" href="/intake" aria-label="Submit a problem">SUBMIT<span class="nav-cta-rest"> A PROBLEM</span></a>
   </div>
 </header>
 
 <header class="mobile-header">
   <a class="brand-name" href="/">PROBNAYA</a>
-  <a class="mobile-lab-link" href="/lab">LAB</a>
   <span class="relation-slot"><a class="access-entry" href="https://access.probnaya.work/">ENTER</a></span>
-  <span class="crumb">OBJ</span>
+  <button type="button" class="index-toggle" aria-expanded="false" aria-controls="site-index"><span class="pos">OBJ</span><span class="act" data-index-act>INDEX</span></button>
 </header>
 
-<main class="main">
-  <div class="page objects-page">
-    <a class="back-link" href="/lab">← THE LABORATORY</a>
-    <div class="eyebrow-row" style="margin-top:26px;">
-      <h1 class="eyebrow" style="margin:0;font-weight:400;">OBJECTS</h1>
-      <span class="eyebrow-meta">01</span>
-    </div>
-    <p class="body-copy objects-intro">Things the laboratory makes to be kept rather than run. Each one is listed here from the day it is proposed.</p>
+<nav class="site-index" id="site-index" aria-label="Index" hidden>
+  <span class="index-group">THE LABORATORY'S OWN WORK</span>
+  <a href="/instruments"><span class="n">01</span><span class="name">Instruments</span><span class="m"></span></a>
+  <a href="/investigations"><span class="n">02</span><span class="name">Investigations</span><span class="m"></span></a>
+  <a href="/objects" aria-current="page"><span class="n">03</span><span class="name">Objects</span><span class="m"></span></a>
+  <a href="/lab"><span class="n">04</span><span class="name">About the laboratory</span><span class="m"></span></a>
+  <span class="index-group">ARRIVES FROM OUTSIDE</span>
+  <a href="/observations"><span class="n">05</span><span class="name">Observations</span><span class="m"></span></a>
+  <a href="/intake" class="action"><span class="n">06</span><span class="name">Submit a problem</span><span class="m"></span></a>
+</nav>
 
-    <div class="object-list">
-      <a class="index-row" href="/objects/001">
-        <span class="id">EX–</span>
-        <span class="desc">A lenticular card: excitement from one side, exhaustion from the other</span>
-        <span class="status status-observation">001 · PROPOSED</span>
+<main class="main workshop">
+  <div class="workshop-page">
+    <a class="back-link" href="/lab">← THE LABORATORY</a>
+
+    <div class="ws-head">
+      <h1 class="ws-title">OBJECTS</h1>
+      <div class="ws-head-meta">
+        <span>THE WORKSHOP · PROB–OBJ</span>
+        <span><span class="n">01</span> ON THE BENCH</span>
+      </div>
+    </div>
+    <p class="ws-intro">Things the laboratory makes to be kept rather than run. Each one is listed here from the day it is proposed.</p>
+
+    <div class="ws-shelf">
+      <a class="ws-bay ws-bay--live" href="/objects/001">
+        <span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <span class="ws-bay-row">
+          <span class="n">001</span>
+          <span><span class="ws-mark observing"></span>PROPOSED</span>
+        </span>
+        <span class="ws-stage">
+          <span class="ex-card" aria-hidden="true" style="--deg:0deg;">
+            <span class="ex-card-ground"></span>
+            <span class="ex-card-ribs"></span>
+            <span class="ex-card-face">
+              <span class="ex-card-row"><span>PROB–OBJ–001</span></span>
+              <span class="ex-card-word"><span>EX</span><span class="ex-tail"><span class="hold">HAUSTION</span><span class="first">CITEMENT</span></span></span>
+              <span class="ex-card-row"><span>&nbsp;</span></span>
+            </span>
+          </span>
+        </span>
+        <span class="ws-bay-foot">
+          <span class="id">EX–</span>
+          <span class="go">→</span>
+        </span>
       </a>
+
+      <div class="ws-bay ws-bay--empty" aria-label="Bay 002, open">
+        <span class="ws-bay-row">
+          <span class="n">002</span>
+          <span><span class="ws-mark awaiting"></span>OPEN</span>
+        </span>
+        <span class="ws-stage"></span>
+        <span class="ws-bay-foot">
+          <span class="ws-empty-id">—</span>
+        </span>
+      </div>
     </div>
   </div>
 </main>
 
 <footer class="site-footer">
   <a href="/lab">PROBNAYA · WHAT THIS LABORATORY IS →</a>
-  <a class="standing" href="/instrument-mpa-01" data-standing>
-    <span class="standing-mark" hidden></span>
-    <span class="standing-line"></span>
-  </a>
+  <a href="mailto:mail@probnaya.work">mail@probnaya.work</a>
   <span class="stamp" data-stamp></span>
 </footer>
 
-<nav class="bottom-nav has-tabs">
-  <a href="/instruments"><span>INSTRUMENTS</span></a>
-  <a href="/investigations"><span>INVESTIGATIONS</span></a>
-  <a class="nav-divided" href="/observations"><span>OBSERVATIONS</span></a>
-  <a href="/intake"><span>SUBMIT</span></a>
-</nav>
 
 <script src="../js/apparatus.js"></script>
 <script src="../js/register.js"></script>

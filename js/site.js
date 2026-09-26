@@ -1,4 +1,27 @@
 // Small shared page chrome behaviour used across all pages.
+
+// The index. Both header controls (desktop and phone) open the same panel.
+// Escape closes it; a page restored from history opens with it closed.
+(function () {
+  const panel = document.getElementById('site-index');
+  if (!panel) return;
+  const toggles = document.querySelectorAll('.index-toggle');
+  const set = (open) => {
+    panel.hidden = !open;
+    document.documentElement.classList.toggle('index-open', open);
+    toggles.forEach((t) => {
+      t.setAttribute('aria-expanded', String(open));
+      const act = t.querySelector('[data-index-act]');
+      if (act) act.textContent = open ? 'CLOSE' : 'INDEX';
+    });
+  };
+  toggles.forEach((t) => t.addEventListener('click', () => set(panel.hidden)));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !panel.hidden) { set(false); toggles.forEach((t) => t.offsetParent && t.focus()); }
+  });
+  window.addEventListener('pageshow', () => set(false));
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
   const stamp = 'PROB–' + new Date().toISOString().slice(0, 10).replace(/-/g, '.');
   document.querySelectorAll('[data-stamp]').forEach(el => { el.textContent = stamp; });

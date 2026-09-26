@@ -60,32 +60,26 @@ test('the page carries every element the behaviour addresses', () => {
   for (const id of ids) assert.match(page, new RegExp(`id="${id}"`), `#${id}`);
 });
 
-test('no download link sits inside another link', () => {
-  for (const block of page.split('<div class="ex-download">').slice(1)) {
-    const card = block.slice(0, block.indexOf('</div>'));
-    let depth = 0;
-    for (const tag of card.matchAll(/<(\/?)a\b/g)) {
-      depth += tag[1] ? -1 : 1;
-      assert.ok(depth <= 1, 'nested <a>');
-    }
-  }
-});
-
 test('the interest message passes the intake endpoint unchanged in meaning', async () => {
   const { interestPayload, INTEREST_LIMITS } = await loadObject();
-  const payload = interestPayload({ name: 'A Reader', email: 'reader@example.org', note: 'One for the wall.', website: '' });
-  const result = handler.validate(payload);
+  const result = handler.validate(interestPayload({ email: 'reader@example.org', website: '' }));
   assert.equal(result.ok, true, result.error);
   assert.equal(result.channel, 'B');
-  assert.match(result.body, /^OBJECT 001 — EX– · INTEREST\nNON-BINDING · NO PAYMENT TAKEN · NO POSTAL ADDRESS TAKEN\n\nOne for the wall\.$/);
+  assert.equal(result.from, 'reader@example.org');
+  assert.equal(result.body, 'OBJECT 001 — EX– · INTEREST\nNON-BINDING · NO PAYMENT TAKEN · NO POSTAL ADDRESS TAKEN');
 
-  const longest = interestPayload({
-    name: 'n'.repeat(INTEREST_LIMITS.name),
-    email: 'e'.repeat(INTEREST_LIMITS.email),
-    note: 'x'.repeat(INTEREST_LIMITS.note),
-  });
+  const longest = interestPayload({ email: 'e'.repeat(INTEREST_LIMITS.email) });
   assert.equal(handler.validate(longest).ok, true, handler.validate(longest).error);
-  assert.match(page, new RegExp(`id="ex-note"[^>]*maxlength="${INTEREST_LIMITS.note}"`));
+  assert.equal(handler.validate(interestPayload({ email: '' })).ok, false, 'an empty address is refused');
+  assert.match(page, new RegExp(`id="ex-email"[^>]*maxlength="${INTEREST_LIMITS.email}"`));
+});
+
+test('the form asks for an email and nothing else', () => {
+  const form = page.slice(page.indexOf('<form id="ex-form"'), page.indexOf('</form>'));
+  const fields = [...form.matchAll(/<(input|textarea|select)\b[^>]*>/g)].map((m) => m[0]);
+  assert.equal(fields.length, 2, 'the email and the honeypot');
+  assert.match(fields[0], /id="ex-email"[^>]*type="email"[^>]*required/);
+  assert.match(fields[1], /id="ex-hp"[^>]*tabindex="-1"/);
 });
 
 test('interest arrives as one channel B intake mail naming the object', async () => {
@@ -96,13 +90,12 @@ test('interest arrives as one channel B intake mail naming the object', async ()
   Object.assign(process.env, { SMTP_USER: 'u', SMTP_PASS: 'p', SMTP_FROM: 'from@probnaya.work' });
   try {
     const res = { code: 0, body: null, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; }, end() { return this; } };
-    await handler({ method: 'POST', headers: {}, body: interestPayload({ name: 'A Reader', email: 'reader@example.org' }) }, res);
+    await handler({ method: 'POST', headers: {}, body: interestPayload({ email: 'reader@example.org' }) }, res);
     assert.equal(res.code, 200);
     assert.equal(res.body.ok, true);
-    assert.equal(seen.message.subject, 'INTAKE / CHANNEL B — A Reader');
+    assert.equal(seen.message.subject, 'INTAKE / CHANNEL B — reader@example.org');
     assert.equal(seen.message.replyTo, 'reader@example.org');
-    assert.match(seen.message.text, /\nOBJECT 001 — EX– · INTEREST\n/);
-    assert.match(seen.message.text, /\n\(no note\)\n/);
+    assert.match(seen.message.text, /\nOBJECT 001 — EX– · INTEREST\nNON-BINDING/);
   } finally {
     process.env = env;
     handler._setMailer(null);
@@ -115,12 +108,18 @@ test('a filled honeypot is accepted and never mailed', async () => {
   handler._setMailer({ createTransport: () => ({ sendMail: async () => { sent = true; } }) });
   try {
     const res = { code: 0, body: null, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; }, end() { return this; } };
-    await handler({ method: 'POST', headers: {}, body: interestPayload({ name: 'x', email: 'y@z.io', website: 'http://spam' }) }, res);
+    await handler({ method: 'POST', headers: {}, body: interestPayload({ email: 'y@z.io', website: 'http://spam' }) }, res);
     assert.equal(res.code, 200);
     assert.equal(sent, false);
   } finally {
     handler._setMailer(null);
   }
+});
+
+test('the wallpaper pack is the primary action and carries all six files', () => {
+  assert.match(page, /<a class="ex-primary" href="\/objects\/001\/wallpapers\/probnaya-ex-wallpapers\.zip" download>/);
+  const pngs = manifest.runtimeFiles.filter((f) => /wallpapers\/probnaya-ex-(dark|light|interlaced)-/.test(f));
+  assert.equal(pngs.length, 6);
 });
 
 test('the objects pages are in the sitemap', () => {

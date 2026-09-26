@@ -49,23 +49,31 @@
       <svg viewBox="0 0 32 32" width="15" height="15" style="display:block; flex-shrink:0; overflow:visible;"><rect x="4" y="3" width="20" height="26" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="14" y="14" width="17" height="3" fill="currentColor"></rect></svg>
       <span class="brand-name">PROBNAYA</span>
     </a>
-    <a class="brand-tag" href="/lab">INDEPENDENT COMPUTATIONAL LABORATORY</a>
+    <span class="brand-tag">INDEPENDENT COMPUTATIONAL LABORATORY</span>
   </div>
   <div class="nav-right">
     <span class="relation-slot"><a class="access-entry" href="https://access.probnaya.work/">ENTER</a></span>
-    <a class="nav-link" href="/instruments"><span class="label">INSTRUMENTS</span></a>
-    <a class="nav-link" href="/investigations"><span class="label">INVESTIGATIONS</span></a>
-    <a class="nav-link nav-divided" href="/observations"><span class="label">OBSERVATIONS</span></a>
+    <button type="button" class="index-toggle" aria-expanded="false" aria-controls="site-index"><span class="pos">OBJECTS / 001</span><span class="act" data-index-act>INDEX</span></button>
     <a class="nav-cta" href="/intake" aria-label="Submit a problem">SUBMIT<span class="nav-cta-rest"> A PROBLEM</span></a>
   </div>
 </header>
 
 <header class="mobile-header">
   <a class="brand-name" href="/">PROBNAYA</a>
-  <a class="mobile-lab-link" href="/lab">LAB</a>
   <span class="relation-slot"><a class="access-entry" href="https://access.probnaya.work/">ENTER</a></span>
-  <span class="crumb">OBJ / 001</span>
+  <button type="button" class="index-toggle" aria-expanded="false" aria-controls="site-index"><span class="pos">OBJ / 001</span><span class="act" data-index-act>INDEX</span></button>
 </header>
+
+<nav class="site-index" id="site-index" aria-label="Index" hidden>
+  <span class="index-group">THE LABORATORY'S OWN WORK</span>
+  <a href="/instruments"><span class="n">01</span><span class="name">Instruments</span><span class="m"></span></a>
+  <a href="/investigations"><span class="n">02</span><span class="name">Investigations</span><span class="m"></span></a>
+  <a href="/objects" aria-current="page"><span class="n">03</span><span class="name">Objects</span><span class="m"></span></a>
+  <a href="/lab"><span class="n">04</span><span class="name">About the laboratory</span><span class="m"></span></a>
+  <span class="index-group">ARRIVES FROM OUTSIDE</span>
+  <a href="/observations"><span class="n">05</span><span class="name">Observations</span><span class="m"></span></a>
+  <a href="/intake" class="action"><span class="n">06</span><span class="name">Submit a problem</span><span class="m"></span></a>
+</nav>
 
 <main class="main">
   <div class="page detail">
@@ -103,32 +111,51 @@
       </div>
 
       <div class="ex-text">
-        <p class="lede">A small card that reads EXCITEMENT from one side and EXHAUSTION from the other.</p>
-        <p class="body-copy">It is a lenticular print. Walk past it, or turn it in your hand, and the word changes. The first two letters stay where they are.</p>
-        <p class="body-copy">It started as a note about working with AI: more ideas, more of them built, and the tiredness of trying to keep up. Both words begin with ex–, Latin for out of.</p>
-        <dl class="specs">
-          <dt>STATUS</dt><dd>PROPOSED · NOT YET MADE</dd>
-          <dt>CARD</dt><dd>148 × 105 MM · LENTICULAR · TWO STATES</dd>
-          <dt>RUN</dt><dd>50 NUMBERED CARDS · A TARGET</dd>
-          <dt>PRICE</dt><dd>COVERS PRODUCTION AND POSTAGE · NOT YET SET</dd>
-          <dt>DIGITAL</dt><dd class="accent">FREE · FULL RESOLUTION · BELOW</dd>
-        </dl>
-        <a class="action-link" href="#interest">REGISTER INTEREST →</a>
+        <p class="lede">A lenticular card, 148 × 105 mm. Proposed, not yet made.</p>
+        <p class="body-copy">It began as a note on working with AI: more gets built, and keeping up is tiring.</p>
+        <div class="ex-primary-wrap">
+          <a class="ex-primary" href="/objects/001/wallpapers/probnaya-ex-wallpapers.zip" download>DOWNLOAD THE WALLPAPERS · FREE ↓</a>
+          <span class="ex-primary-note">DARK, LIGHT, INTERLACED · DESKTOP AND PHONE · NO SIGN-UP</span>
+        </div>
       </div>
     </div>
+
+    <!-- The wallpapers, the archive and the page behaviour are issued from
+         probnaya-work/objects (ex/) by scripts/sync-ex.sh. Do not edit the copies. -->
+    <section class="ex-section" id="wallpapers" aria-labelledby="ex-wall-title">
+      <div class="eyebrow-row">
+        <h2 class="eyebrow" id="ex-wall-title" style="margin:0;font-weight:400;">WALLPAPERS</h2>
+        <span class="eyebrow-meta">PNG</span>
+      </div>
+      <img class="ex-sheet" src="/objects/001/wallpapers/probnaya-ex-preview-sheet.png" width="3000" height="508" alt="Three wallpapers, each for desktop and phone: EX– with CITEMENT and HAUSTION cut into interlaced blue and red strips, on a dark ground, on a light ground, and inside a field of rippled blue and red strips.">
+      <div class="ex-files">
+        <div class="ex-file">
+          <span class="k">DARK</span>
+          <a href="/objects/001/wallpapers/probnaya-ex-dark-desktop-3840x2160.png" download>DESKTOP ↓ <span class="size">3840 × 2160</span></a>
+          <a href="/objects/001/wallpapers/probnaya-ex-dark-phone-1320x2868.png" download>PHONE ↓ <span class="size">1320 × 2868</span></a>
+        </div>
+        <div class="ex-file">
+          <span class="k">LIGHT</span>
+          <a href="/objects/001/wallpapers/probnaya-ex-light-desktop-3840x2160.png" download>DESKTOP ↓ <span class="size">3840 × 2160</span></a>
+          <a href="/objects/001/wallpapers/probnaya-ex-light-phone-1320x2868.png" download>PHONE ↓ <span class="size">1320 × 2868</span></a>
+        </div>
+        <div class="ex-file">
+          <span class="k">INTERLACED</span>
+          <a href="/objects/001/wallpapers/probnaya-ex-interlaced-desktop-3840x2160.png" download>DESKTOP ↓ <span class="size">3840 × 2160</span></a>
+          <a href="/objects/001/wallpapers/probnaya-ex-interlaced-phone-1320x2868.png" download>PHONE ↓ <span class="size">1320 × 2868</span></a>
+        </div>
+      </div>
+    </section>
 
     <section class="ex-section" aria-labelledby="ex-how-title">
       <div class="eyebrow-row">
         <h2 class="eyebrow" id="ex-how-title" style="margin:0;font-weight:400;">HOW IT GETS MADE</h2>
-        <span class="eyebrow-meta">NOTHING IS CHARGED UNTIL STEP 03</span>
       </div>
       <div class="ex-steps">
-        <div class="ex-step"><span class="n">01</span><span class="k">NOW</span><span class="t">Register interest below. It is not an order. No payment, no postal address.</span></div>
-        <div class="ex-step"><span class="n">02</span><span class="k">QUOTE</span><span class="t">A printer quotes for the card. The price is set from that quote, to cover production and postage.</span></div>
-        <div class="ex-step"><span class="n">03</span><span class="k">ORDERS</span><span class="t">Everyone who registered gets one email with the price and a way to order. Only then is anything paid.</span></div>
-        <div class="ex-step"><span class="n">04</span><span class="k">RUN</span><span class="t">The plan is to print <span class="accent">50 cards once 20 paid orders are in</span>. That is a target, and it depends on the final quote.</span></div>
+        <div class="ex-step"><span class="n">01</span><span class="k">INTEREST</span><span class="t">Register below. Not an order: no payment, no postal address.</span></div>
+        <div class="ex-step"><span class="n">02</span><span class="k">QUOTE</span><span class="t">At <span class="accent">20 registrations</span>, PROBNAYA gets a printer’s quote and plans production.</span></div>
+        <div class="ex-step"><span class="n">03</span><span class="k">ORDER</span><span class="t">After the quote, everyone registered gets one email with the final price and an order link.</span></div>
       </div>
-      <p class="ex-note">REGISTERING INTEREST DOES NOT GUARANTEE THE CARD WILL BE MADE.</p>
     </section>
 
     <section class="ex-section" id="interest" aria-labelledby="ex-interest-title">
@@ -136,84 +163,23 @@
         <h2 class="eyebrow" id="ex-interest-title" style="margin:0;font-weight:400;">REGISTER INTEREST</h2>
         <span class="eyebrow-meta">NON-BINDING</span>
       </div>
-      <div class="intake-grid">
-        <div class="intake-copy ex-interest">
-          <h2>Tell us you would want one.</h2>
-          <p>We will write once, when there is a price. Your email is used for that and nothing else.</p>
-          <dl class="specs">
-            <dt>ASKS FOR</dt><dd>A NAME · AN EMAIL</dd>
-            <dt>DOES NOT ASK</dt><dd>PAYMENT · POSTAL ADDRESS</dd>
-            <dt>COMMITS YOU</dt><dd>TO NOTHING</dd>
-          </dl>
+      <div class="ex-interest-wrap">
+        <div id="ex-receipt" class="intake-receipt" hidden>
+          <span class="stamp">RECORDED · <span id="ex-receipt-id"></span></span>
+          <span class="line">Noted. One email when there is a price.</span>
+          <span class="note">NOT AN ORDER. NOTHING HAS BEEN CHARGED.</span>
         </div>
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          <div id="ex-receipt" class="intake-receipt" hidden>
-            <span class="stamp">RECORDED · <span id="ex-receipt-id"></span></span>
-            <span class="line">Your interest is noted.</span>
-            <span class="note">THIS IS NOT AN ORDER. NOTHING HAS BEEN CHARGED.</span>
+        <div id="ex-error" class="intake-error" hidden>
+          <span>COULD NOT SEND. TRY AGAIN, OR WRITE TO MAIL@PROBNAYA.WORK.</span>
+        </div>
+        <form id="ex-form" class="intake-form ex-interest-form">
+          <input id="ex-email" type="email" placeholder="EMAIL" inputmode="email" autocomplete="email" aria-label="Email" maxlength="200" required>
+          <!-- Honeypot: positioned off-screen, not visible to humans. -->
+          <div style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" aria-hidden="true">
+            <input id="ex-hp" type="text" name="website" tabindex="-1" autocomplete="off">
           </div>
-          <div id="ex-error" class="intake-error" hidden>
-            <span>COULD NOT SEND. TRY AGAIN, OR WRITE TO MAIL@PROBNAYA.WORK.</span>
-          </div>
-          <form id="ex-form" class="intake-form">
-            <input id="ex-name" type="text" placeholder="NAME" autocomplete="name" aria-label="Name" maxlength="200" required>
-            <input id="ex-email" type="email" placeholder="EMAIL" inputmode="email" autocomplete="email" aria-label="Email" maxlength="200" required>
-            <textarea id="ex-note" rows="3" placeholder="ANYTHING TO ADD (OPTIONAL)" aria-label="Anything to add (optional)" maxlength="3800"></textarea>
-            <!-- Honeypot: positioned off-screen, not visible to humans. -->
-            <div style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" aria-hidden="true">
-              <input id="ex-hp" type="text" name="website" tabindex="-1" autocomplete="off">
-            </div>
-            <button type="submit">REGISTER INTEREST · NO PAYMENT →</button>
-          </form>
-        </div>
-      </div>
-    </section>
-
-    <section class="ex-section" aria-labelledby="ex-digital-title">
-      <div class="eyebrow-row">
-        <h2 class="eyebrow" id="ex-digital-title" style="margin:0;font-weight:400;">DIGITAL EDITION</h2>
-        <span class="eyebrow-meta">FREE · NO SIGN-UP</span>
-      </div>
-      <div class="split" style="padding-top:26px;">
-        <p class="lede">One inscription that reads both ways, for a desktop and a phone.</p>
-        <p class="body-copy">Made the way the card works: EX– whole, the rest cut into strips of both words, so one inscription reads both ways. Full resolution. Download directly; nothing is asked for.</p>
-      </div>
-      <!-- The wallpapers and the page behaviour are issued from probnaya-work/objects
-           (ex/) by scripts/sync-ex.sh. Do not edit the copies in this directory. -->
-      <div class="ex-downloads">
-        <div class="ex-download">
-          <a href="/objects/001/wallpapers/probnaya-ex-desktop-16x10-3456x2160.png" download aria-label="Download the desktop wallpaper, 3456 × 2160, 16:10">
-            <img src="/objects/001/wallpapers/preview-desktop.png" width="960" height="600" alt="Desktop wallpaper: EX– in black over two interlaced lines, CITE/HAUS and MENT/TION, cut into alternating blue and red strips">
-          </a>
-          <span class="label"><a href="/objects/001/wallpapers/probnaya-ex-desktop-16x10-3456x2160.png" download>DESKTOP ↓</a><span class="size">3456 × 2160 · 16:10 · <a href="/objects/001/wallpapers/probnaya-ex-desktop-16x9-3840x2160.png" download aria-label="Download the desktop wallpaper, 3840 × 2160, 16:9">16:9</a></span></span>
-        </div>
-        <div class="ex-download">
-          <a href="/objects/001/wallpapers/probnaya-ex-phone-1320x2868.png" download aria-label="Download the phone wallpaper, 1320 × 2868">
-            <img src="/objects/001/wallpapers/preview-phone.png" width="330" height="717" alt="Phone wallpaper: EX– over two interlaced lines, CITE/HAUS and MENT/TION">
-          </a>
-          <span class="label"><a href="/objects/001/wallpapers/probnaya-ex-phone-1320x2868.png" download>PHONE ↓</a><span class="size">1320 × 2868 · PNG</span></span>
-        </div>
-      </div>
-    </section>
-
-    <section class="ex-section" aria-labelledby="ex-card-title">
-      <div class="eyebrow-row">
-        <h2 class="eyebrow" id="ex-card-title" style="margin:0;font-weight:400;">THE CARD · PROVISIONAL</h2>
-        <span class="eyebrow-meta">UNTIL A PRINTER CONFIRMS</span>
-      </div>
-      <div class="split">
-        <dl class="specs">
-          <dt>SIZE</dt><dd>148 × 105 MM · SQUARE CORNERS</dd>
-          <dt>LENS</dt><dd>FLIP LENS · ≈ 75 LPI · ≈ 0.45 MM</dd>
-          <dt>COLOURS</dt><dd>BLUE TO RED · EX– IN PAPER WHITE THROUGHOUT</dd>
-          <dt>BACK</dt><dd>UNCOATED CARD · NUMBERED BY HAND OR STAMP</dd>
-        </dl>
-        <dl class="specs">
-          <dt>RUN</dt><dd>50 · TARGET · AFTER 20 PAID ORDERS</dd>
-          <dt>POST</dt><dd>FLAT · RIGID MAILER · LETTER POST</dd>
-          <dt>PRICE</dt><dd>PRODUCTION AND POSTAGE · SET AFTER THE QUOTE</dd>
-          <dt>ISSUED BY</dt><dd>PROBNAYA</dd>
-        </dl>
+          <button type="submit">REGISTER INTEREST</button>
+        </form>
       </div>
     </section>
   </div>
@@ -221,19 +187,9 @@
 
 <footer class="site-footer">
   <a href="/lab">PROBNAYA · WHAT THIS LABORATORY IS →</a>
-  <a class="standing" href="/instrument-mpa-01" data-standing>
-    <span class="standing-mark" hidden></span>
-    <span class="standing-line"></span>
-  </a>
+  <a href="mailto:mail@probnaya.work">mail@probnaya.work</a>
   <span class="stamp" data-stamp></span>
 </footer>
-
-<nav class="bottom-nav has-tabs">
-  <a href="/instruments"><span>INSTRUMENTS</span></a>
-  <a href="/investigations"><span>INVESTIGATIONS</span></a>
-  <a class="nav-divided" href="/observations"><span>OBSERVATIONS</span></a>
-  <a href="/intake"><span>SUBMIT</span></a>
-</nav>
 
 <script src="../../js/apparatus.js"></script>
 <script src="../../js/register.js"></script>

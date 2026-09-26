@@ -133,6 +133,55 @@ p { text-wrap: pretty; }
 }
 .nav-cta:hover { background: var(--blue); color: var(--paper); }
 
+/* The descriptor is a description, not a link. */
+span.brand-tag { cursor: default; border-bottom: none; padding-bottom: 0; }
+span.brand-tag:hover { color: var(--mid); }
+
+/* ---------- the index ----------
+   One control in the header carries the visitor's position and opens the index.
+   Every section is listed there once: a number and a name, in the two groups the
+   navigation always had. The current section is set in ink with the blue marker. */
+.index-toggle {
+  display: flex; align-items: stretch; flex-shrink: 0; padding: 0; margin: 0;
+  border: 1px solid var(--ink); background: none; color: var(--ink); cursor: pointer;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; white-space: nowrap;
+}
+.index-toggle .pos { display: flex; align-items: center; gap: 9px; padding: 7px 14px; border-right: 1px solid var(--ink); }
+.index-toggle .pos::before { content: ""; width: 7px; height: 7px; background: var(--blue); flex-shrink: 0; }
+.index-toggle .act { display: flex; align-items: center; padding: 7px 14px; }
+.index-toggle:hover { background: var(--hover-bg); }
+.site-header .index-toggle { margin-left: 12px; }
+.index-toggle[aria-expanded="true"] { background: var(--ink); color: var(--paper); }
+.index-toggle[aria-expanded="true"] .pos { border-right-color: var(--body-text); }
+.index-toggle:focus-visible { outline: 1px solid var(--blue); outline-offset: 3px; }
+:root.index-open .site-header, :root.index-open .mobile-header { border-bottom-color: var(--ink); }
+:root.index-open body { overflow: hidden; }
+
+.site-index {
+  position: fixed; top: var(--header-h); left: 0; right: 0; bottom: 0; z-index: 49;
+  display: flex; flex-direction: column; padding: 28px; overflow-y: auto;
+  background: var(--paper); color: var(--ink);
+}
+.site-index[hidden] { display: none; }
+.site-index .index-group {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--body-text);
+  padding: 0 18px 12px; border-bottom: 1px solid var(--ink);
+}
+.site-index a + .index-group { padding-top: 26px; }
+.site-index a {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) 7px; gap: 18px; align-items: baseline;
+  padding: 18px; border-bottom: 1px solid var(--border); color: var(--ink);
+}
+.site-index a .n { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--body-text); }
+.site-index a .name { font-weight: 500; font-size: 36px; letter-spacing: -0.02em; line-height: 1; }
+.site-index a .m { width: 7px; height: 7px; align-self: center; }
+.site-index a:hover { background: var(--hover-bg); }
+.site-index a.action { color: var(--blue); }
+.site-index a[aria-current="page"] { background: var(--ink); color: var(--paper); border-bottom-color: var(--ink); }
+.site-index a[aria-current="page"] .n { color: var(--faint); }
+.site-index a[aria-current="page"] .m { background: var(--blue); }
+.site-index a:focus-visible { outline: 1px solid var(--blue); outline-offset: -1px; }
+
 /* ---------- mobile header + bottom nav ---------- */
 
 .mobile-header {
@@ -194,6 +243,9 @@ p { text-wrap: pretty; }
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--faint);
 }
 .site-footer a:hover { color: var(--blue); }
+.site-footer > a:first-child { color: var(--body-text); }
+.site-footer a[href^="mailto:"] { color: var(--blue); }
+.site-footer a[href^="mailto:"]:hover { color: var(--ink); }
 .site-footer span.stamp {
   color: var(--body-text); font-weight: 500; white-space: nowrap;
 }
@@ -384,7 +436,7 @@ p { text-wrap: pretty; }
   padding: 26px 0 90px 0;
 }
 .index-foot .count {
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--faint);
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--body-text);
 }
 .index-foot .count:hover { color: var(--blue); }
 .index-foot .cta {
@@ -1101,16 +1153,16 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
 .threshold-labels span:first-child { color: var(--body-text); }
 .threshold-labels span:last-child { color: var(--faint); }
 .observations-band {
-  display: grid; grid-template-columns: 120px 1fr 150px; column-gap: 28px; align-items: baseline;
+  display: grid; grid-template-columns: minmax(0, 1fr) 170px; column-gap: 28px; align-items: baseline;
   padding: 28px 0 96px 0;
 }
 .observations-band .title {
-  grid-column: 2; grid-row: 1;
+  grid-column: 1; grid-row: 1;
   font-weight: 300; font-size: 30px; line-height: 1.2; letter-spacing: -0.01em; color: var(--ink);
 }
-.observations-band .desc { grid-column: 2; grid-row: 2; margin-top: 10px; font-weight: 300; font-size: 17px; color: var(--body-text); }
+.observations-band .desc { grid-column: 1; grid-row: 2; margin-top: 10px; font-weight: 300; font-size: 17px; color: var(--body-text); }
 .observations-band .read {
-  grid-column: 3; grid-row: 1; text-align: right;
+  grid-column: 2; grid-row: 1; text-align: right;
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--ink);
 }
 .observations-band:hover .read, .observations-band:hover .title { color: var(--blue); }
@@ -1186,22 +1238,76 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
 .ex-step .t .accent { color: var(--blue); }
 .ex-note { margin: 18px 0 0 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--body-text); }
 
-.ex-interest h2 { margin: 0; font-weight: 300; font-size: clamp(28px, 3.2vw, 42px); line-height: 1.12; letter-spacing: -0.015em; text-wrap: pretty; }
-.ex-interest p { margin: 0; font-weight: 300; font-size: 16px; line-height: 1.55; color: var(--body-text); max-width: 40ch; }
-
-.ex-downloads { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: 28px; padding-top: 26px; align-items: end; max-width: 900px; }
-.ex-download { display: flex; flex-direction: column; gap: 10px; }
-.ex-download img { display: block; width: 100%; height: auto; border: 1px solid var(--ink); }
-.ex-download .label {
-  display: flex; flex-direction: column; gap: 4px;
-  padding-top: 10px; border-top: 1px solid var(--ink);
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+/* The wallpapers are the primary action: one ink control, as the primary button. */
+.ex-primary-wrap { display: flex; flex-direction: column; gap: 11px; align-items: flex-start; padding-top: 4px; }
+.ex-primary {
+  display: inline-block; padding: 16px 22px; background: var(--ink); color: var(--paper);
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; white-space: nowrap;
 }
-.ex-download .label .size { color: var(--mid); }
-.ex-download .label a { color: inherit; }
-.ex-download .label .size a { border-bottom: 1px solid currentColor; }
-.ex-download:hover img { border-color: var(--blue); }
-.ex-download:hover .label { color: var(--blue); border-top-color: var(--blue); }
+.ex-primary:hover { background: var(--blue); color: var(--paper); }
+.ex-primary:focus-visible { outline: 1px solid var(--blue); outline-offset: 3px; }
+.ex-primary-note { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--body-text); }
+
+.ex-sheet { display: block; width: 100%; height: auto; margin-top: 26px; border: 1px solid var(--border); }
+.ex-files { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 28px; padding-top: 18px; }
+.ex-file { display: flex; flex-direction: column; border-top: 1px solid var(--ink); }
+.ex-file .k { padding: 11px 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--body-text); }
+.ex-file a {
+  display: flex; justify-content: space-between; gap: 13px; padding: 11px 0; border-top: 1px solid var(--border);
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--ink);
+}
+.ex-file a .size { color: var(--mid); }
+.ex-file a:hover, .ex-file a:hover .size { color: var(--blue); }
+
+/* Interest is secondary: one field, an outlined control. */
+.ex-interest-wrap { display: flex; flex-direction: column; gap: 10px; max-width: 520px; padding-top: 26px; }
+.ex-interest-form { flex-direction: row; }
+.ex-interest-form input { flex: 1; min-width: 0; border-bottom: none; }
+.ex-interest-form button { border-top: none; border-left: 1px solid var(--ink); background: transparent; color: var(--ink); white-space: nowrap; }
+.ex-interest-form button:hover { background: var(--hover-bg); color: var(--ink); }
+.ex-interest-form button:disabled { background: #E7E9EC; color: var(--faint); opacity: 1; }
+
+/* The workshop. /objects is the one room in the laboratory with the lights down:
+   the field polarity swaps (ink ground, paper type) so the objects carry the page.
+   The header and footer stay paper; the room begins under them. */
+.workshop { background: var(--ink); color: var(--paper); }
+.workshop-page { max-width: 1280px; margin: 0 auto; padding: 100px 40px 120px; }
+.workshop .back-link { color: var(--faint); }
+.workshop .back-link:hover { color: var(--paper); }
+.ws-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 18px 40px; padding-top: 40px; border-bottom: 1px solid var(--paper); padding-bottom: 22px; }
+.ws-title { margin: 0; font-weight: 600; font-size: clamp(72px, 14vw, 208px); line-height: 0.82; letter-spacing: -0.045em; }
+.ws-head-meta { display: flex; flex-direction: column; gap: 9px; align-items: flex-end; font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--faint); text-align: right; }
+.ws-head-meta .n { color: var(--paper); }
+.ws-intro { margin: 0; padding-top: 26px; max-width: 46ch; font-weight: 300; font-size: 19px; line-height: 1.5; color: var(--border); text-wrap: pretty; }
+
+.ws-shelf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; padding-top: 76px; padding-bottom: 22px; border-bottom: 1px solid var(--body-text); }
+.ws-bay { position: relative; display: flex; flex-direction: column; aspect-ratio: 4 / 5; border: 1px solid var(--body-text); color: var(--paper); }
+.ws-bay .tick { position: absolute; width: 22px; height: 22px; pointer-events: none; }
+.ws-bay .tick::before, .ws-bay .tick::after { content: ""; position: absolute; background: var(--paper); }
+.ws-bay .tick::before { width: 22px; height: 1px; }
+.ws-bay .tick::after { width: 1px; height: 22px; }
+.ws-bay .tick.tl { top: -1px; left: -1px; }
+.ws-bay .tick.tr { top: -1px; right: -1px; transform: scaleX(-1); }
+.ws-bay .tick.bl { bottom: -1px; left: -1px; transform: scaleY(-1); }
+.ws-bay .tick.br { bottom: -1px; right: -1px; transform: scale(-1, -1); }
+.ws-bay-row { display: flex; justify-content: space-between; align-items: baseline; gap: 18px; padding: 18px 22px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--faint); }
+.ws-bay-row .n { color: var(--paper); }
+.ws-mark { display: inline-block; width: 7px; height: 7px; margin-right: 9px; }
+.ws-mark.observing { border: 1px solid var(--paper); }
+.ws-mark.awaiting { border: 1px dashed var(--mid); }
+.ws-stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 22px; }
+.ws-stage .ex-card { width: 86%; transform: none; }
+.ws-bay-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 18px; padding: 22px; }
+.ws-bay-foot .id { font-weight: 600; font-size: 44px; letter-spacing: -0.02em; line-height: 1; }
+.ws-bay-foot .go { font-family: var(--mono); font-size: 14px; color: var(--faint); }
+.ws-bay--live:hover, .ws-bay--live:focus-visible { border-color: var(--paper); outline: none; }
+.ws-bay--live:hover .go, .ws-bay--live:focus-visible .go { color: var(--paper); }
+.ws-bay--empty { border-style: dashed; border-color: var(--mid); }
+.ws-bay--empty .ws-stage { position: relative; }
+.ws-bay--empty .ws-stage::before, .ws-bay--empty .ws-stage::after { content: ""; position: absolute; left: 50%; top: 50%; background: var(--body-text); }
+.ws-bay--empty .ws-stage::before { width: 44px; height: 1px; transform: translate(-50%, -50%); }
+.ws-bay--empty .ws-stage::after { width: 1px; height: 44px; transform: translate(-50%, -50%); }
+.ws-bay--empty .ws-empty-id { font-weight: 600; font-size: 44px; line-height: 1; color: var(--body-text); }
 
 @media (max-width: 760px) {
   .site-header { display: none; }
@@ -1210,7 +1316,17 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
   .mobile-header .recognized-return { gap: 8px; font-size: 9px; letter-spacing: 0.08em; }
   .mobile-header .recognized-return .return-label { display: none; }
   .mobile-header .access-entry { padding-right: 10px; font-size: 9px; }
-  .bottom-nav.has-tabs { display: grid; }
+  .mobile-header .index-toggle { letter-spacing: 0.12em; position: relative; }
+  .mobile-header .index-toggle::after { content: ""; position: absolute; inset: -9px -6px; }
+  .ex-file a { padding: 15px 0; }
+  .ex-states button { min-height: 44px; }
+  .mobile-header .index-toggle .pos, .mobile-header .index-toggle .act { padding: 7px 10px; }
+  .mobile-header .index-toggle .pos { gap: 8px; }
+  .site-index { top: var(--header-h-mobile); padding: 18px; }
+  .site-index .index-group { padding: 0 13px 12px; }
+  .site-index a + .index-group { padding-top: 18px; }
+  .site-index a { grid-template-columns: 22px minmax(0, 1fr) 7px; gap: 13px; padding: 13px; }
+  .site-index a .name { font-size: 22px; line-height: 1.1; }
 
   .main { padding-top: var(--header-h-mobile); }
 
@@ -1219,7 +1335,7 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
      Its links take --body-text: the pale desktop colour is a known defect. */
   .site-footer {
     flex-direction: column; align-items: stretch;
-    padding: 0 18px; margin-bottom: var(--bottom-nav-h);
+    padding: 0 18px;
   }
   .site-footer > a {
     min-height: 48px; display: flex; align-items: center;
@@ -1351,8 +1467,22 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
   .ex-section { padding-top: 48px; }
   .ex-step { grid-template-columns: 34px minmax(0, 1fr); padding: 16px 0; }
   .ex-step .t { grid-column: 1 / -1; font-size: 15px; }
-  .ex-downloads { grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr); gap: 18px 14px; }
+  .ex-files { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .ex-primary { white-space: normal; }
+  .ex-interest-form { flex-direction: column; }
+  .ex-interest-form input { border-bottom: 1px solid var(--border); }
+  .ex-interest-form button { border-left: none; }
   .objects-page .objects-intro { padding-top: 26px; }
+  .workshop-page { padding: 72px 18px 96px; }
+  .ws-head { padding-top: 26px; }
+  .ws-head-meta { align-items: flex-start; text-align: left; }
+  .ws-intro { font-size: 17px; }
+  .ws-shelf { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding-top: 48px; gap: 13px; }
+  .ws-bay-row { padding: 13px; }
+  .ws-stage { padding: 13px; }
+  .ws-stage .ex-card { width: 100%; }
+  .ws-bay-foot { padding: 13px; }
+  .ws-bay-foot .id, .ws-bay--empty .ws-empty-id { font-size: 28px; }
 }
 
 /* The descriptor steps aside while the header needs its width. With four links and
