@@ -12,6 +12,7 @@
   --hover-bg: #E7E9EC;
   --body-text: #3B3E45;
   --sheet: #FAFAF9;          /* the ground of material that arrived from elsewhere */
+  --ex-red: #D23D2B;         /* Object 001 only: the second state of the EX– card */
 
   --sans: 'Archivo', Helvetica, sans-serif;
   --mono: 'Geist Mono', ui-monospace, monospace;
@@ -1119,6 +1120,89 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
    top bar, fixed bottom tab bar, stacked single-column content.
    ============================================================ */
 
+/* ---------- objects ----------
+   Things the laboratory makes to be kept. An object is reached from the index
+   band, the lab card and /objects; it has no place in the header. A proposed
+   object carries the outlined marker: in observation, not in service. */
+
+.apparatus-band + .object-band { margin-top: 0; }
+.object-band .condition::before { background: transparent; border: 1px solid var(--ink); }
+
+.objects-page .objects-intro { max-width: 52ch; padding-top: 40px; }
+.objects-page .object-list { margin-top: 40px; border-top: 1px solid var(--border); }
+
+/* The EX– card. One card, two printed states: --b runs from 0 (EXCITEMENT)
+   to 1 (EXHAUSTION) and --deg is the tilt. EX– is never faded. */
+.ex-plate {
+  aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center;
+  perspective: 1200px; cursor: ew-resize; touch-action: pan-y;
+}
+.ex-card {
+  --b: 0; --deg: -5.4deg;
+  position: relative; width: 78%; aspect-ratio: 148 / 105; container-type: inline-size;
+  color: var(--paper); transform: rotateY(var(--deg)); transition: transform 120ms linear;
+}
+.ex-card-ground { position: absolute; inset: 0; background: var(--blue); }
+.ex-card-ground.second { background: var(--ex-red); opacity: var(--b); }
+.ex-card-ribs {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(90deg, rgba(239, 240, 242, 0.10) 0px, rgba(239, 240, 242, 0.10) 1px, transparent 1px, transparent 4px);
+}
+.ex-card-face {
+  position: absolute; inset: 0; padding: 6.1cqw 6.8cqw;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.ex-card-row {
+  display: flex; justify-content: space-between; gap: 12px;
+  font-family: var(--mono); font-size: max(10px, 3.4cqw); letter-spacing: 0.16em;
+}
+.ex-card-word { display: flex; align-items: baseline; font-weight: 600; font-size: 12.2cqw; letter-spacing: -0.02em; line-height: 1; }
+.ex-tail { position: relative; display: inline-block; }
+.ex-tail .hold { visibility: hidden; }
+.ex-tail .first, .ex-tail .second { position: absolute; left: 0; top: 0; }
+.ex-tail .first { opacity: calc(1 - var(--b)); }
+.ex-tail .second { opacity: var(--b); }
+@media (prefers-reduced-motion: reduce) { .ex-card { transition: none; } }
+
+.ex-states { margin-top: 4px; }
+.ex-states button[hidden] { display: none; }
+/* The tilt control appears only on touch screens; it takes its own row so the
+   two states keep theirs at phone width. */
+.ex-plate ~ .figure-caption .accent { white-space: nowrap; }
+.ex-states { flex-wrap: wrap; }
+.ex-states button:nth-child(2) { border-right: none; }
+.ex-states #ex-tilt { flex: 1 0 100%; border-top: 1px solid var(--ink); color: var(--blue); }
+.ex-text { display: flex; flex-direction: column; gap: 24px; }
+
+.ex-section { padding-top: 76px; }
+.ex-steps { display: flex; flex-direction: column; }
+.ex-step {
+  display: grid; grid-template-columns: 44px 150px minmax(0, 1fr); gap: 6px 18px; align-items: baseline;
+  padding: 18px 0; border-bottom: 1px solid var(--border);
+}
+.ex-step .n { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--mid); }
+.ex-step .k { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; }
+.ex-step .t { font-weight: 300; font-size: 16px; line-height: 1.55; color: var(--body-text); max-width: 64ch; }
+.ex-step .t .accent { color: var(--blue); }
+.ex-note { margin: 18px 0 0 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--body-text); }
+
+.ex-interest h2 { margin: 0; font-weight: 300; font-size: clamp(28px, 3.2vw, 42px); line-height: 1.12; letter-spacing: -0.015em; text-wrap: pretty; }
+.ex-interest p { margin: 0; font-weight: 300; font-size: 16px; line-height: 1.55; color: var(--body-text); max-width: 40ch; }
+
+.ex-downloads { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: 28px; padding-top: 26px; align-items: end; max-width: 900px; }
+.ex-download { display: flex; flex-direction: column; gap: 10px; }
+.ex-download img { display: block; width: 100%; height: auto; border: 1px solid var(--ink); }
+.ex-download .label {
+  display: flex; flex-direction: column; gap: 4px;
+  padding-top: 10px; border-top: 1px solid var(--ink);
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+}
+.ex-download .label .size { color: var(--mid); }
+.ex-download .label a { color: inherit; }
+.ex-download .label .size a { border-bottom: 1px solid currentColor; }
+.ex-download:hover img { border-color: var(--blue); }
+.ex-download:hover .label { color: var(--blue); border-top-color: var(--blue); }
+
 @media (max-width: 760px) {
   .site-header { display: none; }
   .mobile-header { display: flex; }
@@ -1261,6 +1345,14 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
   .observations-band .title { grid-column: 1; grid-row: 1; font-size: 24px; }
   .observations-band .desc { grid-column: 1; grid-row: 2; font-size: 16px; }
   .observations-band .read { grid-column: 1; grid-row: 3; text-align: left; margin-top: 14px; }
+
+  .ex-plate { aspect-ratio: 1 / 1; }
+  .ex-card { width: 88%; }
+  .ex-section { padding-top: 48px; }
+  .ex-step { grid-template-columns: 34px minmax(0, 1fr); padding: 16px 0; }
+  .ex-step .t { grid-column: 1 / -1; font-size: 15px; }
+  .ex-downloads { grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr); gap: 18px 14px; }
+  .objects-page .objects-intro { padding-top: 26px; }
 }
 
 /* The descriptor steps aside while the header needs its width. With four links and
