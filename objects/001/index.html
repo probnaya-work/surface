@@ -28,14 +28,153 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "CreativeWork",
-  "@id": "https://probnaya.work/objects/001#object",
-  "url": "https://probnaya.work/objects/001",
-  "name": "EX– · Object 001",
-  "description": "A proposed lenticular card that reads EXCITEMENT from one side and EXHAUSTION from the other.",
-  "creativeWorkStatus": "Proposed",
-  "creator": { "@id": "https://probnaya.work/#laboratory" },
-  "isPartOf": { "@id": "https://probnaya.work/#website" }
+  "@graph": [
+    {
+      "@type": "CreativeWork",
+      "@id": "https://probnaya.work/objects/001#object",
+      "url": "https://probnaya.work/objects/001",
+      "name": "EX– · Object 001",
+      "alternateName": "PROB–OBJ–001",
+      "identifier": "PROB–OBJ–001",
+      "description": "A proposed lenticular card that reads EXCITEMENT from one side and EXHAUSTION from the other.",
+      "genre": "Lenticular card",
+      "size": "148 × 105 mm",
+      "creativeWorkStatus": "Proposed",
+      "image": {
+        "@type": "ImageObject",
+        "url": "https://probnaya.work/assets/og-object-001-1200x630.png",
+        "width": 1200,
+        "height": 630,
+        "encodingFormat": "image/png",
+        "caption": "EX– · Object 001, PROBNAYA: EXCITEMENT in blue over EXHAUSTION in red, the shared EX in ink."
+      },
+      "creator": {
+        "@id": "https://probnaya.work/#laboratory"
+      },
+      "isPartOf": {
+        "@id": "https://probnaya.work/#website"
+      },
+      "hasPart": {
+        "@id": "https://probnaya.work/objects/001#wallpapers"
+      }
+    },
+    {
+      "@type": "DataDownload",
+      "@id": "https://probnaya.work/objects/001#wallpapers",
+      "name": "EX– wallpapers",
+      "description": "Dark, light and interlaced, each for a desktop and a phone. Free, no sign-up.",
+      "contentUrl": "https://probnaya.work/objects/001/wallpapers/probnaya-ex-wallpapers.zip",
+      "encodingFormat": "application/zip",
+      "isAccessibleForFree": true,
+      "creator": {
+        "@id": "https://probnaya.work/#laboratory"
+      },
+      "hasPart": [
+        {
+          "@type": "ImageObject",
+          "name": "EX– wallpaper · dark · desktop",
+          "contentUrl": "https://probnaya.work/objects/001/wallpapers/probnaya-ex-dark-desktop-3840x2160.png",
+          "width": 3840,
+          "height": 2160,
+          "encodingFormat": "image/png",
+          "isAccessibleForFree": true
+        },
+        {
+          "@type": "ImageObject",
+          "name": "EX– wallpaper · dark · phone",
+          "contentUrl": "https://probnaya.work/objects/001/wallpapers/probnaya-ex-dark-phone-1320x2868.png",
+          "width": 1320,
+          "height": 2868,
+          "encodingFormat": "image/png",
+          "isAccessibleForFree": true
+        },
+        {
+          "@type": "ImageObject",
+          "name": "EX– wallpaper · light · desktop",
+          "contentUrl": "https://probnaya.work/objects/001/wallpapers/probnaya-ex-light-desktop-3840x2160.png",
+          "width": 3840,
+          "height": 2160,
+          "encodingFormat": "image/png",
+          "isAccessibleForFree": true
+        },
+        {
+          "@type": "ImageObject",
+          "name": "EX– wallpaper · light · phone",
+          "contentUrl": "https://probnaya.work/objects/001/wallpapers/probnaya-ex-light-phone-1320x2868.png",
+          "width": 1320,
+          "height": 2868,
+          "encodingFormat": "image/png",
+          "isAccessibleForFree": true
+        },
+        {
+          "@type": "ImageObject",
+          "name": "EX– wallpaper · interlaced · desktop",
+          "contentUrl": "https://probnaya.work/objects/001/wallpapers/probnaya-ex-interlaced-desktop-3840x2160.png",
+          "width": 3840,
+          "height": 2160,
+          "encodingFormat": "image/png",
+          "isAccessibleForFree": true
+        },
+        {
+          "@type": "ImageObject",
+          "name": "EX– wallpaper · interlaced · phone",
+          "contentUrl": "https://probnaya.work/objects/001/wallpapers/probnaya-ex-interlaced-phone-1320x2868.png",
+          "width": 1320,
+          "height": 2868,
+          "encodingFormat": "image/png",
+          "isAccessibleForFree": true
+        }
+      ]
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://probnaya.work/objects/001#page",
+      "url": "https://probnaya.work/objects/001",
+      "name": "EX– · Object 001 — PROBNAYA",
+      "description": "A proposed lenticular card that reads EXCITEMENT from one side and EXHAUSTION from the other.",
+      "isPartOf": {
+        "@id": "https://probnaya.work/#website"
+      },
+      "about": {
+        "@id": "https://probnaya.work/objects/001#object"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://probnaya.work/assets/og-object-001-1200x630.png",
+        "width": 1200,
+        "height": 630,
+        "encodingFormat": "image/png",
+        "caption": "EX– · Object 001, PROBNAYA: EXCITEMENT in blue over EXHAUSTION in red, the shared EX in ink."
+      },
+      "breadcrumb": {
+        "@id": "https://probnaya.work/objects/001#breadcrumb"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://probnaya.work/objects/001#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PROBNAYA",
+          "item": "https://probnaya.work/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Objects",
+          "item": "https://probnaya.work/objects"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "EX–",
+          "item": "https://probnaya.work/objects/001"
+        }
+      ]
+    }
+  ]
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">

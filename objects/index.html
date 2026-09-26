@@ -28,13 +28,67 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "CollectionPage",
-  "@id": "https://probnaya.work/objects#page",
-  "url": "https://probnaya.work/objects",
-  "name": "Objects — PROBNAYA",
-  "description": "Objects made by PROBNAYA, an independent computational laboratory.",
-  "isPartOf": { "@id": "https://probnaya.work/#website" },
-  "hasPart": [{ "@id": "https://probnaya.work/objects/001#object" }]
+  "@graph": [
+    {
+      "@type": "CollectionPage",
+      "@id": "https://probnaya.work/objects#page",
+      "url": "https://probnaya.work/objects",
+      "name": "Objects — PROBNAYA",
+      "description": "Objects made by PROBNAYA, an independent computational laboratory.",
+      "isPartOf": {
+        "@id": "https://probnaya.work/#website"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://probnaya.work/assets/og-objects-1200x630.png",
+        "width": 1200,
+        "height": 630,
+        "encodingFormat": "image/png",
+        "caption": "Objects, PROBNAYA: the workshop frame on an ink ground, an empty bay marked with a cross, above the word OBJECTS."
+      },
+      "breadcrumb": {
+        "@id": "https://probnaya.work/objects#breadcrumb"
+      },
+      "hasPart": [
+        {
+          "@id": "https://probnaya.work/objects/001#object"
+        }
+      ],
+      "mainEntity": {
+        "@type": "ItemList",
+        "numberOfItems": 1,
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "item": {
+              "@id": "https://probnaya.work/objects/001#object",
+              "url": "https://probnaya.work/objects/001",
+              "name": "EX– · Object 001"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://probnaya.work/objects#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "PROBNAYA",
+          "item": "https://probnaya.work/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Objects",
+          "item": "https://probnaya.work/objects"
+        }
+      ]
+    }
+  ]
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">

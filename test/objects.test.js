@@ -137,6 +137,52 @@ test('each objects page shares its own 1200 × 630 image, with the same alt on b
   }
 });
 
+function jsonLd(html) {
+  const m = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  assert.ok(m, 'structured data');
+  return JSON.parse(m[1])['@graph'];
+}
+
+test('the object page describes the object, its free wallpapers and its place, from files that exist', () => {
+  const graph = jsonLd(page);
+  const byType = Object.fromEntries(graph.map((n) => [n['@type'], n]));
+  const object = byType.CreativeWork;
+  assert.equal(object['@id'], 'https://probnaya.work/objects/001#object');
+  assert.equal(object.identifier, 'PROB–OBJ–001');
+  assert.equal(object.creativeWorkStatus, 'Proposed');
+  assert.ok(!('offers' in object), 'no price is claimed before there is one');
+  const og = page.match(/<meta property="og:image" content="([^"]+)">/)[1];
+  assert.equal(object.image.url, og);
+  assert.equal(byType.WebPage.primaryImageOfPage.url, og);
+
+  const pack = byType.DataDownload;
+  assert.equal(pack.isAccessibleForFree, true);
+  const local = (url) => url.replace('https://probnaya.work/objects/001/', '');
+  assert.ok(manifest.runtimeFiles.includes(local(pack.contentUrl)), pack.contentUrl);
+  assert.equal(pack.hasPart.length, 6);
+  for (const image of pack.hasPart) {
+    assert.ok(manifest.runtimeFiles.includes(local(image.contentUrl)), image.contentUrl);
+    const png = fs.readFileSync(path.join(artifact, local(image.contentUrl)));
+    assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [image.width, image.height], image.contentUrl);
+  }
+  assert.deepEqual(byType.BreadcrumbList.itemListElement.map((c) => c.item),
+    ['https://probnaya.work/', 'https://probnaya.work/objects', 'https://probnaya.work/objects/001']);
+});
+
+test('the objects page lists its objects and its place', () => {
+  const html = fs.readFileSync(path.join(surface, 'objects/index.html'), 'utf8');
+  const graph = jsonLd(html);
+  const collection = graph.find((n) => n['@type'] === 'CollectionPage');
+  assert.equal(collection.primaryImageOfPage.url, html.match(/<meta property="og:image" content="([^"]+)">/)[1]);
+  const items = collection.mainEntity.itemListElement;
+  assert.equal(collection.mainEntity.numberOfItems, items.length);
+  assert.deepEqual(items.map((i) => i.item['@id']), ['https://probnaya.work/objects/001#object']);
+  const bays = (html.match(/class="ws-bay ws-bay--live"/g) || []).length;
+  assert.equal(items.length, bays, 'one list entry per object on the shelf');
+  const crumbs = graph.find((n) => n['@type'] === 'BreadcrumbList');
+  assert.deepEqual(crumbs.itemListElement.map((c) => c.item), ['https://probnaya.work/', 'https://probnaya.work/objects']);
+});
+
 test('the objects pages are in the sitemap', () => {
   const sitemap = fs.readFileSync(path.join(surface, 'sitemap.xml'), 'utf8');
   assert.match(sitemap, /<loc>https:\/\/probnaya\.work\/objects<\/loc>/);
