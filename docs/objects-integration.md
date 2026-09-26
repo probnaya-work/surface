@@ -21,6 +21,14 @@ no trailing slash, so a relative `js/` would resolve under `/objects/`.
 `objects/001/SOURCE.json` records the exact `objects` commit and the runtime
 files copied. It is excluded from deployment in `.vercelignore`.
 
+## Social images
+
+`/objects` shares `assets/og-objects-1200x630.png` and `/objects/001` shares
+`assets/og-object-001-1200x630.png`, both 1200 × 630. They are the design's own
+exports (Claude Design project `d02780a6-…`, `site/assets/`), committed as
+delivered; there is no generator for them in this repository. Keep each page's
+`og:image:alt` and `twitter:image:alt` identical.
+
 ## Interest
 
 The page's primary action is the free wallpaper pack; interest is secondary.

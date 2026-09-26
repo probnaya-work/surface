@@ -122,6 +122,21 @@ test('the wallpaper pack is the primary action and carries all six files', () =>
   assert.equal(pngs.length, 6);
 });
 
+test('each objects page shares its own 1200 × 630 image, with the same alt on both cards', () => {
+  for (const [file, image] of [['objects/index.html', 'og-objects-1200x630.png'], ['objects/001/index.html', 'og-object-001-1200x630.png']]) {
+    const html = fs.readFileSync(path.join(surface, file), 'utf8');
+    const url = `https://probnaya.work/assets/${image}`;
+    assert.match(html, new RegExp(`<meta property="og:image" content="${url}">`), file);
+    assert.match(html, new RegExp(`<meta name="twitter:image" content="${url}">`), file);
+    const alts = [...html.matchAll(/<meta (?:property="og:image:alt"|name="twitter:image:alt") content="([^"]+)">/g)].map((m) => m[1]);
+    assert.equal(alts.length, 2, file);
+    assert.equal(alts[0], alts[1], file);
+    const png = fs.readFileSync(path.join(surface, 'assets', image));
+    assert.equal(png.toString('latin1', 1, 4), 'PNG');
+    assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [1200, 630], image);
+  }
+});
+
 test('the objects pages are in the sitemap', () => {
   const sitemap = fs.readFileSync(path.join(surface, 'sitemap.xml'), 'utf8');
   assert.match(sitemap, /<loc>https:\/\/probnaya\.work\/objects<\/loc>/);
