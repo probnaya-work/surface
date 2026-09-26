@@ -1,0 +1,15 @@
+{
+  "source": "probnaya-work/objects/ex",
+  "commit": "9ba7350d701ead6ec483883d019d9f87e6de3552",
+  "runtimeFiles": [
+    "js/card.js",
+    "js/object.js",
+    "js/page.js",
+    "wallpapers/preview-desktop.png",
+    "wallpapers/preview-phone.png",
+    "wallpapers/probnaya-ex-desktop-16x10-3456x2160.png",
+    "wallpapers/probnaya-ex-desktop-16x9-3840x2160.png",
+    "wallpapers/probnaya-ex-phone-1320x2868.png"
+  ],
+  "surfaceOwned": "index.html"
+}

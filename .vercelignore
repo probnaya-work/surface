@@ -12,6 +12,7 @@ scripts/
 test/
 assets/machine-portrait-synthetic.png
 instrument-mpa/SOURCE.json
+objects/001/SOURCE.json
 interior/fixtures.js
 /access/
 # Observations: drafts are never deployed. Inside a published Observation's
