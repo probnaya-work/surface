@@ -381,6 +381,8 @@ ${chrome.header}
 
 ${chrome.mobileHeader}
 
+${chrome.siteIndex}
+
 <main class="main">
   <div class="page observations-page observations-page--sheet">
 
@@ -406,8 +408,6 @@ ${[neighbour(prev, 'prev'), prev && next ? '<span class="obs-neighbours-rule" ar
 
 ${chrome.footer}
 
-${chrome.bottomNav}
-
 <script src="/js/apparatus.js"></script>
 <script src="/js/records.js"></script>
 <script src="/js/register.js"></script>
@@ -419,7 +419,8 @@ ${chrome.bottomNav}
 }
 
 // The shared frame of the public pages, read from observations.html. On an
-// Observation's own sheet the OBSERVATIONS link marks the section, not the page.
+// Observation's own sheet the index's OBSERVATIONS entry marks the section, not
+// the page.
 function extractChrome(indexHtml) {
   const take = (re, name) => {
     const m = re.exec(indexHtml);
@@ -430,8 +431,8 @@ function extractChrome(indexHtml) {
   return {
     header: section(take(/<header class="site-header">[\s\S]*?<\/header>/, 'site header')),
     mobileHeader: take(/<header class="mobile-header">[\s\S]*?<\/header>/, 'mobile header'),
+    siteIndex: section(take(/<nav class="site-index"[\s\S]*?<\/nav>/, 'index')),
     footer: take(/<footer class="site-footer">[\s\S]*?<\/footer>/, 'site footer'),
-    bottomNav: section(take(/<nav class="bottom-nav[^"]*">[\s\S]*?<\/nav>/, 'bottom navigation')),
   };
 }
 

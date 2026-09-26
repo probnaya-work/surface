@@ -20,7 +20,7 @@ python3 -m http.server 4173
 
 ## Code style
 
-- HTML: one file per page, chrome (header/mobile-header/bottom-nav/footer) duplicated across pages rather than templated. This is intentional — no build step to inject partials, and duplication here is cheap to read and cheap to grep.
+- HTML: one file per page, chrome (header/mobile-header/index/footer) duplicated across pages rather than templated. This is intentional — no build step to inject partials, and duplication here is cheap to read and cheap to grep.
 - CSS: all shared styling lives in `css/style.css`. Design tokens (`--ink`, `--paper`, `--blue`, `--mid`, `--faint`, `--border`, etc.) are CSS custom properties on `:root` — use them, don't hardcode hex values in new rules. Mobile layout is one `@media (max-width: 760px)` block at the bottom of the file, not a separate stylesheet.
 - JS: no transpilation, no modules/bundling — plain `<script>` tags, loaded in dependency order (`apparatus.js` / `records.js` before page-specific inline scripts). Keep functions small and avoid adding a state-management or templating library for what a few `document.querySelector` calls already do.
 
@@ -40,9 +40,13 @@ Mail delivery uses Google Workspace SMTP with credentials supplied by the enviro
 
 `api/observations.js` receives Observations. It stores nothing: the mailbox message is the editorial queue. Publication is a deliberate terminal step: `npm run observation:new`, `:validate`, `:preview`, `:publish` (`scripts/observations/`, documented in `docs/observations-publishing.md`). Each published Observation is a committed record in `observations/<number>/` at the archival address `/observations/<number>` (three digits, never reused, recorded in `observations/ledger.json`; the number is an address only and must never be shown in the interface), and the build writes its sheet page, two GENERATED regions of `observations.html`, and one of `sitemap.xml`. The approved visual source for Observations is fixed in `docs/observations-publishing.md` §0 (the first-pass design file, approved despite "superseded" in its name); never switch to another design file on your own. Git stores published public material only (drafts, raw submissions, and editorial notes stay outside it; see `docs/observations-publishing.md` §9), and the section has one shared social image (§10), never one per publication. Never edit generated output by hand, never commit `observations/_drafts/`, and keep the publishing commands free of git, network, and deployment side effects. The endpoint's limits keep every request under the Vercel Function body limit (4.5 MB), and `js/observation-attachment.js` prepares oversized images in the browser to match. `js/observations-field.js` draws the field above the sequence. `api/views.js` and `js/observation-views.js` keep the public reading count of each Observation, one browser once a day, in one JSON file in Vercel Blob (`BLOB_READ_WRITE_TOKEN`); the request carries the archival number only, and nothing identifies a reader (`docs/observations-publishing.md` §11). That count is the one runtime store the section has. Never add further storage, a database, or automatic mail to senders without an explicit decision. Working procedure, limits, the pending mail-credential change, and the publication and media-sanitisation checklist are in `docs/observations.md`. The repository is public: never commit unpublished material or sender addresses. Whether a published Observation belongs, privately, to someone's PROBNAYA account lives only in the Access database, keyed by the archival number alone (`docs/observation-ownership.md`); never let that state, an address, or its lookup reach the record, the build, or the public site.
 
+## Navigation: the index
+
+The header lists no sections. It carries the brand, ENTER, one index control and SUBMIT A PROBLEM; the phone header carries the brand, ENTER and the same control. The control states where the visitor is (`.pos`, full in the desktop header and short in the phone header; none on the home page) and opens `<nav class="site-index">`, which lists every section once in two groups, THE LABORATORY'S OWN WORK (Instruments, Investigations, Objects, About the laboratory) and ARRIVES FROM OUTSIDE (Observations, Submit a problem). The current section carries `aria-current="page"` (on an Observation's sheet, `"true"`). `js/site.js` opens and closes it; Escape closes it. There is no bottom bar. The footer names `mail@probnaya.work`. `test/navigation.test.js` holds every page to this; a new page copies the chrome of an existing one and sets its position and current section. Observation sheets take their chrome from `observations.html` at build time.
+
 ## Objects (`objects/`)
 
-`/objects` lists objects the laboratory proposes and issues; `/objects/001` is Object 001, EX–. Its behaviour (`objects/001/js/`) and wallpapers (`objects/001/wallpapers/`) are a deploy artifact copied from `probnaya-work/objects` (`ex/`) by `scripts/sync-ex.sh`, like `instrument-mpa/`: never edit them here. Being that repository's code, they are ES modules, loaded by one `<script type="module">` on the surface-owned `objects/001/index.html`. The interest form posts to `/api/intake` on channel B and is never an order: no payment, no postal address. See `docs/objects-integration.md`.
+`/objects` lists objects the laboratory proposes and issues; `/objects/001` is Object 001, EX–. Its behaviour (`objects/001/js/`) and wallpapers (`objects/001/wallpapers/`) are a deploy artifact copied from `probnaya-work/objects` (`ex/`) by `scripts/sync-ex.sh`, like `instrument-mpa/`: never edit them here. Being that repository's code, they are ES modules, loaded by one `<script type="module">` on the surface-owned `objects/001/index.html`. The interest form asks for an email address only, posts to `/api/intake` on channel B and is never an order: no payment, no postal address. See `docs/objects-integration.md`.
 
 ## Testing / verification
 
@@ -52,7 +56,7 @@ The serverless functions have executable test suites; none of them contacts SMTP
 npm test
 ```
 
-(`node --test test/intake.test.js test/machine-portrait.test.js test/observations.test.js test/observations-publishing.test.js test/observation-views.test.js test/objects.test.js`.)
+(`node --test test/intake.test.js test/machine-portrait.test.js test/observations.test.js test/observations-publishing.test.js test/observation-views.test.js test/objects.test.js test/navigation.test.js`.)
 
 To exercise the Observations form locally without sending mail, set `OBSERVATIONS_DEV_OUTBOX=1` for the dev server; the endpoint then prints the message to the terminal. It refuses to do so on Vercel. Likewise `VIEWS_DEV_MEMORY=1` gives the reading count an in-memory store.
 
@@ -62,7 +66,7 @@ turns test harnesses into public Functions.
 The pages themselves have no automated tests. Before considering a visual or interaction change done:
 
 1. Serve the site locally and check the page in-browser (both the change and anything it might affect).
-2. Check both breakpoints — desktop and the mobile layout below 760px (resize or use device emulation). The two are meant to be structurally different (bottom tab bar vs. top nav, hero-only mobile index screen), not just a scaled-down desktop.
+2. Check both breakpoints — desktop and the mobile layout below 760px (resize or use device emulation). The two are meant to be structurally different (hero-only mobile index screen, the phone header's shorter position), not just a scaled-down desktop.
 3. Check the browser console for errors.
 
 `js/apparatus.js` is pure enough to unit-test headlessly with Node's `vm` module against a mocked canvas/`requestAnimationFrame` — useful for verifying a builder doesn't throw across different simulated frame rates (60Hz, 144Hz, a backgrounded-tab stall) before trusting it in-browser. Write such a harness to a scratch file rather than committing it as project infrastructure unless asked to.

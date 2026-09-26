@@ -53,23 +53,31 @@
       <svg viewBox="0 0 32 32" width="15" height="15" style="display:block; flex-shrink:0; overflow:visible;"><rect x="4" y="3" width="20" height="26" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="14" y="14" width="17" height="3" fill="currentColor"></rect></svg>
       <span class="brand-name">PROBNAYA</span>
     </a>
-    <a class="brand-tag" href="/lab">INDEPENDENT COMPUTATIONAL LABORATORY</a>
+    <span class="brand-tag">INDEPENDENT COMPUTATIONAL LABORATORY</span>
   </div>
   <div class="nav-right">
     <span class="relation-slot"><a class="access-entry" href="https://access.probnaya.work/">ENTER</a></span>
-    <a class="nav-link" href="/instruments"><span class="nav-dot"></span><span class="label">INSTRUMENTS</span></a>
-    <a class="nav-link" href="/investigations"><span class="label">INVESTIGATIONS</span></a>
-    <a class="nav-link nav-divided" href="/observations"><span class="label">OBSERVATIONS</span></a>
+    <button type="button" class="index-toggle" aria-expanded="false" aria-controls="site-index"><span class="pos">INSTRUMENTS</span><span class="act" data-index-act>INDEX</span></button>
     <a class="nav-cta" href="/intake" aria-label="Submit a problem">SUBMIT<span class="nav-cta-rest"> A PROBLEM</span></a>
   </div>
 </header>
 
 <header class="mobile-header">
   <a class="brand-name" href="/">PROBNAYA</a>
-  <a class="mobile-lab-link" href="/lab">LAB</a>
   <span class="relation-slot"><a class="access-entry" href="https://access.probnaya.work/">ENTER</a></span>
-  <span class="crumb">INS</span>
+  <button type="button" class="index-toggle" aria-expanded="false" aria-controls="site-index"><span class="pos">INS</span><span class="act" data-index-act>INDEX</span></button>
 </header>
+
+<nav class="site-index" id="site-index" aria-label="Index" hidden>
+  <span class="index-group">THE LABORATORY'S OWN WORK</span>
+  <a href="/instruments" aria-current="page"><span class="n">01</span><span class="name">Instruments</span><span class="m"></span></a>
+  <a href="/investigations"><span class="n">02</span><span class="name">Investigations</span><span class="m"></span></a>
+  <a href="/objects"><span class="n">03</span><span class="name">Objects</span><span class="m"></span></a>
+  <a href="/lab"><span class="n">04</span><span class="name">About the laboratory</span><span class="m"></span></a>
+  <span class="index-group">ARRIVES FROM OUTSIDE</span>
+  <a href="/observations"><span class="n">05</span><span class="name">Observations</span><span class="m"></span></a>
+  <a href="/intake" class="action"><span class="n">06</span><span class="name">Submit a problem</span><span class="m"></span></a>
+</nav>
 
 <main class="main">
   <div class="page instruments-page">
@@ -209,13 +217,6 @@
   <a href="mailto:mail@probnaya.work">mail@probnaya.work</a>
   <span class="stamp" data-stamp></span>
 </footer>
-
-<nav class="bottom-nav has-tabs">
-  <a href="/instruments"><span class="nav-dot"></span><span>INSTRUMENTS</span></a>
-  <a href="/investigations"><span>INVESTIGATIONS</span></a>
-  <a class="nav-divided" href="/observations"><span>OBSERVATIONS</span></a>
-  <a href="/intake"><span>SUBMIT</span></a>
-</nav>
 
 <script src="js/apparatus.js"></script>
 <script src="js/site.js"></script>

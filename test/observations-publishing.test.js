@@ -186,7 +186,9 @@ describe('content combinations', () => {
     assert.match(page, /<meta name="description" content="An observation by Fixture Principal, published as sent by PROBNAYA\.">/);
     assert.match(page, /<h1 class="obs-title">/);
     assert.doesNotMatch(page, /name="robots"/);
-    assert.match(page, /<a class="nav-link nav-divided" href="\/observations" aria-current="true">/);
+    assert.match(page, /<nav class="site-index" id="site-index"/);
+    assert.match(page, /<a href="\/observations" aria-current="true"><span class="n">05<\/span>/);
+    assert.doesNotMatch(page, /aria-current="page"|bottom-nav/, 'a sheet marks its section only, and has no bottom bar');
     assert.match(page, /href="\/css\/style\.css"/, 'assets are addressed from the root');
 
     const textOnly = sheet(root, 'fixture-text-only');

@@ -12,7 +12,7 @@
     "observation:publish": "node scripts/observations/cli.js publish",
     "observation:unpublish": "node scripts/observations/cli.js unpublish",
     "observations:build": "node scripts/observations/cli.js build",
-    "test": "node --test test/intake.test.js test/machine-portrait.test.js test/observations.test.js test/observations-publishing.test.js test/observation-views.test.js test/objects.test.js"
+    "test": "node --test test/intake.test.js test/machine-portrait.test.js test/observations.test.js test/observations-publishing.test.js test/observation-views.test.js test/objects.test.js test/navigation.test.js"
   },
   "dependencies": {
     "nodemailer": "10.0.1"
