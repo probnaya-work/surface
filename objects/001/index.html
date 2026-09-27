@@ -230,14 +230,25 @@
     <div class="split">
       <div class="figure">
         <div class="figure-plate ex-plate" id="ex-plate">
-          <div class="ex-card" id="ex-card" role="img" aria-label="The EX– card. It reads EXCITEMENT from the left and EXHAUSTION from the right.">
+          <div class="ex-card" id="ex-card" data-ground="ink" data-finish="sheen" role="img" aria-label="The EX– card. It reads EXCITEMENT from the left and EXHAUSTION from the right.">
             <div class="ex-card-ground"></div>
-            <div class="ex-card-ground second"></div>
             <div class="ex-card-ribs"></div>
             <div class="ex-card-face" aria-hidden="true">
-              <div class="ex-card-row"><span>PROB–OBJ–001</span><span data-ex-state>EXCITEMENT</span></div>
+              <div class="ex-card-row"><span>PROB–OBJ–001</span></div>
               <div class="ex-card-word"><span>EX</span><span class="ex-tail"><span class="hold">HAUSTION</span><span class="first">CITEMENT</span><span class="second">HAUSTION</span></span></div>
-              <div class="ex-card-row"><span>TILT · EX– STAYS</span></div>
+            </div>
+            <div class="ex-card-gloss"></div>
+            <div class="ex-card-back" aria-hidden="true">
+              <span class="ex-back-dot" id="ex-dot"></span>
+              <div class="ex-back-head"><span class="brand">PROBNAYA</span><span class="id">OBJECT 001 — EX–</span></div>
+              <div class="ex-back-foot">
+                <div class="ex-back-reg">
+                  <span class="k">READ</span><span>TILT · EX– STAYS</span>
+                  <span class="k">LEFT</span><span>EXCITARE · SET IN MOTION</span>
+                  <span class="k">RIGHT</span><span>EXHAURIRE · DRAW OUT</span>
+                </div>
+                <span class="ex-back-no" id="ex-no">— / 100</span>
+              </div>
             </div>
           </div>
         </div>
@@ -245,16 +256,38 @@
           <span class="dim">FIG. 1 — THE CARD, TURNED BY THE POINTER</span>
           <span class="accent" id="ex-readout" aria-hidden="true">ANGLE −05.4°</span>
         </div>
-        <div class="channel-toggle ex-states" role="group" aria-label="Show one state">
-          <button type="button" id="ex-left" class="active" aria-pressed="true"><span class="dot">●</span> EXCITEMENT</button>
-          <button type="button" id="ex-right" aria-pressed="false"><span class="dot">○</span> EXHAUSTION</button>
-          <button type="button" id="ex-tilt" hidden>USE THE PHONE'S TILT</button>
+        <div class="ex-controls">
+          <div class="channel-toggle ex-states" role="group" aria-label="Show one state">
+            <button type="button" id="ex-left" class="active" aria-pressed="true"><span class="dot">●</span> EXCITEMENT</button>
+            <button type="button" id="ex-right" aria-pressed="false"><span class="dot">○</span> EXHAUSTION</button>
+            <button type="button" id="ex-tilt" hidden>USE THE PHONE'S TILT</button>
+          </div>
+          <div class="channel-toggle ex-faces" role="group" aria-label="Show a face">
+            <button type="button" id="ex-front" class="active" aria-pressed="true">FRONT</button>
+            <button type="button" id="ex-back" aria-pressed="false">BACK</button>
+          </div>
         </div>
       </div>
 
       <div class="ex-text">
         <p class="lede">A lenticular card, 148 × 105 mm. Proposed, not yet made.</p>
         <p class="body-copy">It began as a note on working with AI: more gets built, and keeping up is tiring.</p>
+        <div class="ex-config" role="group" aria-label="Configuration">
+          <div class="ex-config-row">
+            <span class="k" id="ex-k-ground">GROUND</span>
+            <div class="channel-toggle" role="radiogroup" aria-labelledby="ex-k-ground">
+              <button type="button" role="radio" data-set="ground" data-v="ink" class="active" aria-checked="true"><span class="sw sw-ink"></span>BLACK</button>
+              <button type="button" role="radio" data-set="ground" data-v="blue" aria-checked="false"><span class="sw sw-blue"></span>BLUE</button>
+            </div>
+          </div>
+          <div class="ex-config-row">
+            <span class="k" id="ex-k-finish">FINISH</span>
+            <div class="channel-toggle" role="radiogroup" aria-labelledby="ex-k-finish">
+              <button type="button" role="radio" data-set="finish" data-v="sheen" class="active" aria-checked="true"><span class="sw sw-sheen"></span>PEARL SHEEN</button>
+              <button type="button" role="radio" data-set="finish" data-v="white" aria-checked="false"><span class="sw sw-white"></span>WHITE</button>
+            </div>
+          </div>
+        </div>
         <div class="ex-primary-wrap">
           <a class="ex-primary" href="/objects/001/wallpapers/probnaya-ex-wallpapers.zip" download>DOWNLOAD THE WALLPAPERS · FREE ↓</a>
           <span class="ex-primary-note">DARK, LIGHT, INTERLACED · DESKTOP AND PHONE · NO SIGN-UP</span>
@@ -270,6 +303,21 @@
         <span class="eyebrow-meta">PNG</span>
       </div>
       <img class="ex-sheet" src="/objects/001/wallpapers/probnaya-ex-preview-sheet.png" width="3000" height="508" alt="Three wallpapers, each for desktop and phone: EX– with CITEMENT and HAUSTION cut into interlaced blue and red strips, on a dark ground, on a light ground, and inside a field of rippled blue and red strips.">
+      <div class="ex-slides" id="ex-slides" role="group" aria-label="Phone wallpapers">
+        <figure class="ex-slide">
+          <img src="/objects/001/wallpapers/probnaya-ex-dark-phone-1320x2868.png" width="1320" height="2868" loading="lazy" decoding="async" alt="Dark phone wallpaper: EX– with the two tails interlaced on a dark ground.">
+          <figcaption><span>01 · DARK</span><a href="/objects/001/wallpapers/probnaya-ex-dark-phone-1320x2868.png" download>PHONE ↓</a></figcaption>
+        </figure>
+        <figure class="ex-slide">
+          <img src="/objects/001/wallpapers/probnaya-ex-light-phone-1320x2868.png" width="1320" height="2868" loading="lazy" decoding="async" alt="Light phone wallpaper: EX– with the two tails interlaced on a light ground.">
+          <figcaption><span>02 · LIGHT</span><a href="/objects/001/wallpapers/probnaya-ex-light-phone-1320x2868.png" download>PHONE ↓</a></figcaption>
+        </figure>
+        <figure class="ex-slide">
+          <img src="/objects/001/wallpapers/probnaya-ex-interlaced-phone-1320x2868.png" width="1320" height="2868" loading="lazy" decoding="async" alt="Interlaced phone wallpaper: EX– inside a field of rippled strips.">
+          <figcaption><span>03 · INTERLACED</span><a href="/objects/001/wallpapers/probnaya-ex-interlaced-phone-1320x2868.png" download>PHONE ↓</a></figcaption>
+        </figure>
+      </div>
+      <span class="ex-slides-count" aria-hidden="true"><span id="ex-slide-n">01</span> / 03 · SWIPE</span>
       <div class="ex-files">
         <div class="ex-file">
           <span class="k">DARK</span>
@@ -306,6 +354,7 @@
         <span class="eyebrow-meta">NON-BINDING</span>
       </div>
       <div class="ex-interest-wrap">
+        <span class="ex-config-echo">CONFIGURATION · <span class="v" data-ex-config>BLACK · PEARL SHEEN</span> · <a href="#ex-plate" class="action-link">CHANGE</a></span>
         <div id="ex-receipt" class="intake-receipt" hidden>
           <span class="stamp">RECORDED · <span id="ex-receipt-id"></span></span>
           <span class="line">Noted. One email when there is a price.</span>
@@ -337,7 +386,8 @@
 <script src="../../js/register.js"></script>
 <script src="../../js/site.js"></script>
 <script type="module">
-  // The card and the interest form are driven from probnaya-work/objects (ex/).
+  // The card, its configuration, the wallpaper slider and the interest form are
+  // driven from probnaya-work/objects (ex/).
   import { mountEx } from '/objects/001/js/page.js';
   mountEx();
 </script>

@@ -12,7 +12,6 @@
   --hover-bg: #E7E9EC;
   --body-text: #3B3E45;
   --sheet: #FAFAF9;          /* the ground of material that arrived from elsewhere */
-  --ex-red: #D23D2B;         /* Object 001 only: the second state of the EX– card */
 
   --sans: 'Archivo', Helvetica, sans-serif;
   --mono: 'Geist Mono', ui-monospace, monospace;
@@ -1184,38 +1183,80 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
 .objects-page .object-list { margin-top: 40px; border-top: 1px solid var(--border); }
 
 /* The EX– card. One card, two printed states: --b runs from 0 (EXCITEMENT)
-   to 1 (EXHAUSTION) and --deg is the tilt. EX– is never faded. */
+   to 1 (EXHAUSTION) and --deg is the tilt. EX– is never faded. Both words share
+   one ground and one white; the angle alone carries the change.
+   data-ground: ink (default) | blue. data-finish: sheen (default) | white.
+   --p is where the lens highlight sits, set from the tilt. */
 .ex-plate {
   aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center;
   perspective: 1200px; cursor: ew-resize; touch-action: pan-y;
 }
 .ex-card {
-  --b: 0; --deg: -5.4deg;
+  --b: 0; --deg: -5.4deg; --p: 38%; --g: var(--ink); --gloss: 0.04;
   position: relative; width: 78%; aspect-ratio: 148 / 105; container-type: inline-size;
   color: var(--paper); transform: rotateY(var(--deg)); transition: transform 120ms linear;
 }
-.ex-card-ground { position: absolute; inset: 0; background: var(--blue); }
-.ex-card-ground.second { background: var(--ex-red); opacity: var(--b); }
+.ex-card[data-ground="blue"] { --g: var(--blue); }
+.ex-card[data-finish="sheen"] { --gloss: 0.07; }
+.ex-card-ground { position: absolute; inset: 0; background: var(--g); }
+.ex-card-ground.second { display: none; }
 .ex-card-ribs {
   position: absolute; inset: 0;
-  background: repeating-linear-gradient(90deg, rgba(239, 240, 242, 0.10) 0px, rgba(239, 240, 242, 0.10) 1px, transparent 1px, transparent 4px);
+  background: repeating-linear-gradient(90deg, rgba(239, 240, 242, 0.035) 0px, rgba(239, 240, 242, 0.035) 1px, transparent 1px, transparent 4px);
+}
+.ex-card-gloss {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(104deg, transparent calc(var(--p) - 22%), rgba(239, 240, 242, var(--gloss)) var(--p), transparent calc(var(--p) + 22%));
 }
 .ex-card-face {
-  position: absolute; inset: 0; padding: 6.1cqw 6.8cqw;
+  position: absolute; inset: 0; padding: 5.8cqw 6.8cqw 6.8cqw;
   display: flex; flex-direction: column; justify-content: space-between;
 }
 .ex-card-row {
   display: flex; justify-content: space-between; gap: 12px;
-  font-family: var(--mono); font-size: max(10px, 3.4cqw); letter-spacing: 0.16em;
+  font-family: var(--mono); font-size: max(10px, 1.6cqw); letter-spacing: 0.18em; line-height: 1;
 }
-.ex-card-word { display: flex; align-items: baseline; font-weight: 600; font-size: 12.2cqw; letter-spacing: -0.02em; line-height: 1; }
+.ex-card-word { display: flex; align-items: flex-end; font-weight: 600; font-size: 13cqw; letter-spacing: -0.02em; line-height: 0.74; white-space: nowrap; }
 .ex-tail { position: relative; display: inline-block; }
 .ex-tail .hold { visibility: hidden; }
 .ex-tail .first, .ex-tail .second { position: absolute; left: 0; top: 0; }
 .ex-tail .first { opacity: calc(1 - var(--b)); }
 .ex-tail .second { opacity: var(--b); }
+/* Finish B: a silver pearl behind the ground. One highlight crosses both words. */
+.ex-card[data-finish="sheen"] .ex-card-word > span:first-child,
+.ex-card[data-finish="sheen"] .ex-tail .first,
+.ex-card[data-finish="sheen"] .ex-tail .second {
+  color: transparent; -webkit-background-clip: text; background-clip: text;
+  background-repeat: no-repeat; background-size: 86.4cqw 100%; background-position: 0 0;
+  background-image: linear-gradient(104deg, #C3C7CE 0%, #D2D5DA calc(var(--p) - 34%), #E7E9EC calc(var(--p) - 17%), #FFFFFF var(--p), color-mix(in oklch, var(--paper) 82%, var(--blue)) calc(var(--p) + 10%), #D2D5DA calc(var(--p) + 27%), #C3C7CE 100%);
+}
+.ex-card[data-finish="sheen"] .ex-tail .first,
+.ex-card[data-finish="sheen"] .ex-tail .second { background-position: -16.4cqw 0; }
+/* The back: 350 gsm uncoated, ink, the issue number and the dot in blue.
+   The dot is placed by the issue number, so no two backs are alike. */
+.ex-card-back {
+  position: absolute; inset: 0; display: none; flex-direction: column; justify-content: space-between;
+  padding: 5.8cqw 6.8cqw 6.1cqw; background: var(--paper); color: var(--ink); border: 1px solid var(--border);
+}
+.ex-card.is-back .ex-card-back { display: flex; }
+.ex-card.is-back > :not(.ex-card-back) { visibility: hidden; }
+.ex-back-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; line-height: 1; }
+.ex-back-head .brand { font-weight: 600; font-size: max(10px, 1.7cqw); letter-spacing: 0.06em; }
+.ex-back-head .id { font-family: var(--mono); font-size: max(10px, 1.5cqw); letter-spacing: 0.16em; color: var(--body-text); }
+.ex-back-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.ex-back-reg {
+  display: grid; grid-template-columns: max(40px, 7.8cqw) minmax(0, 1fr); gap: max(5px, 0.85cqw) max(8px, 1.7cqw);
+  font-family: var(--mono); font-size: max(10px, 1.5cqw); letter-spacing: 0.06em; line-height: 1.2; white-space: nowrap; flex: none;
+}
+.ex-back-reg .k { color: var(--body-text); }
+.ex-back-no { font-family: var(--mono); font-size: max(10px, 1.5cqw); letter-spacing: 0.08em; line-height: 1.2; color: var(--blue); white-space: nowrap; }
+.ex-back-dot { position: absolute; width: max(6px, 1.35cqw); aspect-ratio: 1; background: var(--blue); left: 50%; top: 50%; }
 @media (prefers-reduced-motion: reduce) { .ex-card { transition: none; } }
 
+.ex-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.ex-controls .ex-states { flex: 2 1 260px; margin-top: 0; }
+.ex-controls .ex-faces { flex: 1 1 150px; }
+.ex-faces button.active { color: var(--blue); }
 .ex-states { margin-top: 4px; }
 .ex-states button[hidden] { display: none; }
 /* The tilt control appears only on touch screens; it takes its own row so the
@@ -1225,6 +1266,22 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
 .ex-states button:nth-child(2) { border-right: none; }
 .ex-states #ex-tilt { flex: 1 0 100%; border-top: 1px solid var(--ink); color: var(--blue); }
 .ex-text { display: flex; flex-direction: column; gap: 24px; }
+
+/* Configuration: ground and finish. Chosen here, sent with the interest. */
+.ex-config { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--ink); padding-top: 14px; }
+.ex-config-row { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 14px; align-items: center; }
+.ex-config-row .k { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--body-text); }
+.ex-config .channel-toggle button { display: flex; align-items: center; justify-content: center; gap: 9px; color: var(--body-text); }
+.ex-config .channel-toggle button:hover { background: var(--hover-bg); }
+.ex-config .channel-toggle button.active { color: var(--blue); }
+.ex-config .channel-toggle button:focus-visible { outline: 1px solid var(--blue); outline-offset: -4px; }
+.ex-config .sw { width: 7px; height: 7px; flex-shrink: 0; display: block; }
+.ex-config .sw-ink { background: var(--ink); }
+.ex-config .sw-blue { background: var(--blue); }
+.ex-config .sw-white { border: 1px solid var(--ink); box-sizing: border-box; }
+.ex-config .sw-sheen { border: 1px dashed var(--ink); box-sizing: border-box; }
+.ex-config-echo { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--body-text); }
+.ex-config-echo .v { color: var(--ink); }
 
 .ex-section { padding-top: 76px; }
 .ex-steps { display: flex; flex-direction: column; }
@@ -1249,6 +1306,9 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
 .ex-primary-note { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--body-text); }
 
 .ex-sheet { display: block; width: 100%; height: auto; margin-top: 26px; border: 1px solid var(--border); }
+/* Phone: the sheet is too small to read, so the three phone wallpapers are
+   shown one at a time, swiped. Native scroll-snap; no library. */
+.ex-slides, .ex-slides-count { display: none; }
 .ex-files { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 28px; padding-top: 18px; }
 .ex-file { display: flex; flex-direction: column; border-top: 1px solid var(--ink); }
 .ex-file .k { padding: 11px 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--body-text); }
@@ -1319,7 +1379,7 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
   .mobile-header .index-toggle { letter-spacing: 0.12em; position: relative; }
   .mobile-header .index-toggle::after { content: ""; position: absolute; inset: -9px -6px; }
   .ex-file a { padding: 15px 0; }
-  .ex-states button { min-height: 44px; }
+  .ex-states button, .ex-faces button, .ex-config .channel-toggle button { min-height: 44px; }
   .mobile-header .index-toggle .pos, .mobile-header .index-toggle .act { padding: 7px 10px; }
   .mobile-header .index-toggle .pos { gap: 8px; }
   .site-index { top: var(--header-h-mobile); padding: 18px; }
@@ -1464,6 +1524,20 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
 
   .ex-plate { aspect-ratio: 1 / 1; }
   .ex-card { width: 88%; }
+  .ex-sheet { display: none; }
+  .ex-slides {
+    display: flex; gap: 12px; margin: 22px -18px 0; padding: 0 18px;
+    overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 18px;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .ex-slides::-webkit-scrollbar { display: none; }
+  .ex-slide { flex: 0 0 74%; margin: 0; scroll-snap-align: start; display: flex; flex-direction: column; gap: 10px; }
+  .ex-slide img { display: block; width: 100%; height: auto; aspect-ratio: 1320 / 2868; border: 1px solid var(--border); background: var(--hover-bg); }
+  .ex-slide figcaption { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; }
+  .ex-slide figcaption a { color: var(--blue); padding: 12px 0; margin: -12px 0; }
+  .ex-slides-count { display: block; margin-top: 14px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--body-text); }
+  .ex-back-foot { flex-direction: column-reverse; align-items: flex-start; gap: 8px; }
+  .ex-back-reg { white-space: normal; flex: 0 1 auto; min-width: 0; }
   .ex-section { padding-top: 48px; }
   .ex-step { grid-template-columns: 34px minmax(0, 1fr); padding: 16px 0; }
   .ex-step .t { grid-column: 1 / -1; font-size: 15px; }

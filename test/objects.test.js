@@ -66,7 +66,9 @@ test('the interest message passes the intake endpoint unchanged in meaning', asy
   assert.equal(result.ok, true, result.error);
   assert.equal(result.channel, 'B');
   assert.equal(result.from, 'reader@example.org');
-  assert.equal(result.body, 'OBJECT 001 — EX– · INTEREST\nNON-BINDING · NO PAYMENT TAKEN · NO POSTAL ADDRESS TAKEN');
+  assert.equal(result.body, 'OBJECT 001 — EX– · INTEREST\nCONFIGURATION · BLACK · PEARL SHEEN\nNON-BINDING · NO PAYMENT TAKEN · NO POSTAL ADDRESS TAKEN');
+  const chosen = handler.validate(interestPayload({ email: 'reader@example.org', config: { ground: 'blue', finish: 'white' } }));
+  assert.match(chosen.body, /\nCONFIGURATION · BLUE · WHITE\n/);
 
   const longest = interestPayload({ email: 'e'.repeat(INTEREST_LIMITS.email) });
   assert.equal(handler.validate(longest).ok, true, handler.validate(longest).error);
@@ -95,7 +97,7 @@ test('interest arrives as one channel B intake mail naming the object', async ()
     assert.equal(res.body.ok, true);
     assert.equal(seen.message.subject, 'INTAKE / CHANNEL B — reader@example.org');
     assert.equal(seen.message.replyTo, 'reader@example.org');
-    assert.match(seen.message.text, /\nOBJECT 001 — EX– · INTEREST\nNON-BINDING/);
+    assert.match(seen.message.text, /\nOBJECT 001 — EX– · INTEREST\nCONFIGURATION · BLACK · PEARL SHEEN\nNON-BINDING/);
   } finally {
     process.env = env;
     handler._setMailer(null);
@@ -114,6 +116,29 @@ test('a filled honeypot is accepted and never mailed', async () => {
   } finally {
     handler._setMailer(null);
   }
+});
+
+test('the configuration picker offers exactly what the object offers, default first', async () => {
+  const { CONFIG, configName, normalizeConfig, OBJECT } = await loadObject();
+  const buttons = [...page.matchAll(/<button[^>]*data-set="([^"]+)"[^>]*data-v="([^"]+)"([^>]*)>(?:<span[^>]*><\/span>)?([^<]+)<\/button>/g)]
+    .map((m) => ({ set: m[1], v: m[2], active: /class="active"/.test(m[0]), name: m[4] }));
+  const offered = Object.entries(CONFIG).flatMap(([set, options]) => options.map((o, i) => ({ set, v: o.value, active: i === 0, name: o.name })));
+  assert.deepEqual(buttons, offered);
+
+  const defaults = normalizeConfig();
+  assert.match(page, new RegExp(`id="ex-card" data-ground="${defaults.ground}" data-finish="${defaults.finish}"`));
+  assert.match(page, new RegExp(`data-ex-config>${configName(defaults)}<`));
+  assert.match(page, new RegExp(`id="ex-no">— / ${OBJECT.issues}<`));
+
+  const shelf = fs.readFileSync(path.join(surface, 'objects/index.html'), 'utf8');
+  assert.match(shelf, new RegExp(`data-ground="${defaults.ground}" data-finish="${defaults.finish}"`), 'the shelf shows the default card');
+});
+
+test('the phone slider offers each phone wallpaper once, in the order of the files', () => {
+  const slider = page.slice(page.indexOf('id="ex-slides"'), page.indexOf('id="ex-slide-n"'));
+  const images = [...slider.matchAll(/<img src="\/objects\/001\/wallpapers\/([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(images, ['dark', 'light', 'interlaced'].map((t) => `probnaya-ex-${t}-phone-1320x2868.png`));
+  assert.match(page, new RegExp(`/ 0${images.length} · SWIPE`));
 });
 
 test('the wallpaper pack is the primary action and carries all six files', () => {

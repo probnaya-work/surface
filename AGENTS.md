@@ -46,7 +46,7 @@ The header lists no sections. It carries the brand, ENTER, one index control and
 
 ## Objects (`objects/`)
 
-`/objects` lists objects the laboratory proposes and issues; `/objects/001` is Object 001, EX–. Its behaviour (`objects/001/js/`) and wallpapers (`objects/001/wallpapers/`) are a deploy artifact copied from `probnaya-work/objects` (`ex/`) by `scripts/sync-ex.sh`, like `instrument-mpa/`: never edit them here. Being that repository's code, they are ES modules, loaded by one `<script type="module">` on the surface-owned `objects/001/index.html`. The interest form asks for an email address only, posts to `/api/intake` on channel B and is never an order: no payment, no postal address. See `docs/objects-integration.md`.
+`/objects` lists objects the laboratory proposes and issues; `/objects/001` is Object 001, EX–. Its behaviour (`objects/001/js/`) and wallpapers (`objects/001/wallpapers/`) are a deploy artifact copied from `probnaya-work/objects` (`ex/`) by `scripts/sync-ex.sh`, like `instrument-mpa/`: never edit them here. Being that repository's code, they are ES modules, loaded by one `<script type="module">` on the surface-owned `objects/001/index.html`. The interest form asks for an email address only, sends the ground and finish chosen on the page with it, posts to `/api/intake` on channel B and is never an order: no payment, no postal address. See `docs/objects-integration.md`.
 
 ## Testing / verification
 
