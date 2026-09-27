@@ -72,7 +72,7 @@ export function backDot(issue) {
   return { x, y };
 }
 
-// 007 / 100
+// 007 / 50
 export function formatIssue(issue, issues) {
   return String(issue).padStart(3, '0') + ' / ' + issues;
 }

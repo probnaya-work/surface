@@ -38,7 +38,7 @@ that device only, and it is echoed above the interest form. The options, their
 names and the default (black · pearl sheen) come from `objects`
 (`CONFIG` in `object.js`); the buttons' `data-set` / `data-v` must match them,
 and `test/objects.test.js` checks that they do. FRONT / BACK shows the back:
-each time, a sample issue number out of 100 and the blue dot it places. On
+each time, a random issue number out of 50 and the blue dot it places. On
 phones the wallpaper sheet gives way to a swipe slider of the three phone
 wallpapers.
 

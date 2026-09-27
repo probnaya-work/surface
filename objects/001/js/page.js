@@ -54,7 +54,8 @@ export function mountCard(doc = document, random = Math.random) {
     });
   }
 
-  // Each time the back is shown it stands for another card of the issue.
+  // Each time the back is shown it stands for another card of the issue, at
+  // random.
   function showIssue(issue) {
     const at = backDot(issue);
     if (dot) {
@@ -108,6 +109,8 @@ export function mountCard(doc = document, random = Math.random) {
     view.addEventListener('deviceorientation', onOrient);
   }
 
+  // The back already stands for one card before it is first shown.
+  showIssue(1 + Math.floor(random() * OBJECT.issues));
   set(REST);
   return { set, face };
 }

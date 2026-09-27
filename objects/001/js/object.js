@@ -14,9 +14,9 @@ export const OBJECT = Object.freeze({
     Object.freeze({ key: 'exhaustion', word: 'EXHAUSTION', tail: 'HAUSTION', ink: 'red' }),
   ]),
   card: Object.freeze({ widthMm: 148, heightMm: 105, lens: 'FLIP' }),
-  // Each card is numbered on its back, out of this many, and the number places
+  // Each card is numbered on its back, out of this many; the number places
   // the back's blue dot.
-  issues: 100,
+  issues: 50,
   // How it gets made: at 20 registrations PROBNAYA asks a printer for a quote
   // and plans production; then everyone registered gets one email with the
   // final price and an order link. Nothing is paid before that email.
