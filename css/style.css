@@ -624,15 +624,18 @@ span.brand-tag:hover { color: var(--mid); }
 .sheet-access .label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--faint); }
 .sheet-access .state { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--mid); }
 
-/* A release that exists but is not handed out yet. Each channel keeps its place
-   and its name; it is simply not a link. */
+/* Available release channels are links. A channel still in development keeps
+   its place in the same register without pretending to be open. */
 .release { display: flex; flex-direction: column; gap: 8px; }
 .release-item {
   display: flex; justify-content: space-between; gap: 16px; padding: 11px 12px;
-  border: 1px dashed var(--faint-line); color: var(--faint); cursor: not-allowed;
+  border: 1px solid var(--border); color: var(--ink);
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
 }
-.release-item .channel-state { color: var(--mid); }
+.release-item[href]:hover { border-color: var(--blue); color: var(--blue); }
+.release-item[href] .channel-state { color: var(--blue); }
+.release-item--pending { border-style: dashed; border-color: var(--faint-line); color: var(--faint); cursor: not-allowed; }
+.release-item--pending .channel-state { color: var(--mid); }
 .release-note { margin: 0; font: 10px/1.7 var(--mono); letter-spacing: 0.12em; color: var(--mid); }
 
 /* The other instruments, each still running, under the one being read. */
