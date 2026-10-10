@@ -20,6 +20,13 @@ python3 -m http.server 4173
 
 ## Code style
 
+For Open Graph and Twitter/X images, read `docs/social-image-identity.md` and
+inspect its reference assets before designing. Social previews must inherit
+PROBNAYA's existing Archivo / Geist Mono typography and graphic identity, even
+when a project's own page uses different fonts. Preserve approved project
+concepts and palettes within that relationship; do not invent a separate OG
+identity from the project page alone.
+
 - HTML: one file per page, chrome (header/mobile-header/index/footer) duplicated across pages rather than templated. This is intentional — no build step to inject partials, and duplication here is cheap to read and cheap to grep.
 - CSS: all shared styling lives in `css/style.css`. Design tokens (`--ink`, `--paper`, `--blue`, `--mid`, `--faint`, `--border`, etc.) are CSS custom properties on `:root` — use them, don't hardcode hex values in new rules. Mobile layout is one `@media (max-width: 760px)` block at the bottom of the file, not a separate stylesheet.
 - JS: no transpilation, no modules/bundling — plain `<script>` tags, loaded in dependency order (`apparatus.js` / `records.js` before page-specific inline scripts). Keep functions small and avoid adding a state-management or templating library for what a few `document.querySelector` calls already do.
