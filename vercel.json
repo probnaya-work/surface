@@ -1,4 +1,9 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "feat/fieldwork-identity": false
+    }
+  },
   "cleanUrls": true,
   "redirects": [
     { "source": "/index",      "destination": "/", "permanent": true },
