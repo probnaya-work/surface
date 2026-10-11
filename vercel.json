@@ -1,7 +1,8 @@
 {
   "git": {
     "deploymentEnabled": {
-      "feat/fieldwork-identity": false
+      "feat/fieldwork-identity": false,
+      "fix/project-navigation": false
     }
   },
   "cleanUrls": true,

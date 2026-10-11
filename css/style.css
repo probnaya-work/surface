@@ -1266,7 +1266,9 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
   grid-template-columns: 18px 1fr auto; margin-top: 40px; padding-top: 12px;
   border-top: 1px solid var(--field-rule); color: var(--field-moss);
 }
-.fieldwork-foot span:last-child { color: var(--field-earth); }
+.fieldwork-link { color: var(--field-earth); padding-block: 8px; margin-block: -8px; }
+.fieldwork-link:hover { color: var(--field-earth); text-decoration: underline; text-underline-offset: 4px; }
+.fieldwork-link:focus-visible { outline: 2px solid var(--field-earth); outline-offset: 4px; }
 .fieldwork-marker { width: 11px; height: 11px; background: var(--field-earth); }
 
 /* ============================================================
@@ -1641,7 +1643,7 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
   .fieldwork-statement dl > div { grid-template-columns: 76px minmax(0, 1fr); gap: 14px; }
   .fieldwork-coordinate--longitude { margin-top: 62px; font-size: 20vw; }
   .fieldwork-foot { grid-template-columns: 14px 1fr; gap: 8px 12px; margin-top: 28px; }
-  .fieldwork-foot span:last-child { grid-column: 2; }
+  .fieldwork-link { grid-column: 2; margin-block: 0; }
   .fieldwork-marker { width: 9px; height: 9px; }
 
   .ex-plate { aspect-ratio: 1 / 1; }
