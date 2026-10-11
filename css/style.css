@@ -1,3 +1,19 @@
+@font-face {
+  font-family: 'Fieldwork Sans';
+  src: url('../assets/fonts/fieldwork-plex-sans.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Fieldwork Serif';
+  src: url('../assets/fonts/fieldwork-newsreader.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 /* PROBNAYA — shared stylesheet
    Tokens and layout are ported directly from the approved design. */
 
@@ -12,6 +28,14 @@
   --hover-bg: #E7E9EC;
   --body-text: #3B3E45;
   --sheet: #FAFAF9;          /* the ground of material that arrived from elsewhere */
+
+  --field-paper: #eeeee7;
+  --field-ink: #292e27;
+  --field-moss: #29382f;
+  --field-earth: #8c4939;
+  --field-rule: #c9cdc1;
+  --field-sans: 'Fieldwork Sans', Helvetica, sans-serif;
+  --field-serif: 'Fieldwork Serif', Georgia, serif;
 
   --sans: 'Archivo', Helvetica, sans-serif;
   --mono: 'Geist Mono', ui-monospace, monospace;
@@ -1169,6 +1193,84 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
 }
 .observations-band:hover .read, .observations-band:hover .title { color: var(--blue); }
 
+/* ---------- FIELDWORK / coordinate threshold ----------
+   The laboratory's mechanical index gives way to the warmer ground of another
+   PROBNAYA practice. Coordinates establish a position; typography establishes
+   the relationship between the practice and its first project. */
+
+.fieldwork-threshold {
+  position: relative; overflow: hidden;
+  min-height: 930px; padding: 34px max(40px, calc((100vw - 1120px) / 2)) 42px;
+  background: var(--field-paper); color: var(--field-ink);
+  border-top: 1px solid var(--field-ink);
+  font-family: var(--field-sans);
+}
+.fieldwork-running, .fieldwork-foot {
+  display: grid; align-items: baseline; gap: 24px;
+  font: 400 10px/1.3 var(--field-sans); letter-spacing: 0.17em; text-transform: uppercase;
+}
+.fieldwork-running {
+  grid-template-columns: 1fr auto; padding-bottom: 12px;
+  border-bottom: 1px solid var(--field-rule);
+}
+.fieldwork-running span:last-child { color: var(--field-earth); }
+.fieldwork-coordinate {
+  display: flex; align-items: flex-start; gap: 0.08em;
+  margin: 0; font: 400 clamp(118px, 18vw, 278px)/0.79 var(--field-sans);
+  letter-spacing: -0.085em; white-space: nowrap;
+}
+.fieldwork-coordinate small {
+  margin-top: 0.08em; font-size: 0.18em; line-height: 1; letter-spacing: 0;
+}
+.fieldwork-coordinate--latitude { margin: 32px 0 0 -0.04em; }
+.fieldwork-composition {
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 22px;
+  align-items: end; margin-top: 36px;
+}
+.fieldwork-title { grid-column: 2 / 8; }
+.fieldwork-title > p {
+  margin: 0 0 18px; color: var(--field-earth);
+  font: 400 10px/1.3 var(--field-sans); letter-spacing: 0.18em;
+}
+.fieldwork-title h2 {
+  margin: 0; font: 400 clamp(82px, 9vw, 142px)/0.77 var(--field-serif);
+  letter-spacing: -0.055em;
+}
+.fieldwork-title h2 span { margin-left: 0.53em; }
+.fieldwork-statement {
+  grid-column: 8 / 13; margin-bottom: 2px; padding: 25px 0 0 24px;
+  border-top: 1px solid var(--field-earth); border-left: 1px solid var(--field-rule);
+}
+.fieldwork-lede {
+  margin: 0 0 46px; font: 400 clamp(27px, 3vw, 42px)/1.06 var(--field-serif);
+  letter-spacing: -0.02em;
+}
+.fieldwork-statement dl { margin: 0; }
+.fieldwork-statement dl > div {
+  display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px;
+  padding: 12px 0; border-top: 1px solid var(--field-rule);
+}
+.fieldwork-statement dt {
+  color: var(--field-earth); font: 400 9px/1.45 var(--field-sans);
+  letter-spacing: 0.15em; text-transform: uppercase;
+}
+.fieldwork-statement dd {
+  max-width: 36ch; margin: 0; color: var(--field-moss);
+  font: 400 13px/1.4 var(--field-sans);
+}
+.fieldwork-coordinate--longitude {
+  justify-content: flex-end; margin: 76px -0.015em 0 0;
+  color: var(--field-moss); font-size: clamp(102px, 15vw, 230px);
+}
+.fieldwork-foot {
+  grid-template-columns: 18px 1fr auto; margin-top: 40px; padding-top: 12px;
+  border-top: 1px solid var(--field-rule); color: var(--field-moss);
+}
+.fieldwork-link { color: var(--field-earth); padding-block: 8px; margin-block: -8px; }
+.fieldwork-link:hover { color: var(--field-earth); text-decoration: underline; text-underline-offset: 4px; }
+.fieldwork-link:focus-visible { outline: 2px solid var(--field-earth); outline-offset: 4px; }
+.fieldwork-marker { width: 11px; height: 11px; background: var(--field-earth); }
+
 /* ============================================================
    MOBILE — structural changes from the approved design: simplified
    top bar, fixed bottom tab bar, stacked single-column content.
@@ -1524,6 +1626,25 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
   .observations-band .title { grid-column: 1; grid-row: 1; font-size: 24px; }
   .observations-band .desc { grid-column: 1; grid-row: 2; font-size: 16px; }
   .observations-band .read { grid-column: 1; grid-row: 3; text-align: left; margin-top: 14px; }
+
+  .fieldwork-threshold {
+    min-height: 0; padding: 22px 18px 28px;
+  }
+  .fieldwork-running { grid-template-columns: 1fr; gap: 6px; }
+  .fieldwork-coordinate { font-size: 23vw; line-height: 0.82; }
+  .fieldwork-coordinate--latitude { margin-top: 30px; }
+  .fieldwork-composition { grid-template-columns: 1fr; gap: 42px; margin-top: 56px; }
+  .fieldwork-title, .fieldwork-statement { grid-column: 1; }
+  .fieldwork-title > p { margin-bottom: 14px; }
+  .fieldwork-title h2 { font-size: 20.5vw; line-height: 0.79; }
+  .fieldwork-title h2 span { margin-left: 0.22em; }
+  .fieldwork-statement { margin: 0; padding: 22px 0 0 18px; }
+  .fieldwork-lede { margin-bottom: 34px; font-size: 34px; }
+  .fieldwork-statement dl > div { grid-template-columns: 76px minmax(0, 1fr); gap: 14px; }
+  .fieldwork-coordinate--longitude { margin-top: 62px; font-size: 20vw; }
+  .fieldwork-foot { grid-template-columns: 14px 1fr; gap: 8px 12px; margin-top: 28px; }
+  .fieldwork-link { grid-column: 2; margin-block: 0; }
+  .fieldwork-marker { width: 9px; height: 9px; }
 
   .ex-plate { aspect-ratio: 1 / 1; }
   .ex-card { width: 88%; }
