@@ -75,13 +75,38 @@
 
 <nav class="site-index" id="site-index" aria-label="Index" hidden>
   <span class="index-group">THE LABORATORY'S OWN WORK</span>
-  <a href="/instruments"><span class="n">01</span><span class="name">Instruments</span><span class="m"></span></a>
-  <a href="/investigations"><span class="n">02</span><span class="name">Investigations</span><span class="m"></span></a>
-  <a href="/objects"><span class="n">03</span><span class="name">Objects</span><span class="m"></span></a>
-  <a href="/lab"><span class="n">04</span><span class="name">About the laboratory</span><span class="m"></span></a>
+  <section class="index-section" aria-labelledby="index-instruments-title">
+    <span class="n" aria-hidden="true">01</span><h2 id="index-instruments-title">Instruments</h2>
+    <div class="group-links">
+      <a href="/instrument-0x2f">0x2F</a>
+      <a href="/instrument-057">057</a>
+    </div>
+  </section>
+  <section class="index-section" aria-labelledby="index-investigations-title">
+    <span class="n" aria-hidden="true">02</span><h2 id="index-investigations-title">Investigations</h2>
+    <div class="group-links">
+      <a href="/#investigations">Proposed questions →</a>
+    </div>
+  </section>
+  <section class="index-section" aria-labelledby="index-human-title">
+    <span class="n" aria-hidden="true">03</span><h2 id="index-human-title">Human</h2>
+    <div class="group-links">
+      <a href="https://getchinotto.app/">Chinotto</a>
+      <a href="https://heard.probnaya.work/">HEARD</a>
+      <a href="https://fieldwork.probnaya.work/tras-os-montes/">FIELDWORK</a>
+    </div>
+  </section>
+  <section class="index-section" aria-labelledby="index-objects-title">
+    <span class="n" aria-hidden="true">04</span><h2 id="index-objects-title">Objects</h2>
+    <div class="group-links">
+      <a href="/instrument-mpa-01">MPA–01</a>
+      <a href="/objects/001">EX–</a>
+    </div>
+  </section>
+  <a href="/lab" class="index-route"><span class="n" aria-hidden="true">05</span><span class="name">About the laboratory</span><span class="m"></span></a>
   <span class="index-group">ARRIVES FROM OUTSIDE</span>
-  <a href="/observations"><span class="n">05</span><span class="name">Observations</span><span class="m"></span></a>
-  <a href="/intake" class="action"><span class="n">06</span><span class="name">Submit a problem</span><span class="m"></span></a>
+  <a href="/observations" class="index-route"><span class="n" aria-hidden="true">06</span><span class="name">Observations</span><span class="m"></span></a>
+  <a href="/intake" class="index-route action"><span class="n" aria-hidden="true">07</span><span class="name">Submit a problem</span><span class="m"></span></a>
 </nav>
 
 <main class="main">
@@ -113,122 +138,28 @@
     </div>
   </div>
 
-  <div class="index-list">
-    <a class="index-row" href="/instrument-0x2f">
-      <span class="id">0x2F</span>
-      <span class="desc">Local task runtime for coding agents</span>
-      <span class="status"></span>
-    </a>
-    <a class="index-row" href="/instrument-057">
-      <span class="id">057</span>
-      <span class="desc">Visual surface for computational activity</span>
-      <span class="status status-observation">IN OBSERVATION</span>
-    </a>
-    <a class="index-row" href="/instrument-chinotto">
-      <span class="id">CHINOTTO</span>
-      <span class="desc">Private record of thoughts and what continues between them</span>
-      <span class="status status-observation">NEW VERSION COMING</span>
-    </a>
-    <a class="index-row" href="/instrument-heard">
-      <span class="id">HEARD</span>
-      <span class="desc">Public voices describing life with AI</span>
-      <span class="status"></span>
-    </a>
-
-    <!-- MPA–01 is an apparatus, not one of the instruments listed above. It
-         stands under them on its own rule and states its own access. -->
-    <a class="apparatus-band" href="/instrument-mpa-01">
-      <span class="band-head">
-        <span class="condition">APPARATUS IN SERVICE · ISSUING</span>
-        <span class="access">ACCESS / ENTERABLE</span>
-      </span>
-      <span class="band-row">
-        <span class="id">MPA–01</span>
-        <span class="name">MACHINE PORTRAIT APPARATUS</span>
-        <span class="enter">ENTER THE APPARATUS →</span>
-      </span>
-    </a>
-
-    <!-- An object is not an instrument or an apparatus. While it is proposed it
-         stands under the apparatus band in the same grammar, with the outlined
-         marker, and leaves the index when it is no longer open. -->
-    <a class="apparatus-band object-band" href="/objects/001">
-      <span class="band-head">
-        <span class="condition">OBJECT 001 · PROPOSED</span>
-        <span class="access">FREE WALLPAPERS · INTEREST OPEN</span>
-      </span>
-      <span class="band-row">
-        <span class="id">EX–</span>
-        <span class="name">LENTICULAR CARD · EXCITEMENT / EXHAUSTION</span>
-        <span class="enter">SEE THE OBJECT →</span>
-      </span>
-    </a>
-
-    <div class="index-foot">
-      <a class="count" href="/investigations">17 INVESTIGATIONS ON RECORD · 4 DISCLOSED</a>
-      <a class="cta" href="/intake">BRING US AN INTERESTING PROBLEM →</a>
-    </div>
-
-    <!-- Observations are not PROBNAYA's work: the material comes from outside the
-         laboratory. The laboratory's index closes first; Observations opens after
-         it, across its own rule, as a different space rather than another row. -->
-    <section class="observations-threshold" id="observations" aria-labelledby="observations-title">
-      <div class="threshold-labels">
-        <span>FROM OUTSIDE THE LABORATORY</span>
-        <span>SENT BY OTHERS · PUBLISHED BY PROBNAYA</span>
-      </div>
-      <a class="observations-band" href="/observations">
-        <span class="title" id="observations-title">Observations</span>
-        <span class="desc">What other people noticed and sent to PROBNAYA</span>
-        <span class="read">READ →</span>
+  <div class="index-list selected-content" id="selected-instruments">
+    <section aria-label="Selected instruments">
+      <a class="index-row" href="/instrument-0x2f">
+        <span class="id">0x2F</span>
+        <span class="desc">Local task runtime for coding agents</span>
+        <span class="status"></span>
       </a>
+      <a class="index-row" href="/instrument-057">
+        <span class="id">057</span>
+        <span class="desc">See processes and agent activity as a spatial field</span>
+        <span class="status"></span>
+      </a>
+      <div class="selection-foot"><span>SELECTED INSTRUMENTS</span><a href="#site-index" data-open-index>INDEX →</a></div>
+    </section>
+    <section class="investigation-questions" id="investigations" aria-labelledby="questions-title">
+      <div class="questions-heading"><h2 id="questions-title">Investigations</h2><span>PROPOSED QUESTIONS</span></div>
+      <p class="questions-note">Questions to test with the instruments. No findings are claimed here.</p>
+      <div class="question-row"><span class="question-instrument">0x2F</span><p>What must a task retain when an agent is interrupted?</p></div>
+      <div class="question-row"><span class="question-instrument">057</span><p>What can a spatial field reveal about an idle machine?</p></div>
+      <div class="questions-foot"><a href="/intake">BRING US AN INTERESTING PROBLEM →</a></div>
     </section>
   </div>
-
-  <!-- FIELDWORK is a practice within PROBNAYA; TRÁS-OS-MONTES is the first
-       project held by that practice. This threshold stays outside the project
-       index so the relationship reads as one passage, not two listings. -->
-  <section class="fieldwork-threshold" aria-labelledby="fieldwork-project-title">
-    <div class="fieldwork-running">
-      <span>FIELDWORK / A PRACTICE WITHIN PROBNAYA</span>
-      <span>TRÁS-OS-MONTES / FIRST PROJECT</span>
-    </div>
-
-    <p class="fieldwork-coordinate fieldwork-coordinate--latitude" aria-label="41 degrees 44 minutes north">
-      <span>41°44′</span><small>N</small>
-    </p>
-
-    <div class="fieldwork-composition">
-      <div class="fieldwork-title">
-        <p>FIELDWORK</p>
-        <h2 id="fieldwork-project-title" lang="pt">Trás-os-<br><span>Montes</span></h2>
-      </div>
-
-      <div class="fieldwork-statement">
-        <p class="fieldwork-lede">An unfinished portrait<br>of a place.</p>
-        <dl>
-          <div>
-            <dt>Practice</dt>
-            <dd>Observation, place, memory, landscape and the physical world.</dd>
-          </div>
-          <div>
-            <dt>First project</dt>
-            <dd>An evolving visual portrait of Trás-os-Montes, beginning around Barroso and Alto Rabagão.</dd>
-          </div>
-        </dl>
-      </div>
-    </div>
-
-    <p class="fieldwork-coordinate fieldwork-coordinate--longitude" aria-label="7 degrees 51 minutes west">
-      <span>07°51′</span><small>W</small>
-    </p>
-
-    <div class="fieldwork-foot">
-      <span class="fieldwork-marker" aria-hidden="true"></span>
-      <span>PISÕES / REFERENCE</span>
-      <a class="fieldwork-link" href="https://fieldwork.probnaya.work/tras-os-montes/">ENTER TRÁS-OS-MONTES ↗</a>
-    </div>
-  </section>
 
 </main>
 

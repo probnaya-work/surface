@@ -1,12 +1,30 @@
 // Small shared page chrome behaviour used across all pages.
 
-// The index. Both header controls (desktop and phone) open the same panel.
-// Escape closes it; a page restored from history opens with it closed.
+// The Index covers the page, but leaves the visible header usable. Keep keyboard
+// navigation in that same surface, and restore the page's previous inert state.
 (function () {
   const panel = document.getElementById('site-index');
   if (!panel) return;
-  const toggles = document.querySelectorAll('.index-toggle');
+  const toggles = [...document.querySelectorAll('.index-toggle')];
+  const background = [...document.querySelectorAll('main, .site-footer')];
+  const previousInert = new Map();
+  let trigger = null;
+
+  const visible = (el) => el && el.isConnected && el.getClientRects().length &&
+    !el.closest('[inert]') && getComputedStyle(el).visibility !== 'hidden';
+  const visibleToggle = () => toggles.find(visible);
+  const focus = (el) => { if (visible(el)) el.focus({ preventScroll: true }); };
+  const controls = () => [...document.querySelectorAll(
+    '.site-header a[href], .site-header button, .mobile-header a[href], .mobile-header button, #site-index a[href], #site-index button'
+  )].filter(el => visible(el) && !el.disabled && el.tabIndex >= 0);
+
   const set = (open) => {
+    if (open && panel.hidden) {
+      background.forEach(el => { previousInert.set(el, el.inert); el.inert = true; });
+    } else if (!open) {
+      previousInert.forEach((inert, el) => { el.inert = inert; });
+      previousInert.clear();
+    }
     panel.hidden = !open;
     document.documentElement.classList.toggle('index-open', open);
     toggles.forEach((t) => {
@@ -15,11 +33,71 @@
       if (act) act.textContent = open ? 'CLOSE' : 'INDEX';
     });
   };
-  toggles.forEach((t) => t.addEventListener('click', () => set(panel.hidden)));
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !panel.hidden) { set(false); toggles.forEach((t) => t.offsetParent && t.focus()); }
+  const open = (source) => {
+    trigger = source;
+    set(true);
+    focus(visibleToggle());
+  };
+  const close = (restoreFocus) => {
+    set(false);
+    if (restoreFocus) focus(visible(trigger) ? trigger : visibleToggle());
+    trigger = null;
+  };
+  const ordinaryClick = (event, link) => !event.defaultPrevented && !(event.button > 0) &&
+    !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey &&
+    !link.hasAttribute('download') && (!link.target || link.target === '_self');
+
+  toggles.forEach(t => t.addEventListener('click', () => panel.hidden ? open(t) : close(true)));
+  document.querySelectorAll('[data-open-index]').forEach(link => link.addEventListener('click', event => {
+    if (!ordinaryClick(event, link)) return;
+    event.preventDefault();
+    if (panel.hidden) open(link);
+  }));
+
+  panel.addEventListener('click', event => {
+    const link = event.target.closest('a[href]');
+    if (!link || !panel.contains(link) || !ordinaryClick(event, link)) return;
+    // Leave cross-page and modified clicks to the browser. Root anchors also
+    // work when the homepage is served as index.html for a local preview.
+    let url, id;
+    try {
+      url = new URL(link.href, location.href);
+      id = decodeURIComponent(url.hash.slice(1));
+    } catch (_) { return; }
+    const home = ['/', '/index', '/index.html'];
+    const samePath = url.pathname === location.pathname ||
+      (home.includes(url.pathname) && home.includes(location.pathname));
+    if (url.origin !== location.origin || !samePath || url.search !== location.search || !id) return;
+    const destination = document.getElementById(id);
+    if (!destination) return;
+    close(false);
+    if (!destination.hasAttribute('tabindex')) {
+      destination.setAttribute('tabindex', '-1');
+      destination.addEventListener('blur', () => destination.removeAttribute('tabindex'), { once: true });
+    }
+    focus(destination);
+    // The browser still updates history and scrolls to the anchor normally.
   });
-  window.addEventListener('pageshow', () => set(false));
+
+  document.addEventListener('keydown', event => {
+    if (panel.hidden || event.defaultPrevented) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      close(true);
+    } else if (event.key === 'Tab') {
+      const items = controls();
+      if (!items.length) return;
+      const current = items.indexOf(document.activeElement);
+      if (current < 0 || (event.shiftKey ? current === 0 : current === items.length - 1)) {
+        event.preventDefault();
+        focus(event.shiftKey ? items[items.length - 1] : items[0]);
+      }
+    }
+  });
+  window.addEventListener('resize', () => {
+    if (!panel.hidden && !controls().includes(document.activeElement)) focus(visibleToggle());
+  });
+  window.addEventListener('pageshow', () => close(!panel.hidden));
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
