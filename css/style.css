@@ -162,8 +162,8 @@ span.brand-tag:hover { color: var(--mid); }
 
 /* ---------- the index ----------
    One control in the header carries the visitor's position and opens the index.
-   Every section is listed there once: a number and a name, in the two groups the
-   navigation always had. The current section is set in ink with the blue marker. */
+   Four groups expose direct destinations; the remaining routes stay subordinate.
+   Current location and interaction use thin rules, never filled rows. */
 .index-toggle {
   display: flex; align-items: stretch; flex-shrink: 0; padding: 0; margin: 0;
   border: 1px solid var(--ink); background: none; color: var(--ink); cursor: pointer;
@@ -200,9 +200,6 @@ span.brand-tag:hover { color: var(--mid); }
 .site-index a .m { width: 7px; height: 7px; align-self: center; }
 .site-index a:hover { background: var(--hover-bg); }
 .site-index a.action { color: var(--blue); }
-.site-index a[aria-current="page"] { background: var(--ink); color: var(--paper); border-bottom-color: var(--ink); }
-.site-index a[aria-current="page"] .n { color: var(--faint); }
-.site-index a[aria-current="page"] .m { background: var(--blue); }
 .site-index a:focus-visible { outline: 1px solid var(--blue); outline-offset: -1px; }
 
 /* ---------- mobile header + bottom nav ---------- */
@@ -1474,6 +1471,48 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
 .ws-bay--empty .ws-stage::after { width: 1px; height: 44px; transform: translate(-50%, -50%); }
 .ws-bay--empty .ws-empty-id { font-weight: 600; font-size: 44px; line-height: 1; color: var(--body-text); }
 
+/* Selected homepage content and the grouped Index. */
+.selected-content{scroll-margin-top:72px}
+.selected-content .selection-foot {display:flex;justify-content:space-between;gap:16px;padding:20px 0 42px;font:10px var(--mono);letter-spacing:.14em;color:var(--body-text)}
+.selected-content .selection-foot a,.selected-content .questions-foot a{color:var(--blue)}
+.investigation-questions {border-top:1px solid var(--ink);padding-top:24px;scroll-margin-top:76px}
+.investigation-questions .questions-heading{display:flex;justify-content:space-between;gap:20px;align-items:baseline}
+.investigation-questions h2{font-size:32px;letter-spacing:-.02em;font-weight:400;margin:0}
+.investigation-questions .questions-heading>span{font:10px var(--mono);letter-spacing:.14em;color:var(--body-text)}
+.investigation-questions .questions-note{font-size:16px;font-weight:300;line-height:1.55;color:var(--body-text);margin:14px 0 24px}
+.investigation-questions .question-row{display:grid;grid-template-columns:150px 1fr;gap:28px;padding:20px 0;border-top:1px solid var(--border);align-items:baseline}
+.investigation-questions .question-instrument{font:11px var(--mono);letter-spacing:.08em;color:var(--body-text)}
+.investigation-questions .question-row p{margin:0;font-size:22px;font-weight:300;line-height:1.35;letter-spacing:-.015em}
+.investigation-questions .questions-foot{border-top:1px solid var(--border);padding:22px 0 48px;font:10px var(--mono);letter-spacing:.14em}
+/* Four groups, each with its existing direct destinations visible. */
+.site-index .index-section{display:grid;grid-template-columns:44px minmax(0,1fr) 7px;column-gap:18px;row-gap:4px;align-items:baseline;padding:16px 18px 8px;border-bottom:1px solid var(--border);flex-shrink:0}
+.site-index .index-section .n{font:10px var(--mono);letter-spacing:.14em;color:var(--body-text)}
+.site-index .index-section h2{margin:0;font-size:36px;font-weight:500;letter-spacing:-.02em;line-height:1}
+.site-index .group-links{grid-column:2;display:flex;flex-wrap:wrap;column-gap:28px;align-items:center}
+.site-index .group-links a{display:flex;align-items:center;padding:8px 0;min-height:44px;border:0;font-size:16px;line-height:1.4;font-weight:400;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.22em;text-decoration-color:var(--border)}
+.site-index .group-links a:hover{color:var(--ink);text-decoration-color:var(--ink)}
+.site-index .group-links a:focus-visible{outline:1px solid var(--ink);outline-offset:3px}
+.site-index a.index-route .name{font-size:24px}
+.site-index a.index-route{flex-shrink:0}
+/* Quiet interaction: no filled rows or colour inversion. */
+.site-index a:hover,.selected-content a.index-row:hover{background:transparent;color:var(--ink)}
+.site-index a.action:hover{color:var(--blue)}
+.site-index a:hover .name,.selected-content a.index-row:hover .id,
+.selected-content .selection-foot a:hover,.selected-content .questions-foot a:hover,
+.site-footer a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em}
+.selected-content a.index-row:focus-visible,.site-index a:focus-visible{outline:none}
+.site-index a .name,.selected-content a.index-row .id{width:fit-content}
+.site-index a:focus-visible .name,.selected-content a.index-row:focus-visible .id,
+.selected-content .selection-foot a:focus-visible,.selected-content .questions-foot a:focus-visible,
+.site-footer a:focus-visible{outline:1px solid var(--ink);outline-offset:4px}
+.site-footer>a:first-child:hover{color:var(--body-text)}
+.site-footer a[href^="mailto:"]:hover{color:var(--blue)}
+.selected-content ::selection,.site-index ::selection,.site-footer ::selection{background:var(--border);color:var(--ink)}
+
+.site-index .index-section[aria-current="true"] h2,
+.site-index .index-route[aria-current] .name { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .2em; }
+.site-index .group-links a[aria-current="page"] { text-decoration-color: var(--ink); }
+
 @media (max-width: 760px) {
   .site-header { display: none; }
   .mobile-header { display: flex; }
@@ -1492,6 +1531,23 @@ a.obs-date:hover { color: var(--blue); border-bottom-color: var(--blue); }
   .site-index a + .index-group { padding-top: 18px; }
   .site-index a { grid-template-columns: 22px minmax(0, 1fr) 7px; gap: 13px; padding: 13px; }
   .site-index a .name { font-size: 22px; line-height: 1.1; }
+
+ .selected-content .selection-foot{font-size:9px;letter-spacing:.08em;padding:18px 0 32px}
+ .investigation-questions{padding-top:22px;scroll-margin-top:66px}
+ .investigation-questions .questions-heading{display:block}
+ .investigation-questions h2{font-size:28px;margin-bottom:12px}
+ .investigation-questions .questions-heading>span{font-size:9px}
+ .investigation-questions .questions-note{font-size:15px;margin:14px 0 24px}
+ .investigation-questions .question-row{grid-template-columns:1fr;gap:8px;padding:18px 0}
+ .investigation-questions .question-row p{font-size:20px;line-height:1.4}
+ .investigation-questions .questions-foot{font-size:9px;line-height:1.6;padding-bottom:36px;letter-spacing:.1em}
+ .site-index .index-section{grid-template-columns:22px minmax(0,1fr) 7px;column-gap:13px;row-gap:2px;padding:12px 13px 4px}
+ .site-index .index-section h2{font-size:22px;line-height:1.1}
+ .site-index .group-links{column-gap:22px}
+ .site-index .group-links a{font-size:14px}
+ .site-index a.index-route .name{font-size:22px}
+
+
 
   .main { padding-top: var(--header-h-mobile); }
 

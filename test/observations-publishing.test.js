@@ -187,7 +187,9 @@ describe('content combinations', () => {
     assert.match(page, /<h1 class="obs-title">/);
     assert.doesNotMatch(page, /name="robots"/);
     assert.match(page, /<nav class="site-index" id="site-index"/);
-    assert.match(page, /<a href="\/observations" aria-current="true"><span class="n">05<\/span>/);
+    const observationsRoute = /<a\b(?=[^>]*\bhref="\/observations")(?=[^>]*\baria-current="true")[^>]*>([\s\S]*?)<\/a>/.exec(page);
+    assert.ok(observationsRoute, 'the generated sheet marks the Observations section');
+    assert.match(observationsRoute[1], /<span\b(?=[^>]*\bclass="n")[^>]*>\s*06\s*<\/span>/);
     assert.doesNotMatch(page, /aria-current="page"|bottom-nav/, 'a sheet marks its section only, and has no bottom bar');
     assert.match(page, /href="\/css\/style\.css"/, 'assets are addressed from the root');
 
